@@ -110,20 +110,20 @@ WSGI_APPLICATION = 'admin_panel.wsgi.application'
 # Use MySQL for production (PythonAnywhere), SQLite for local development
 # if os.environ.get('USE_MYSQL', 'False').lower() == 'true':
 #     # Production MySQL configuration (PythonAnywhere)
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
+# else:
+#     # Local development SQLite configuration
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-# else:
-#     # Local development SQLite configuration
-#     DATABASES = {
-#         'default': {
-#             'ENGINE': 'django.db.backends.sqlite3',
-#             'NAME': BASE_DIR / 'db.sqlite3',
-#         }
-#     }
 
 
 # Password validation
