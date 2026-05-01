@@ -4,7 +4,7 @@ import os
 import sys
 
 # add your project directory to the sys.path
-project_home = '/home/mineralife/MineraLife/admin_panel'
+project_home = '/home/mineralife/MineraLife'
 if project_home not in sys.path:
     sys.path.insert(0, project_home)
 
