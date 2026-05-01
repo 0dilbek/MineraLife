@@ -29,7 +29,7 @@ class OrderForm(forms.ModelForm):
             "courier": forms.Select(attrs=_attrs()),
             "inquantity": forms.NumberInput(attrs=_attrs(min=0, placeholder="oldim")),
             "outquantity": forms.NumberInput(attrs=_attrs(min=0, placeholder="berdim")),
-            "price": forms.NumberInput(attrs=_attrs(step="0.01", min=0, placeholder="17000.00")),
+            "price": forms.NumberInput(attrs=_attrs(step="0.01", min=0, placeholder="18000")),
             "status": forms.Select(attrs=_attrs()),
             "effective_date": forms.DateInput(attrs=_attrs(type="date")),
             "payment_method": forms.Select(attrs=_attrs()),
@@ -52,7 +52,8 @@ class OrderForm(forms.ModelForm):
         # Default sana - bugun
         if not self.instance.pk:  # Yangi buyurtma bo'lsa
             self.fields['effective_date'].initial = timezone.localdate()
-        
+            self.fields['price'].initial = 18000
+
         # Placeholder va help textlar
         self.fields['effective_date'].help_text = "Buyurtma bajarilish sanasi"
         self.fields['inquantity'].help_text = "oldim miqdori"

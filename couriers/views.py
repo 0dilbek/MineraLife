@@ -51,6 +51,7 @@ def courier_dashboard(request):
     card_total = qs.filter(status="completed", payment_method="card").aggregate(total=Sum(F("price") * F("outquantity")))["total"] or 0
     perechesleniya_total = qs.filter(status="completed", payment_method="perechesleniya").aggregate(total=Sum(F("price") * F("outquantity")))["total"] or 0
     debt_total = qs.filter(status="completed", payment_method="debt").aggregate(total=Sum(F("price") * F("outquantity")))["total"] or 0
+    daily_total = cash_total + card_total + perechesleniya_total
 
     return render(request, "couriers/dashboard.html", {
         "orders": qs,
@@ -58,6 +59,7 @@ def courier_dashboard(request):
         "card_total": card_total,
         "perechesleniya_total": perechesleniya_total,
         "debt_total": debt_total,
+        "daily_total": daily_total,
         "today": today,
     })
 
