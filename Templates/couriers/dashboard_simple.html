@@ -110,9 +110,7 @@
                                 <div>
                                     <span class="text-gray-500 dark:text-gray-400">To'lov:</span>
                                     <span class="font-medium text-gray-900 dark:text-white ml-1">
-                                        {% if order.payment_method == 'card' %}💳 Karta
-                                        {% elif order.payment_method == 'cash' %}💵 Naqd
-                                        {% else %}🏦 Perechesleniya{% endif %}
+                                        {{ order.get_payment_summary }}
                                     </span>
                                 </div>
                             </div>

@@ -47,10 +47,17 @@ def courier_dashboard(request):
           )
           .order_by("-created_at"))
 
-    cash_total = qs.filter(status="completed", payment_method="cash").aggregate(total=Sum(F("price") * F("outquantity")))["total"] or 0
-    card_total = qs.filter(status="completed", payment_method="card").aggregate(total=Sum(F("price") * F("outquantity")))["total"] or 0
-    perechesleniya_total = qs.filter(status="completed", payment_method="perechesleniya").aggregate(total=Sum(F("price") * F("outquantity")))["total"] or 0
-    debt_total = qs.filter(status="completed", payment_method="debt").aggregate(total=Sum(F("price") * F("outquantity")))["total"] or 0
+    completed_qs = qs.filter(status="completed")
+    totals = completed_qs.aggregate(
+        cash_total=Sum("cash_amount"),
+        card_total=Sum("card_amount"),
+        perechesleniya_total=Sum("perechesleniya_amount"),
+        debt_total=Sum("debt_amount"),
+    )
+    cash_total = totals["cash_total"] or 0
+    card_total = totals["card_total"] or 0
+    perechesleniya_total = totals["perechesleniya_total"] or 0
+    debt_total = totals["debt_total"] or 0
     daily_total = cash_total + card_total + perechesleniya_total
 
     return render(request, "couriers/dashboard.html", {
@@ -142,16 +149,16 @@ def courier_map(request):
         "outquantity": o.outquantity,
         "price": float(o.get_total_price()),
         "date": o.effective_date.isoformat(),
-        "payment": "💳 Karta" if o.payment_method == "card" else "💵 Naqd" if o.payment_method == "cash" else "🏦 Perechesleniya" if o.payment_method == "perechesleniya" else "📝 Qarz",
-        "payment_raw": o.payment_method,  # ('card'|'cash'|'perechesleniya'|'debt')
+        "payment": o.get_payment_summary(),
     } for o in qs]
 
-    stats = {
-        "cash": qs.filter(status="completed", payment_method="cash").aggregate(total=Sum(F("price") * F("outquantity")))["total"] or 0,
-        "card": qs.filter(status="completed", payment_method="card").aggregate(total=Sum(F("price") * F("outquantity")))["total"] or 0,
-        "perechesleniya": qs.filter(status="completed", payment_method="perechesleniya").aggregate(total=Sum(F("price") * F("outquantity")))["total"] or 0,
-        "debt": qs.filter(status="completed", payment_method="debt").aggregate(total=Sum(F("price") * F("outquantity")))["total"] or 0,
-    }
+    map_totals = qs.filter(status="completed").aggregate(
+        cash=Sum("cash_amount"),
+        card=Sum("card_amount"),
+        perechesleniya=Sum("perechesleniya_amount"),
+        debt=Sum("debt_amount"),
+    )
+    stats = {k: (v or 0) for k, v in map_totals.items()}
 
     # Kuryerning bugungi marshrutini olish
     route = None

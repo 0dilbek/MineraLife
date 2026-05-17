@@ -18,7 +18,7 @@ def _tw(**kw):
 
 class CourierQuickCompleteForm(forms.ModelForm):
     """Tez bajarish formasi - oldim, berdim miqdorlar va izoh"""
-    
+
     class Meta:
         model = Order
         fields = ["inquantity", "outquantity", "notes"]
@@ -27,101 +27,86 @@ class CourierQuickCompleteForm(forms.ModelForm):
             "outquantity": forms.NumberInput(attrs=_tw(min=0, placeholder="berdim", **{"data-price": "true"})),
             "notes": forms.Textarea(attrs=_tw(rows=2, placeholder="Qo'shimcha izohlar (ixtiyoriy)...")),
         }
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        
-        self.fields['inquantity'].label = "oldim"
-        self.fields['outquantity'].label = "berdim"
+
+        self.fields['inquantity'].label = "Oldim"
+        self.fields['outquantity'].label = "Berdim"
         self.fields['notes'].label = "Izohlar"
-        
+
         self.fields['inquantity'].help_text = "Mijozga yetkazilgan mahsulot miqdori"
         self.fields['outquantity'].help_text = "Mijozdan olingan mahsulot miqdori"
-        self.fields['notes'].help_text = "Buyurtma haqida qo'shimcha ma'lumot"
-        
-        # Required qilish - kamida bittasi bo'lishi kerak
         self.fields['outquantity'].required = True
-    
+
     def clean(self):
-        """Miqdor validatsiyasi"""
         cleaned_data = super().clean()
         inquantity = cleaned_data.get('inquantity', 0) or 0
         outquantity = cleaned_data.get('outquantity', 0) or 0
-        
-        # Hech bo'lmaganda bittasi 0 dan katta bo'lishi kerak
+
         if inquantity == 0 and outquantity == 0:
             raise ValidationError(
                 "Hech bo'lmaganda kiruvchi yoki chiquvchi miqdor 0 dan katta bo'lishi kerak"
             )
-            
-        # Miqdorlar manfiy bo'lmasligi kerak
         if inquantity < 0:
             raise ValidationError("Kiruvchi miqdor manfiy bo'lmasligi kerak")
         if outquantity < 0:
             raise ValidationError("Chiquvchi miqdor manfiy bo'lmasligi kerak")
-            
         return cleaned_data
 
 
 class CourierOrderUpdateForm(forms.ModelForm):
-    """Kurer uchun buyurtma tahrirlash formasi - holat, to'lov, miqdor"""
-    
+    """Kurer uchun buyurtma tahrirlash formasi - holat, to'lov summalar, miqdor"""
+
     class Meta:
         model = Order
-        fields = ["inquantity", "outquantity", "status", "payment_method", "notes"]
+        fields = [
+            "inquantity", "outquantity", "status",
+            "cash_amount", "card_amount", "perechesleniya_amount", "debt_amount",
+            "notes"
+        ]
         widgets = {
             "inquantity": forms.NumberInput(attrs=_tw(min=0, placeholder="oldim")),
             "outquantity": forms.NumberInput(attrs=_tw(min=0, placeholder="berdim")),
             "status": forms.Select(attrs=_tw()),
-            "payment_method": forms.Select(attrs=_tw()),
+            "cash_amount": forms.NumberInput(attrs=_tw(step="1", min=0, placeholder="0")),
+            "card_amount": forms.NumberInput(attrs=_tw(step="1", min=0, placeholder="0")),
+            "perechesleniya_amount": forms.NumberInput(attrs=_tw(step="1", min=0, placeholder="0")),
+            "debt_amount": forms.NumberInput(attrs=_tw(step="1", min=0, placeholder="0")),
             "notes": forms.Textarea(attrs=_tw(rows=3, placeholder="Qo'shimcha izohlar...")),
         }
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        
-        # Kurer faqat ma'lum holatlarni o'zgartira olishi mumkin
+
         self.fields['status'].choices = [
             ('pending', 'Kutilmoqda'),
             ('completed', 'Bajardi'),
             ('cancelled', 'Bekor qilingan'),
         ]
-        
-        # To'lov usullari
-        self.fields['payment_method'].choices = Order.PAYMENT_METHODS
-        
-        # Field labellarini o'zbek tilida
-        self.fields['inquantity'].label = "oldim"
-        self.fields['outquantity'].label = "berdim"
+
+        self.fields['inquantity'].label = "Oldim"
+        self.fields['outquantity'].label = "Berdim"
         self.fields['status'].label = "Buyurtma holati"
-        self.fields['payment_method'].label = "To'lov usuli"
+        self.fields['cash_amount'].label = "💵 Naqd (so'm)"
+        self.fields['card_amount'].label = "💳 Karta (so'm)"
+        self.fields['perechesleniya_amount'].label = "🏦 Perechisleniya (so'm)"
+        self.fields['debt_amount'].label = "📝 Qarz (so'm)"
         self.fields['notes'].label = "Izohlar"
-        
-        # Help textlar
-        self.fields['inquantity'].help_text = "Mijozga yetkazilgan mahsulot miqdori"
-        self.fields['outquantity'].help_text = "Mijozdan olingan mahsulot miqdori"
-        self.fields['status'].help_text = "Buyurtma holatini tanlang"
-        self.fields['payment_method'].help_text = "Mijoz qanday to'lov qildi?"
-        self.fields['notes'].help_text = "Qo'shimcha ma'lumotlar (ixtiyoriy)"
-    
+
     def clean(self):
-        """Miqdor validatsiyasi"""
         cleaned_data = super().clean()
         inquantity = cleaned_data.get('inquantity', 0)
         outquantity = cleaned_data.get('outquantity', 0)
-        
-        # Hech bo'lmaganda bittasi 0 dan katta bo'lishi kerak
+
         if inquantity == 0 and outquantity == 0:
             raise ValidationError(
                 "Hech bo'lmaganda oldim yoki berdim miqdor 0 dan katta bo'lishi kerak"
             )
-            
-        # Miqdorlar manfiy bo'lmasligi kerak
         if inquantity < 0:
             raise ValidationError("Oldim miqdor manfiy bo'lmasligi kerak")
         if outquantity < 0:
             raise ValidationError("Berdim miqdor manfiy bo'lmasligi kerak")
-            
         return cleaned_data
 
 
@@ -167,6 +152,7 @@ class CourierUserUpdateForm(forms.ModelForm):
 class CourierUserPasswordForm(forms.Form):
     password1 = forms.CharField(widget=forms.PasswordInput(attrs=_tw(placeholder="yangi parol")))
     password2 = forms.CharField(widget=forms.PasswordInput(attrs=_tw(placeholder="tasdiqlash")))
+
     def clean(self):
         data = super().clean()
         if data.get("password1") != data.get("password2"):

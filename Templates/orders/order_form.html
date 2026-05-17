@@ -151,25 +151,51 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <div>
-        <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Holat</label>
-        {{ form.status }}
-        {% if form.status.errors %}
-          {% for error in form.status.errors %}
-            <p class="mt-1 text-sm text-red-600">{{ error }}</p>
-          {% endfor %}
-        {% endif %}
+    <div>
+      <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Holat</label>
+      {{ form.status }}
+      {% if form.status.errors %}
+        {% for error in form.status.errors %}<p class="mt-1 text-sm text-red-600">{{ error }}</p>{% endfor %}
+      {% endif %}
+    </div>
+
+    <!-- To'lov summalar -->
+    <div class="rounded-xl border border-gray-200 dark:border-gray-600 p-4 space-y-3 bg-gray-50 dark:bg-gray-700">
+      <p class="text-sm font-semibold text-gray-700 dark:text-gray-200">To'lov tafsiloti (so'mda)</p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">{{ form.cash_amount.label }}</label>
+          {{ form.cash_amount }}
+          {% if form.cash_amount.errors %}{% for e in form.cash_amount.errors %}<p class="mt-1 text-sm text-red-600">{{ e }}</p>{% endfor %}{% endif %}
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">{{ form.card_amount.label }}</label>
+          {{ form.card_amount }}
+          {% if form.card_amount.errors %}{% for e in form.card_amount.errors %}<p class="mt-1 text-sm text-red-600">{{ e }}</p>{% endfor %}{% endif %}
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">{{ form.perechesleniya_amount.label }}</label>
+          {{ form.perechesleniya_amount }}
+          {% if form.perechesleniya_amount.errors %}{% for e in form.perechesleniya_amount.errors %}<p class="mt-1 text-sm text-red-600">{{ e }}</p>{% endfor %}{% endif %}
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">{{ form.debt_amount.label }}</label>
+          {{ form.debt_amount }}
+          {% if form.debt_amount.errors %}{% for e in form.debt_amount.errors %}<p class="mt-1 text-sm text-red-600">{{ e }}</p>{% endfor %}{% endif %}
+        </div>
       </div>
-      <div>
-        <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">To'lov usuli</label>
-        {{ form.payment_method }}
-        {% if form.payment_method.errors %}
-          {% for error in form.payment_method.errors %}
-            <p class="mt-1 text-sm text-red-600">{{ error }}</p>
-          {% endfor %}
-        {% endif %}
+      <!-- Jami to'lov hisob-kitob -->
+      <div class="flex items-center justify-between pt-2 border-t border-gray-300 dark:border-gray-500">
+        <span class="text-sm font-medium text-gray-600 dark:text-gray-300">Jami to'langan:</span>
+        <span id="total-paid-display" class="text-base font-bold text-indigo-600 dark:text-indigo-400">0 so'm</span>
       </div>
+      <div class="flex items-center justify-between">
+        <span class="text-sm font-medium text-gray-600 dark:text-gray-300">Buyurtma narxi:</span>
+        <span id="order-total-display" class="text-base font-bold text-green-600 dark:text-green-400">— so'm</span>
+      </div>
+      <p id="payment-hint" class="text-xs text-gray-400 dark:text-gray-500 hidden">
+        ⚠️ Jami to'lov buyurtma narxiga teng emas
+      </p>
     </div>
 
     <div>
@@ -203,26 +229,50 @@
   
   <script>
     $(document).ready(function() {
-      // Initialize Select2 on client and courier select fields
       $('#id_client').select2({
         placeholder: 'Mijozni tanlang yoki qidiring',
         allowClear: true,
         width: '100%'
       });
-      
+
       $('#id_courier').select2({
         placeholder: 'Kurerni tanlang',
         allowClear: true,
         width: '100%'
       });
-      
-      // Auto-fill date from query parameter (from order_list filter)
+
       const urlParams = new URLSearchParams(window.location.search);
       const dateParam = urlParams.get('date');
-      
       if (dateParam && !$('#id_effective_date').val()) {
         $('#id_effective_date').val(dateParam);
       }
+
+      // To'lov hisob-kitob
+      function updatePaymentTotals() {
+        const cash = parseFloat($('#id_cash_amount').val()) || 0;
+        const card = parseFloat($('#id_card_amount').val()) || 0;
+        const perech = parseFloat($('#id_perechesleniya_amount').val()) || 0;
+        const debt = parseFloat($('#id_debt_amount').val()) || 0;
+        const totalPaid = cash + card + perech + debt;
+
+        const outqty = parseFloat($('#id_outquantity').val()) || 0;
+        const price = parseFloat($('#id_price').val()) || 0;
+        const orderTotal = outqty * price;
+
+        $('#total-paid-display').text(totalPaid.toLocaleString() + ' so\'m');
+
+        if (orderTotal > 0) {
+          $('#order-total-display').text(orderTotal.toLocaleString() + ' so\'m');
+          if (Math.abs(totalPaid - orderTotal) > 1) {
+            $('#payment-hint').removeClass('hidden');
+          } else {
+            $('#payment-hint').addClass('hidden');
+          }
+        }
+      }
+
+      $('#id_cash_amount, #id_card_amount, #id_perechesleniya_amount, #id_debt_amount, #id_outquantity, #id_price').on('input', updatePaymentTotals);
+      updatePaymentTotals();
     });
   </script>
 {% endblock %}

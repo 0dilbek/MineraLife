@@ -60,11 +60,16 @@ def reports_view(request):
     ).select_related("client", "courier")
 
     # === UMUMIY STATISTIKA ===
-    # To'lovlar bo'yicha hisoblash
-    cash_total = qs.filter(payment_method="cash").aggregate(total=Sum(F("price") * F("outquantity")))["total"] or 0
-    card_total = qs.filter(payment_method="card").aggregate(total=Sum(F("price") * F("outquantity")))["total"] or 0
-    pereches_total = qs.filter(payment_method="perechesleniya").aggregate(total=Sum(F("price") * F("outquantity")))["total"] or 0
-    debt_total = qs.filter(payment_method="debt").aggregate(total=Sum(F("price") * F("outquantity")))["total"] or 0
+    pay_totals = qs.aggregate(
+        cash_total=Sum("cash_amount"),
+        card_total=Sum("card_amount"),
+        pereches_total=Sum("perechesleniya_amount"),
+        debt_total=Sum("debt_amount"),
+    )
+    cash_total = pay_totals["cash_total"] or 0
+    card_total = pay_totals["card_total"] or 0
+    pereches_total = pay_totals["pereches_total"] or 0
+    debt_total = pay_totals["debt_total"] or 0
     total = cash_total + card_total + pereches_total + debt_total
 
     # Umumiy buyurtmalar soni va o'rtacha narx
@@ -227,37 +232,15 @@ def export_excel(request):
     clients_data = (
         qs.values("client__id", "client__name", "client__caption")
         .annotate(
-            # Naqd
-            cash_count=Count("id", filter=Q(payment_method="cash")),
-            cash_total=Sum(
-                F("price") * F("outquantity"),
-                filter=Q(payment_method="cash"),
-                output_field=DecimalField()
-            ),
-            # Karta
-            card_count=Count("id", filter=Q(payment_method="card")),
-            card_total=Sum(
-                F("price") * F("outquantity"),
-                filter=Q(payment_method="card"),
-                output_field=DecimalField()
-            ),
-            # Perechesleniya
-            pereches_count=Count("id", filter=Q(payment_method="perechesleniya")),
-            pereches_total=Sum(
-                F("price") * F("outquantity"),
-                filter=Q(payment_method="perechesleniya"),
-                output_field=DecimalField()
-            ),
-            # Qarz
-            debt_count=Count("id", filter=Q(payment_method="debt")),
-            debt_total=Sum(
-                F("price") * F("outquantity"),
-                filter=Q(payment_method="debt"),
-                output_field=DecimalField()
-            ),
-            # Jami
+            cash_total=Sum("cash_amount", output_field=DecimalField()),
+            card_total=Sum("card_amount", output_field=DecimalField()),
+            pereches_total=Sum("perechesleniya_amount", output_field=DecimalField()),
+            debt_total=Sum("debt_amount", output_field=DecimalField()),
             total_orders=Count("id"),
-            total_revenue=Sum(F("price") * F("outquantity"))
+            total_revenue=Sum(
+                F("cash_amount") + F("card_amount") + F("perechesleniya_amount") + F("debt_amount"),
+                output_field=DecimalField()
+            )
         )
         .order_by("-total_revenue")
     )
@@ -280,7 +263,7 @@ def export_excel(request):
     right_align = Alignment(horizontal="right", vertical="center")
 
     # Sarlavha
-    ws.merge_cells('A1:L1')
+    ws.merge_cells('A1:H1')
     title_cell = ws['A1']
     title_cell.value = f"Mijozlar bo'yicha hisobot ({start_date.strftime('%d.%m.%Y')} - {end_date.strftime('%d.%m.%Y')})"
     title_cell.font = Font(bold=True, size=14)
@@ -292,13 +275,9 @@ def export_excel(request):
         "№",
         "Mijoz nomi",
         "Manzil",
-        "Naqd (dona)",
         "Naqd (so'm)",
-        "Karta (dona)",
         "Karta (so'm)",
-        "Perechesleniya (dona)",
         "Perechesleniya (so'm)",
-        "Qarz (dona)",
         "Qarz (so'm)",
         "JAMI (so'm)"
     ]
@@ -317,41 +296,24 @@ def export_excel(request):
         ws.cell(row=row_num, column=1, value=idx).alignment = center_align
         ws.cell(row=row_num, column=2, value=client["client__name"])
         ws.cell(row=row_num, column=3, value=client["client__caption"] or "—")
-        
-        # Naqd
-        ws.cell(row=row_num, column=4, value=client["cash_count"] or 0).alignment = right_align
-        ws.cell(row=row_num, column=5, value=float(client["cash_total"] or 0)).alignment = right_align
-        ws.cell(row=row_num, column=5).number_format = '#,##0'
-        
-        # Karta
-        ws.cell(row=row_num, column=6, value=client["card_count"] or 0).alignment = right_align
-        ws.cell(row=row_num, column=7, value=float(client["card_total"] or 0)).alignment = right_align
-        ws.cell(row=row_num, column=7).number_format = '#,##0'
-        
-        # Perechesleniya
-        ws.cell(row=row_num, column=8, value=client["pereches_count"] or 0).alignment = right_align
-        ws.cell(row=row_num, column=9, value=float(client["pereches_total"] or 0)).alignment = right_align
-        ws.cell(row=row_num, column=9).number_format = '#,##0'
-        
-        # Qarz
-        ws.cell(row=row_num, column=10, value=client["debt_count"] or 0).alignment = right_align
-        ws.cell(row=row_num, column=11, value=float(client["debt_total"] or 0)).alignment = right_align
-        ws.cell(row=row_num, column=11).number_format = '#,##0'
-        
-        # Jami
-        total_cell = ws.cell(row=row_num, column=12, value=float(client["total_revenue"] or 0))
+
+        for col, key in [(4, "cash_total"), (5, "card_total"), (6, "pereches_total"), (7, "debt_total")]:
+            cell = ws.cell(row=row_num, column=col, value=float(client[key] or 0))
+            cell.alignment = right_align
+            cell.number_format = '#,##0'
+
+        total_cell = ws.cell(row=row_num, column=8, value=float(client["total_revenue"] or 0))
         total_cell.alignment = right_align
         total_cell.number_format = '#,##0'
         total_cell.font = Font(bold=True)
-        
-        # Chegaralar
-        for col in range(1, 13):
+
+        for col in range(1, 9):
             ws.cell(row=row_num, column=col).border = border
-        
+
         row_num += 1
 
     # Ustun kengliklarini sozlash
-    column_widths = [5, 30, 25, 12, 15, 12, 15, 18, 20, 12, 15, 18]
+    column_widths = [5, 30, 25, 15, 15, 20, 15, 18]
     for idx, width in enumerate(column_widths, 1):
         ws.column_dimensions[get_column_letter(idx)].width = width
 

@@ -44,10 +44,36 @@
       <div class="text-sm text-gray-500 dark:text-gray-400">Qo'shimcha ma'lumotlar</div>
       <div class="font-medium text-gray-900 dark:text-gray-100">{{ order.client.caption }}</div>
     </div>
-    <div>
-      <div class="text-sm text-gray-500 dark:text-gray-400">To‘lov usuli</div>
-      <div class="font-medium text-gray-900 dark:text-gray-100">
-        {% if order.payment_method == 'cash' %}Naqd{% elif order.payment_method == 'card' %}Karta{% else %}Perechesleniya{% endif %}
+    <div class="sm:col-span-2">
+      <div class="text-sm text-gray-500 dark:text-gray-400 mb-2">To’lov tafsiloti</div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {% if order.cash_amount %}
+        <div class="p-2 bg-green-50 dark:bg-green-900 rounded-lg text-center">
+          <div class="text-xs text-gray-500 dark:text-gray-400">💵 Naqd</div>
+          <div class="font-semibold text-green-700 dark:text-green-300">{{ order.cash_amount|floatformat:0 }} so’m</div>
+        </div>
+        {% endif %}
+        {% if order.card_amount %}
+        <div class="p-2 bg-blue-50 dark:bg-blue-900 rounded-lg text-center">
+          <div class="text-xs text-gray-500 dark:text-gray-400">💳 Karta</div>
+          <div class="font-semibold text-blue-700 dark:text-blue-300">{{ order.card_amount|floatformat:0 }} so’m</div>
+        </div>
+        {% endif %}
+        {% if order.perechesleniya_amount %}
+        <div class="p-2 bg-purple-50 dark:bg-purple-900 rounded-lg text-center">
+          <div class="text-xs text-gray-500 dark:text-gray-400">🏦 Perechisleniya</div>
+          <div class="font-semibold text-purple-700 dark:text-purple-300">{{ order.perechesleniya_amount|floatformat:0 }} so’m</div>
+        </div>
+        {% endif %}
+        {% if order.debt_amount %}
+        <div class="p-2 bg-orange-50 dark:bg-orange-900 rounded-lg text-center">
+          <div class="text-xs text-gray-500 dark:text-gray-400">📝 Qarz</div>
+          <div class="font-semibold text-orange-700 dark:text-orange-300">{{ order.debt_amount|floatformat:0 }} so’m</div>
+        </div>
+        {% endif %}
+        {% if not order.cash_amount and not order.card_amount and not order.perechesleniya_amount and not order.debt_amount %}
+        <div class="col-span-2 text-gray-400 dark:text-gray-500 text-sm">—</div>
+        {% endif %}
       </div>
     </div>
   </div>

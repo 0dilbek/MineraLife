@@ -162,7 +162,7 @@
             <div>Oldim: <strong>{{ o.inquantity }}</strong> | Berdim: <strong>{{ o.outquantity }}</strong></div>
             <div>Narx: <strong>{{ o.get_price_display }}</strong></div>
             <div>Kurer: <strong>{{ o.courier.username|default:"—" }}</strong></div>
-            <div>To'lov: <strong>{% if o.payment_method == 'cash' %}Naqd{% elif o.payment_method == 'card' %}Karta{% else %}Perechesleniya{% endif %}</strong></div>
+            <div>To'lov: <strong>{{ o.get_payment_summary }}</strong></div>
             {% if o.client.phone_numbers.all %}
               <div>Telefon: 
                 {% for phone in o.client.phone_numbers.all %}

@@ -26,15 +26,21 @@ class ClientSerializer(serializers.ModelSerializer):
 
 class OrderSerializer(serializers.ModelSerializer):
     status_display = serializers.CharField(source='get_status_display', read_only=True)
-    payment_method_display = serializers.CharField(source='get_payment_method_display', read_only=True)
+    payment_summary = serializers.CharField(source='get_payment_summary', read_only=True)
     total_price = serializers.DecimalField(
-        source='get_total_price', 
-        max_digits=10, 
-        decimal_places=2, 
+        source='get_total_price',
+        max_digits=10,
+        decimal_places=2,
+        read_only=True
+    )
+    total_paid = serializers.DecimalField(
+        source='get_total_paid',
+        max_digits=12,
+        decimal_places=2,
         read_only=True
     )
     courier_name = serializers.CharField(source='courier.username', read_only=True, allow_null=True)
-    
+
     class Meta:
         model = Order
         fields = [
@@ -43,10 +49,14 @@ class OrderSerializer(serializers.ModelSerializer):
             'outquantity',
             'price',
             'total_price',
+            'cash_amount',
+            'card_amount',
+            'perechesleniya_amount',
+            'debt_amount',
+            'total_paid',
+            'payment_summary',
             'status',
             'status_display',
-            'payment_method',
-            'payment_method_display',
             'effective_date',
             'notes',
             'courier_name',

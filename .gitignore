@@ -9,3 +9,7 @@ db.sqlite3
 admin_panel/db.sqlite3
 .env
 *.env
+# Python cache
+__pycache__/
+*.pyc
+*.pyo

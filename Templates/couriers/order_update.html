@@ -52,11 +52,9 @@
                 </div>
                 
                 <div class="text-center p-2 sm:p-4 rounded-lg border-2 border-blue-300 bg-blue-50 dark:bg-blue-900 dark:border-blue-600">
-                    <div class="text-lg sm:text-2xl mb-1 sm:mb-2">
-                        {% if order.payment_method == 'card' %}💳{% elif order.payment_method == 'cash' %}💵{% else %}🏦{% endif %}
-                    </div>
+                    <div class="text-lg sm:text-2xl mb-1 sm:mb-2">💳</div>
                     <div class="text-xs sm:text-base font-semibold text-gray-900 dark:text-white">
-                        {{ order.get_payment_method_display }}
+                        {{ order.get_payment_summary }}
                     </div>
                 </div>
                 
@@ -204,21 +202,39 @@
                             {% endif %}
                         </div>
 
-                        <!-- To'lov usuli -->
-                        <div>
-                            <label for="{{ form.payment_method.id_for_label }}" 
-                                   class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
-                                </svg>
-                                {{ form.payment_method.label }}
-                            </label>
-                            {{ form.payment_method }}
-                            {% if form.payment_method.errors %}
-                                {% for error in form.payment_method.errors %}
-                                    <p class="mt-1 text-sm text-red-600">{{ error }}</p>
-                                {% endfor %}
-                            {% endif %}
+                        <!-- To'lov summalar -->
+                        <div class="rounded-xl border border-gray-200 dark:border-gray-600 p-4 space-y-3 bg-gray-50 dark:bg-gray-700">
+                            <p class="text-sm font-semibold text-gray-700 dark:text-gray-200">To'lov tafsiloti (so'mda)</p>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">{{ form.cash_amount.label }}</label>
+                                    {{ form.cash_amount }}
+                                    {% if form.cash_amount.errors %}{% for e in form.cash_amount.errors %}<p class="mt-1 text-sm text-red-600">{{ e }}</p>{% endfor %}{% endif %}
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">{{ form.card_amount.label }}</label>
+                                    {{ form.card_amount }}
+                                    {% if form.card_amount.errors %}{% for e in form.card_amount.errors %}<p class="mt-1 text-sm text-red-600">{{ e }}</p>{% endfor %}{% endif %}
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">{{ form.perechesleniya_amount.label }}</label>
+                                    {{ form.perechesleniya_amount }}
+                                    {% if form.perechesleniya_amount.errors %}{% for e in form.perechesleniya_amount.errors %}<p class="mt-1 text-sm text-red-600">{{ e }}</p>{% endfor %}{% endif %}
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">{{ form.debt_amount.label }}</label>
+                                    {{ form.debt_amount }}
+                                    {% if form.debt_amount.errors %}{% for e in form.debt_amount.errors %}<p class="mt-1 text-sm text-red-600">{{ e }}</p>{% endfor %}{% endif %}
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between pt-2 border-t border-gray-300 dark:border-gray-500">
+                                <span class="text-sm font-medium text-gray-600 dark:text-gray-300">Jami to'langan:</span>
+                                <span id="courier-total-paid" class="text-base font-bold text-indigo-600 dark:text-indigo-400">0 so'm</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium text-gray-600 dark:text-gray-300">Buyurtma narxi:</span>
+                                <span class="text-base font-bold text-green-600 dark:text-green-400">{{ order.get_total_price|floatformat:0 }} so'm</span>
+                            </div>
                         </div>
 
                         <!-- Izohlar -->
@@ -419,38 +435,36 @@ document.getElementById('completeModal').addEventListener('click', function(e) {
     }
 });
 
-// Narxni real vaqtda hisoblash
+// To'lov summalar real vaqtda hisoblash
 document.addEventListener('DOMContentLoaded', function() {
-    const inquantityInput = document.getElementById('modal_inquantity');
-    const outquantityInput = document.getElementById('modal_outquantity');
+    function updateCourierTotalPaid() {
+        const cash = parseFloat(document.getElementById('{{ form.cash_amount.id_for_label }}')?.value) || 0;
+        const card = parseFloat(document.getElementById('{{ form.card_amount.id_for_label }}')?.value) || 0;
+        const perech = parseFloat(document.getElementById('{{ form.perechesleniya_amount.id_for_label }}')?.value) || 0;
+        const debt = parseFloat(document.getElementById('{{ form.debt_amount.id_for_label }}')?.value) || 0;
+        const total = cash + card + perech + debt;
+        const el = document.getElementById('courier-total-paid');
+        if (el) el.textContent = total.toLocaleString() + ' so\'m';
+    }
+
+    ['{{ form.cash_amount.id_for_label }}', '{{ form.card_amount.id_for_label }}',
+     '{{ form.perechesleniya_amount.id_for_label }}', '{{ form.debt_amount.id_for_label }}'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', updateCourierTotalPaid);
+    });
+    updateCourierTotalPaid();
+
+    // Modal narx hisoblash
+    const modalOutqty = document.getElementById('modal_outquantity');
     const totalPriceSpan = document.getElementById('modalTotalPrice');
     const unitPrice = {{ order.price }};
-    
+
     function updateModalPrice() {
-        const outquantity = parseInt(outquantityInput.value) || 0;
-        const totalPrice = outquantity * unitPrice;
-        totalPriceSpan.textContent = totalPrice.toLocaleString();
+        const qty = parseInt(modalOutqty?.value) || 0;
+        if (totalPriceSpan) totalPriceSpan.textContent = (qty * unitPrice).toLocaleString();
     }
-    
-    if (inquantityInput && outquantityInput) {
-        inquantityInput.addEventListener('input', updateModalPrice);
-        outquantityInput.addEventListener('input', updateModalPrice);
-    }
-    
-    // Form inputlarini real vaqtda ham yangilash
-    const formOutquantityInput = document.getElementById('{{ form.outquantity.id_for_label }}');
-    if (formOutquantityInput) {
-        formOutquantityInput.addEventListener('input', function() {
-            const quantity = parseInt(this.value) || 0;
-            const totalPrice = quantity * unitPrice;
-            
-            // Header-dagi narxni yangilash
-            const priceDisplay = document.querySelector('.price-display');
-            if (priceDisplay) {
-                priceDisplay.textContent = totalPrice.toLocaleString() + ' so\'m (' + quantity + ' x ' + unitPrice.toLocaleString() + ')';
-            }
-        });
-    }
+
+    if (modalOutqty) modalOutqty.addEventListener('input', updateModalPrice);
 });
 </script>
 {% endblock %}
