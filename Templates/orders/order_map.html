@@ -8,10 +8,71 @@
   {% endif %}
 
   <style>
-    /* Xarita balandligi (navbar + statistika panel'ni hisobga olib) */
+    .admin-map-page{
+      margin: -1.5rem -1rem;
+      padding: 1rem;
+      min-height: calc(100vh - 4rem);
+      background: #f8fafc;
+    }
+    .dark .admin-map-page{ background:#0f172a; }
+
+    .map-topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:.75rem;
+      max-width: 96rem;
+      margin:0 auto .75rem;
+    }
+
+    .map-card{
+      position:relative;
+      max-width:96rem;
+      margin:0 auto;
+      border:1px solid rgba(209,213,219,.9);
+      border-radius:.75rem;
+      background:#fff;
+      box-shadow:0 8px 24px rgba(15,23,42,.08);
+      overflow:hidden;
+    }
+  .dark .map-card{
+      border-color:rgba(55,65,81,.9);
+      background:#111827;
+      box-shadow:0 8px 24px rgba(0,0,0,.24);
+    }
+
+    .map-card:fullscreen{
+      border-radius:0;
+      width:100vw;
+      height:100vh;
+    }
+    .map-card:fullscreen #orders-full-map{
+      height:100vh;
+      min-height:100vh;
+    }
+
+    .icon-btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:2.5rem;
+      height:2.5rem;
+      border-radius:.65rem;
+      border:1px solid rgba(209,213,219,.95);
+      background:#fff;
+      color:#111827;
+    }
+    .icon-btn:hover{ background:#f9fafb; }
+    .dark .icon-btn{
+      border-color:rgba(75,85,99,.95);
+      background:#1f2937;
+      color:#f9fafb;
+    }
+    .dark .icon-btn:hover{ background:#374151; }
+
     #orders-full-map{
-      height: calc(100vh - 280px);
-      border-radius: .75rem;
+      height: calc(100vh - 220px);
+      min-height: 560px;
       overflow: hidden;
     }
 
@@ -20,24 +81,25 @@
       font-size: 12px;
       line-height: 1.2;
       border-radius: .75rem;
-      box-shadow: 0 10px 30px rgba(0,0,0,.25);
-      backdrop-filter: blur(6px);
+      box-shadow: 0 16px 40px rgba(15,23,42,.22);
       padding: 12px;
     }
     .ml-control.light{
-      background: rgba(255,255,255,.9);
+      background: #fff;
       color:#111827;
+      border:1px solid rgba(209,213,219,.95);
     }
     .dark .ml-control.light{
-      background: rgba(17,24,39,.88);
+      background: #111827;
       color:#E5E7EB;
+      border-color:rgba(75,85,99,.95);
     }
     .ml-control .row{ display:grid; grid-template-columns:1fr 1fr; gap:.5rem }
     .ml-input, .ml-select, .ml-btn{
       border:1px solid rgba(107,114,128,.5);
       background: transparent;
       color: inherit;
-      border-radius:.5rem;
+      border-radius:.55rem;
       padding:.4rem .6rem;
       width:100%;
     }
@@ -60,13 +122,16 @@
 
     /* Filtr tugmasi (har doim ko‘rinadi) */
     #filter-toggle {
-      box-shadow: 0 10px 24px rgba(0,0,0,.25);
+      box-shadow: 0 12px 28px rgba(15,23,42,.20);
     }
 
     /* Mobil: panel kengligini cheklash, gridni 1 ustun */
     @media (max-width: 768px){
       .ml-control{ max-width: 92vw }
       .ml-control .row{ grid-template-columns:1fr }
+      .admin-map-page{ margin:-1.5rem -1rem; padding:.75rem; }
+      #orders-full-map{ height:calc(100vh - 180px); min-height:520px; }
+      .map-topbar{ margin-bottom:.5rem; }
     }
 
     /* Kattaroq ekranlarda panel eni */
@@ -79,7 +144,20 @@
 {% endblock %}
 
 {% block content %}
-<div class="relative">
+<div class="admin-map-page">
+<div class="map-topbar">
+  <div class="min-w-0">
+    <a href="{% url 'orders:list' %}" class="text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400">Buyurtmalarga qaytish</a>
+    <h1 class="mt-1 text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">Buyurtmalar xaritasi</h1>
+  </div>
+  <div class="flex items-center gap-2">
+    <span class="hidden rounded-lg bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-gray-200 dark:bg-gray-800 dark:text-gray-100 dark:ring-gray-700 sm:inline-flex">
+      {{ start_date|date:"Y-m-d" }} — {{ end_date|date:"Y-m-d" }}
+    </span>
+  </div>
+</div>
+
+<div class="map-card">
   <div id="orders-full-map" class="bg-gray-200 dark:bg-gray-700"></div>
 
   {% if not yandex_maps_api_key %}
@@ -133,19 +211,33 @@
 
   <!-- 🔘 Filtrni ochib/yopish tugmasi (mobil + desktop) -->
   <button id="filter-toggle"
-          class="absolute left-3 top-3 inline-flex items-center gap-2 px-3 py-2 rounded-full
-                 bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800"
+          class="absolute left-3 top-3 icon-btn"
           aria-controls="filter-panel" aria-expanded="false" type="button">
-    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 12h16M12 4v16"/>
+    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h18M6 12h12M10 19h4"/>
     </svg>
-    <span>Filtr</span>
   </button>
 
+  <div class="absolute right-3 top-3 flex gap-2">
+    <button id="map-recenter" type="button" class="icon-btn" title="Moslashtirish" aria-label="Xaritani moslashtirish">
+      <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4h4M4 4l5 5m11-1V4h-4m4 0l-5 5M4 16v4h4m-4 0l5-5m11 5l-5-5m5 5v-4h-4"/>
+      </svg>
+    </button>
+    <button id="map-fullscreen" type="button" class="icon-btn" title="To'liq ekran" aria-label="To'liq ekran">
+      <svg id="map-fs-open" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4h4M4 4l5 5m11-1V4h-4m4 0l-5 5M4 16v4h4m-4 0l5-5m11 5l-5-5m5 5v-4h-4"/>
+      </svg>
+      <svg id="map-fs-close" class="hidden h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+    </button>
+  </div>
+
   <!-- 🔽 Filtr panel (default: yopiq) -->
-  <div id="filter-panel" class="absolute left-3 top-14 ml-control light is-collapsed" role="dialog" aria-label="Filtrlar">
+  <div id="filter-panel" class="absolute left-3 top-16 ml-control light is-collapsed" role="dialog" aria-label="Filtrlar">
     <div style="display:flex; align-items:center; justify-content:space-between; gap:.5rem; margin-bottom:.4rem">
-      <div style="font-weight:600">Filtrlar</div>
+      <div style="font-weight:700">Xarita filtrlari</div>
       <!-- Yopish tugmasi -->
       <button type="button" id="filter-close" class="ml-chip" title="Yopish" style="line-height:1">✕</button>
     </div>
@@ -171,15 +263,35 @@
                 class="ml-chip {% if preset == 'tomorrow' %}active{% endif %}">Ertaga</button>
       </div>
 
-      <div>
-        <label style="font-size:.75rem">Kurer(lar)</label>
-        <select class="ml-select" name="courier" multiple>
+	      <div>
+	        <label style="font-size:.75rem">Kurer(lar)</label>
+	        <select class="ml-select" name="courier" multiple>
           {% for c in couriers %}
             <option value="{{ c.id }}" {% if c.id in selected_couriers %}selected{% endif %}>{{ c.username }}</option>
           {% endfor %}
         </select>
-        <div style="font-size:.7rem; opacity:.8; margin-top:.25rem">Bir nechta tanlash uchun Ctrl/Cmd</div>
-      </div>
+	        <div style="font-size:.7rem; opacity:.8; margin-top:.25rem">Bir nechta tanlash uchun Ctrl/Cmd</div>
+	      </div>
+
+	      <div class="row">
+	        <div>
+	          <label style="font-size:.75rem">Biriktirish</label>
+	          <select class="ml-select" name="assignment">
+	            <option value="" {% if not selected_assignment %}selected{% endif %}>Hammasi</option>
+	            <option value="assigned" {% if selected_assignment == 'assigned' %}selected{% endif %}>Kuryer biriktirilgan</option>
+	            <option value="unassigned" {% if selected_assignment == 'unassigned' %}selected{% endif %}>Kuryer biriktirilmagan</option>
+	          </select>
+	        </div>
+	        <div>
+	          <label style="font-size:.75rem">Status</label>
+	          <select class="ml-select" name="status">
+	            <option value="" {% if not selected_status %}selected{% endif %}>Hammasi</option>
+	            <option value="pending" {% if selected_status == 'pending' %}selected{% endif %}>Kutilmoqda</option>
+	            <option value="completed" {% if selected_status == 'completed' %}selected{% endif %}>Bajarilgan</option>
+	            <option value="cancelled" {% if selected_status == 'cancelled' %}selected{% endif %}>Bekor qilingan</option>
+	          </select>
+	        </div>
+	      </div>
 
       <div style="display:flex; gap:.5rem; margin-top:.3rem">
         <button class="ml-btn primary" type="submit">Qo‘llash</button>
@@ -221,13 +333,16 @@
 </div>
 
 <!-- Kuryer statistikasi paneli -->
-<div class="mt-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4">
-  <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-    📊 Kuryer statistikasi
-  </h3>
-  <div id="courier-stats" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
+<div class="mx-auto mt-3 max-w-6xl rounded-lg border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+  <div class="mb-3 flex items-center justify-between">
+    <h3 class="text-base font-semibold text-gray-900 dark:text-white">
+      Kuryer statistikasi
+    </h3>
+  </div>
+  <div id="courier-stats" class="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
     <!-- JavaScript orqali to'ldiriladi -->
   </div>
+</div>
 </div>
 {% endblock %}
 
@@ -331,13 +446,13 @@
     // Tayinlanmagan buyurtmalarni birinchi ko'rsatish
     if (courierOrders['unassigned'] > 0) {
       html += `
-        <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-3 border-2 border-gray-300 dark:border-gray-600">
+        <div class="rounded-lg border border-gray-300 bg-gray-50 p-2.5 dark:border-gray-600 dark:bg-gray-900">
           <div class="flex items-center gap-2 mb-1">
-            <div style="width: 16px; height: 16px; background: #1f2937; border-radius: 4px;"></div>
-            <span class="text-sm font-medium text-gray-900 dark:text-white">Tayinlanmagan</span>
+            <div style="width: 10px; height: 10px; background: #1f2937; border-radius: 999px;"></div>
+            <span class="truncate text-xs font-semibold text-gray-900 dark:text-white">Tayinlanmagan</span>
           </div>
-          <div class="text-2xl font-bold text-gray-900 dark:text-white">${courierOrders['unassigned']}</div>
-          <div class="text-xs text-gray-600 dark:text-gray-400">buyurtma · ${courierQuantity['unassigned']} dona suv</div>
+          <div class="text-lg font-bold text-gray-900 dark:text-white">${courierOrders['unassigned']}</div>
+          <div class="text-xs text-gray-600 dark:text-gray-400">${courierQuantity['unassigned']} dona</div>
         </div>
       `;
     }
@@ -352,15 +467,15 @@
         const quantity = courierQuantity[courierId] || 0;
         
         html += `
-          <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 border-2 hover:shadow-lg transition-shadow cursor-pointer"
+          <div class="cursor-pointer rounded-lg border bg-white p-2.5 transition hover:shadow-md dark:bg-gray-900"
                style="border-color: ${color};"
                onclick="filterByCourier(${courierId})">
             <div class="flex items-center gap-2 mb-1">
-              <div style="width: 16px; height: 16px; background: ${color}; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>
-              <span class="text-sm font-medium text-gray-900 dark:text-white">${esc(name)}</span>
+              <div style="width: 10px; height: 10px; background: ${color}; border-radius: 999px;"></div>
+              <span class="truncate text-xs font-semibold text-gray-900 dark:text-white">${esc(name)}</span>
             </div>
-            <div class="text-2xl font-bold text-gray-900 dark:text-white">${count}</div>
-            <div class="text-xs text-gray-600 dark:text-gray-400">buyurtma · ${quantity} dona suv</div>
+            <div class="text-lg font-bold text-gray-900 dark:text-white">${count}</div>
+            <div class="text-xs text-gray-600 dark:text-gray-400">${quantity} dona</div>
           </div>
         `;
       });
@@ -406,7 +521,11 @@
   ymaps.ready(init);
   function init(){
     map = new ymaps.Map("orders-full-map", {
-      center: center, zoom: 11, controls: ["zoomControl", "fullscreenControl"]
+      center: center, zoom: 11, controls: []
+    });
+
+    map.controls.add('zoomControl', {
+      position: { right: 12, top: 64 }
     });
 
     // Kuryerlar ranglarini legend'ga to'ldirish
@@ -424,7 +543,7 @@
         useMapBounds: true,
         noPlacemark: false,
         size: 'large',
-        float: 'right',
+        position: { right: 12, top: 112 },
       }
     });
     map.controls.add(searchControl);
@@ -442,12 +561,16 @@
         url.searchParams.delete('start_date');
         url.searchParams.delete('end_date');
         url.searchParams.delete('page');
-        // courier multiple
-        const selected = Array.from(f.courier.selectedOptions).map(o=>o.value);
-        url.searchParams.delete('courier');
-        selected.forEach(id => url.searchParams.append('courier', id));
-        location.href = url.toString();
-      });
+	        // courier multiple
+	        const selected = Array.from(f.courier.selectedOptions).map(o=>o.value);
+	        url.searchParams.delete('courier');
+	        selected.forEach(id => url.searchParams.append('courier', id));
+	        const assignmentInput = f.querySelector('[name="assignment"]');
+	        const statusInput = f.querySelector('[name="status"]');
+	        if (assignmentInput.value) url.searchParams.set('assignment', assignmentInput.value); else url.searchParams.delete('assignment');
+	        if (statusInput.value) url.searchParams.set('status', statusInput.value); else url.searchParams.delete('status');
+	        location.href = url.toString();
+	      });
     });
 
     // Tozalash (bugun)
@@ -456,10 +579,12 @@
       url.searchParams.set('preset','today');
       url.searchParams.delete('start_date');
       url.searchParams.delete('end_date');
-      url.searchParams.delete('page');
-      url.searchParams.delete('courier');
-      location.href = url.toString();
-    });
+	      url.searchParams.delete('page');
+	      url.searchParams.delete('courier');
+	      url.searchParams.delete('assignment');
+	      url.searchParams.delete('status');
+	      location.href = url.toString();
+	    });
 
     // Qo‘lda sanalar submit
     document.getElementById('ml-filter-form').addEventListener('submit', (e)=>{
@@ -469,16 +594,21 @@
       url.searchParams.delete('page');
       const f = e.target;
       const s = f.start_date.value;
-      const en = f.end_date.value;
-      if(s) url.searchParams.set('start_date', s); else url.searchParams.delete('start_date');
-      if(en) url.searchParams.set('end_date', en); else url.searchParams.delete('end_date');
-      url.searchParams.delete('courier');
-      Array.from(f.courier.selectedOptions).forEach(o=>url.searchParams.append('courier', o.value));
-      location.href = url.toString();
-    });
+	      const en = f.end_date.value;
+	      if(s) url.searchParams.set('start_date', s); else url.searchParams.delete('start_date');
+	      if(en) url.searchParams.set('end_date', en); else url.searchParams.delete('end_date');
+	      url.searchParams.delete('courier');
+	      Array.from(f.courier.selectedOptions).forEach(o=>url.searchParams.append('courier', o.value));
+	      const assignmentInput = f.querySelector('[name="assignment"]');
+	      const statusInput = f.querySelector('[name="status"]');
+	      if (assignmentInput.value) url.searchParams.set('assignment', assignmentInput.value); else url.searchParams.delete('assignment');
+	      if (statusInput.value) url.searchParams.set('status', statusInput.value); else url.searchParams.delete('status');
+	      location.href = url.toString();
+	    });
 
     // Filtr panel toggling (mobil + desktop, default yopiq)
     setupFilterToggle(map);
+    setupMapControls();
   }
 
   function renderMarkers(){
@@ -490,21 +620,26 @@
       const placemark = new ymaps.Placemark([p.lat, p.lon], {
         iconContent: esc(p.client),
         balloonContent: `
-          <div style="max-width: 280px;">
-            <strong>📋 Mijoz:</strong> ${esc(p.client)}<br>
-            ${p.courier ? `<strong>👤 Kurer:</strong> ${esc(p.courier)}<br>` : '<strong style="color:#dc2626">⚠️ Kuryer biriktirilmagan</strong><br>'}
-            <strong>📊 Status:</strong> ${esc(p.status)}<br>
-            <strong>� Narx:</strong> ${Number(p.price).toLocaleString()} so'm<br>
-            <strong>📦 Miqdor:</strong> Oldim ${p.inquantity}, Berdim ${p.outquantity}<br>
-            ${p.notes ? `<strong>📝 Izoh:</strong> ${esc(p.notes)}<br>` : ''}
-            <div style="margin-top: 8px; display: flex; gap: 8px;">
-              <button onclick="openAssignModal(${p.id}, '${esc(p.client)}', ${p.courier_id || 'null'})" 
-                      style="padding: 6px 12px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; flex: 1;">
-                ${p.courier ? '🔄 Kuryerni o\'zgartirish' : '➕ Kuryer biriktirish'}
+          <div style="max-width: 280px; font-family: Arial, sans-serif;">
+            <div style="font-weight:700; margin-bottom:6px;">${esc(p.client)}</div>
+            ${p.courier ? `<div>Kuryer: <strong>${esc(p.courier)}</strong></div>` : '<div style="color:#dc2626; font-weight:700;">Kuryer biriktirilmagan</div>'}
+            <div>Status: <strong>${esc(p.status)}</strong></div>
+            <div>Narx: <strong>${Number(p.price).toLocaleString()} so'm</strong></div>
+            <div>Oldim: <strong>${p.inquantity}</strong> · Berdim: <strong>${p.outquantity}</strong></div>
+            ${p.notes ? `<div style="margin-top:4px; color:#4b5563;">${esc(p.notes)}</div>` : ''}
+            <div style="margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap;">
+              <button onclick="openAssignModal(${p.id}, '${esc(p.client)}', ${p.courier_id || 'null'})"
+                      style="padding: 6px 10px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; flex: 1; font-size: 12px;">
+                ${p.courier ? 'Kuryer' : 'Biriktirish'}
               </button>
-              <a href="/orders/${p.id}/" 
-                 style="padding: 6px 12px; background: #6b7280; color: white; border: none; border-radius: 6px; text-decoration: none; display: inline-block;">
-                👁️ Ko'rish
+              <a href="/orders/${p.id}/"
+                 style="padding: 6px 10px; background: #6b7280; color: white; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; font-size: 12px;">
+                Ko'rish
+              </a>
+              <a href="https://yandex.com/maps/?rtext=~${p.lat},${p.lon}&rtt=auto" target="_blank"
+                 style="padding: 6px 10px; background: #FFD600; color: #000; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700; white-space: nowrap;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+                Navi
               </a>
             </div>
           </div>
@@ -785,6 +920,29 @@
     const bounds = map.geoObjects.getBounds();
     if(bounds) map.setBounds(bounds, {checkZoomRange: true, zoomMargin: 20});
     else map.setCenter(center, 11);
+  }
+
+  function setupMapControls(){
+    const recenterBtn = document.getElementById('map-recenter');
+    const fullscreenBtn = document.getElementById('map-fullscreen');
+    const card = document.querySelector('.map-card');
+
+    recenterBtn?.addEventListener('click', recenter);
+    fullscreenBtn?.addEventListener('click', async ()=>{
+      if (!document.fullscreenElement) {
+        await card.requestFullscreen?.();
+      } else {
+        await document.exitFullscreen?.();
+      }
+      setTimeout(()=> map.container.fitToViewport(), 180);
+    });
+
+    document.addEventListener('fullscreenchange', ()=>{
+      const isFullscreen = Boolean(document.fullscreenElement);
+      document.getElementById('map-fs-open')?.classList.toggle('hidden', isFullscreen);
+      document.getElementById('map-fs-close')?.classList.toggle('hidden', !isFullscreen);
+      setTimeout(()=> map.container.fitToViewport(), 180);
+    });
   }
 
   // (Removed) Custom search/highlight/filter functions — using Yandex SearchControl instead

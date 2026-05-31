@@ -118,6 +118,18 @@
                class="w-full sm:w-56 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900
                       text-gray-900 dark:text-gray-100 px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none text-sm">
       </div>
+      <div class="w-full sm:w-auto">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">To'lov usuli</label>
+        <select name="payment"
+                class="w-full sm:w-48 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900
+                       text-gray-900 dark:text-gray-100 px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+          <option value="all" {% if payment == 'all' %}selected{% endif %}>Hammasi</option>
+          <option value="cash" {% if payment == 'cash' %}selected{% endif %}>Naqd</option>
+          <option value="card" {% if payment == 'card' %}selected{% endif %}>Karta</option>
+          <option value="pereches" {% if payment == 'pereches' %}selected{% endif %}>Perechesleniya</option>
+          <option value="debt" {% if payment == 'debt' %}selected{% endif %}>Qarz</option>
+        </select>
+      </div>
 
       <button type="submit" class="w-full sm:w-auto px-5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition shadow-sm font-medium text-sm">
         🔍 Qo'llash
@@ -193,42 +205,25 @@
     <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">💰 To'lov usullari bo'yicha</h2>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-      <!-- Naqd -->
-      <div class="flex items-center justify-between px-4 py-3 rounded-lg
-                  bg-emerald-50 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200
-                  border border-emerald-200 dark:border-emerald-800">
-        <span class="inline-flex items-center gap-2 text-sm font-medium">
-          <span class="inline-block w-3 h-3 rounded-full bg-emerald-500"></span> Naqd
-        </span>
-        <span class="font-bold">{{ cash_total|floatformat:0|intcomma }}</span>
-      </div>
-      <!-- Karta -->
-      <div class="flex items-center justify-between px-4 py-3 rounded-lg
-                  bg-blue-50 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200
-                  border border-blue-200 dark:border-blue-800">
-        <span class="inline-flex items-center gap-2 text-sm font-medium">
-          <span class="inline-block w-3 h-3 rounded-full bg-blue-500"></span> Karta
-        </span>
-        <span class="font-bold">{{ card_total|floatformat:0|intcomma }}</span>
-      </div>
-      <!-- Perechesleniya -->
-      <div class="flex items-center justify-between px-4 py-3 rounded-lg
-                  bg-violet-50 text-violet-800 dark:bg-violet-900/30 dark:text-violet-200
-                  border border-violet-200 dark:border-violet-800">
-        <span class="inline-flex items-center gap-2 text-sm font-medium">
-          <span class="inline-block w-3 h-3 rounded-full bg-violet-500"></span> Perechesleniya
-        </span>
-        <span class="font-bold">{{ pereches_total|floatformat:0|intcomma }}</span>
-      </div>
-      <!-- Qarz -->
-      <div class="flex items-center justify-between px-4 py-3 rounded-lg
-                  bg-orange-50 text-orange-800 dark:bg-orange-900/30 dark:text-orange-200
-                  border border-orange-200 dark:border-orange-800">
-        <span class="inline-flex items-center gap-2 text-sm font-medium">
-          <span class="inline-block w-3 h-3 rounded-full bg-orange-500"></span> Qarz
-        </span>
-        <span class="font-bold">{{ debt_total|floatformat:0|intcomma }}</span>
-      </div>
+      {% for p in payment_mix %}
+      <a href="?{% query_transform payment=p.key page=None %}"
+         class="block rounded-lg border px-4 py-3 transition hover:shadow-md
+                {% if p.key == 'cash' %}bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-200 dark:border-emerald-800
+                {% elif p.key == 'card' %}bg-blue-50 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-200 dark:border-blue-800
+                {% elif p.key == 'pereches' %}bg-violet-50 text-violet-800 border-violet-200 dark:bg-violet-900/30 dark:text-violet-200 dark:border-violet-800
+                {% else %}bg-orange-50 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-200 dark:border-orange-800{% endif %}
+                {% if payment == p.key %}ring-2 ring-blue-500{% endif %}">
+        <div class="flex items-center justify-between gap-3">
+          <span class="text-sm font-semibold">{{ p.label }}</span>
+          <span class="font-bold">{{ p.amount|floatformat:0|intcomma }}</span>
+        </div>
+        <div class="mt-2 grid grid-cols-3 gap-2 text-xs opacity-80">
+          <span>{{ p.orders }} ta</span>
+          <span>O: {{ p.inquantity }}</span>
+          <span>B: {{ p.outquantity }}</span>
+        </div>
+      </a>
+      {% endfor %}
     </div>
   </div>
 
@@ -241,9 +236,13 @@
         <thead>
           <tr class="bg-gray-50 dark:bg-gray-900/60 text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700">
             <th class="p-3 text-left font-semibold">Kuryer</th>
-            <th class="p-3 text-right font-semibold">Daromad</th>
-            <th class="p-3 text-right font-semibold">Buyurtmalar</th>
-            <th class="p-3 text-right font-semibold">Mahsulot</th>
+            <th class="p-3 text-right font-semibold">Naqd</th>
+            <th class="p-3 text-right font-semibold">Karta</th>
+            <th class="p-3 text-right font-semibold">Perech.</th>
+            <th class="p-3 text-right font-semibold">Qarz</th>
+            <th class="p-3 text-right font-semibold">Buyurtma</th>
+            <th class="p-3 text-right font-semibold">Oldim</th>
+            <th class="p-3 text-right font-semibold">Berdim</th>
             <th class="p-3 text-right font-semibold">O'rtacha</th>
           </tr>
         </thead>
@@ -253,16 +252,18 @@
               <td class="p-3 text-gray-900 dark:text-gray-100 font-medium">
                 {{ c.courier__username|default:"Tayinlanmagan" }}
               </td>
-              <td class="p-3 text-right text-gray-900 dark:text-gray-100">
-                <span class="font-semibold text-green-600 dark:text-green-400">{{ c.total_revenue|floatformat:0|intcomma }}</span> so'm
-              </td>
+              <td class="p-3 text-right text-emerald-700 dark:text-emerald-300">{{ c.cash_total|default:0|floatformat:0|intcomma }}</td>
+              <td class="p-3 text-right text-blue-700 dark:text-blue-300">{{ c.card_total|default:0|floatformat:0|intcomma }}</td>
+              <td class="p-3 text-right text-violet-700 dark:text-violet-300">{{ c.pereches_total|default:0|floatformat:0|intcomma }}</td>
+              <td class="p-3 text-right text-orange-700 dark:text-orange-300">{{ c.debt_total|default:0|floatformat:0|intcomma }}</td>
               <td class="p-3 text-right text-gray-900 dark:text-gray-100">{{ c.total_orders|intcomma }} ta</td>
-              <td class="p-3 text-right text-gray-900 dark:text-gray-100">{{ c.total_quantity|intcomma }} dona</td>
+              <td class="p-3 text-right text-gray-900 dark:text-gray-100">{{ c.total_received|default:0|intcomma }}</td>
+              <td class="p-3 text-right text-gray-900 dark:text-gray-100">{{ c.total_quantity|intcomma }}</td>
               <td class="p-3 text-right text-gray-600 dark:text-gray-400 text-xs">{{ c.avg_order|floatformat:0|intcomma }} so'm</td>
             </tr>
           {% empty %}
             <tr>
-              <td colspan="5" class="p-6 text-center text-gray-500 dark:text-gray-400">Ma'lumot yo'q</td>
+              <td colspan="9" class="p-6 text-center text-gray-500 dark:text-gray-400">Ma'lumot yo'q</td>
             </tr>
           {% endfor %}
         </tbody>
@@ -303,23 +304,31 @@
         <thead>
           <tr class="bg-gray-50 dark:bg-gray-900/60 text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700">
             <th class="p-3 text-left font-semibold">Mijoz</th>
-            <th class="p-3 text-left font-semibold">Manzil</th>
-            <th class="p-3 text-right font-semibold">Daromad</th>
+            <th class="p-3 text-right font-semibold">Naqd</th>
+            <th class="p-3 text-right font-semibold">Karta</th>
+            <th class="p-3 text-right font-semibold">Perech.</th>
+            <th class="p-3 text-right font-semibold">Qarz</th>
             <th class="p-3 text-right font-semibold">Buyurtmalar</th>
-            <th class="p-3 text-right font-semibold">Mahsulot</th>
+            <th class="p-3 text-right font-semibold">Oldim</th>
+            <th class="p-3 text-right font-semibold">Berdim</th>
             <th class="p-3 text-left font-semibold">Kur'er</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
           {% for c in clients_page %}
             <tr class="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/60 transition">
-              <td class="p-3 text-gray-900 dark:text-gray-100 font-medium">{{ c.client__name }}</td>
-              <td class="p-3 text-gray-600 dark:text-gray-400 text-xs">{{ c.client__caption|default:"—" }}</td>
-              <td class="p-3 text-right text-gray-900 dark:text-gray-100">
-                <span class="font-semibold">{{ c.total_revenue|floatformat:0|intcomma }}</span> so'm
+              <td class="p-3 text-gray-900 dark:text-gray-100 font-medium">
+                <a href="{% url 'hisobotlar:client_history' c.client__id %}?{% query_transform page=None %}" class="text-blue-700 hover:text-blue-800 dark:text-blue-300 dark:hover:text-blue-200">
+                  {{ c.client__name }}
+                </a>
               </td>
+              <td class="p-3 text-right text-emerald-700 dark:text-emerald-300">{{ c.cash_total|default:0|floatformat:0|intcomma }}</td>
+              <td class="p-3 text-right text-blue-700 dark:text-blue-300">{{ c.card_total|default:0|floatformat:0|intcomma }}</td>
+              <td class="p-3 text-right text-violet-700 dark:text-violet-300">{{ c.pereches_total|default:0|floatformat:0|intcomma }}</td>
+              <td class="p-3 text-right text-orange-700 dark:text-orange-300">{{ c.debt_total|default:0|floatformat:0|intcomma }}</td>
               <td class="p-3 text-right text-gray-900 dark:text-gray-100">{{ c.total_orders|intcomma }} ta</td>
-              <td class="p-3 text-right text-gray-900 dark:text-gray-100">{{ c.total_quantity|intcomma }} dona</td>
+              <td class="p-3 text-right text-gray-900 dark:text-gray-100">{{ c.total_received|default:0|intcomma }}</td>
+              <td class="p-3 text-right text-gray-900 dark:text-gray-100">{{ c.total_quantity|intcomma }}</td>
               <td class="p-3 text-gray-900 dark:text-gray-100">
                 {% with client_couriers|get_item:c.client__id as courier %}
                   {{ courier.username|default:"—" }}
@@ -328,7 +337,7 @@
             </tr>
           {% empty %}
             <tr>
-              <td colspan="6" class="p-6 text-center text-gray-500 dark:text-gray-400">Ma'lumot yo'q</td>
+              <td colspan="9" class="p-6 text-center text-gray-500 dark:text-gray-400">Ma'lumot yo'q</td>
             </tr>
           {% endfor %}
         </tbody>

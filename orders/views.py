@@ -1,6 +1,6 @@
 from django.views.generic import ListView, CreateView, DetailView, TemplateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Sum
 from .models import Order
 from .forms import OrderForm
 from django.utils import timezone
@@ -94,13 +94,29 @@ class OrderListView(SuperuserRequiredMixin, ListView):
     # --- Asosiy queryset: sana oraliq bo‘yicha filtrlash ---
     def get_queryset(self):
         qs = (Order.objects
-              .select_related("client")
+              .select_related("client", "courier")
               .prefetch_related("client__phone_numbers")
               .order_by("-created_at"))
 
         start, end, _ = self._get_date_range()
         if start and end:
             qs = qs.filter(effective_date__range=(start, end))
+
+        status = self.request.GET.get("status") or ""
+        courier = self.request.GET.get("courier") or ""
+        q = (self.request.GET.get("q") or "").strip()
+
+        if status in {"pending", "completed", "cancelled"}:
+            qs = qs.filter(status=status)
+
+        if courier:
+            try:
+                qs = qs.filter(courier_id=int(courier))
+            except ValueError:
+                pass
+
+        if q:
+            qs = qs.filter(client__name__icontains=q)
         return qs
 
     # --- Template context ---
@@ -116,10 +132,47 @@ class OrderListView(SuperuserRequiredMixin, ListView):
             "today": today,
             "yesterday": today - timedelta(days=1),
             "tomorrow": today + timedelta(days=1),
+            "selected_status": self.request.GET.get("status") or "",
+            "selected_courier": self.request.GET.get("courier") or "",
+            "q": (self.request.GET.get("q") or "").strip(),
         })
 
+        filtered_qs = self.get_queryset()
+        status_counts = {
+            "all": filtered_qs.count(),
+            "pending": filtered_qs.filter(status="pending").count(),
+            "completed": filtered_qs.filter(status="completed").count(),
+            "cancelled": filtered_qs.filter(status="cancelled").count(),
+        }
+        totals = filtered_qs.aggregate(
+            cash_total=Sum("cash_amount"),
+            card_total=Sum("card_amount"),
+            perechesleniya_total=Sum("perechesleniya_amount"),
+            debt_total=Sum("debt_amount"),
+            inquantity_total=Sum("inquantity"),
+            outquantity_total=Sum("outquantity"),
+        )
+        cash_total = totals["cash_total"] or 0
+        card_total = totals["card_total"] or 0
+        perechesleniya_total = totals["perechesleniya_total"] or 0
+
+        ctx["status_counts"] = status_counts
+        ctx["cash_total"] = cash_total
+        ctx["card_total"] = card_total
+        ctx["perechesleniya_total"] = perechesleniya_total
+        ctx["debt_total"] = totals["debt_total"] or 0
+        ctx["daily_total"] = cash_total + card_total + perechesleniya_total
+        ctx["inquantity_total"] = totals["inquantity_total"] or 0
+        ctx["outquantity_total"] = totals["outquantity_total"] or 0
+
+        group = Group.objects.filter(name="couriers").first()
+        ctx["couriers"] = (
+            User.objects.filter(groups=group, is_active=True).order_by("username")
+            if group else User.objects.none()
+        )
+
         # Mini xarita: shu oraliqqa tushgan, koordinatasi bor buyurtmalar (50 taga cheklaymiz)
-        map_qs = (self.get_queryset()
+        map_qs = (filtered_qs
                   .filter(client__latitude__isnull=False,
                           client__longitude__isnull=False)
                   .order_by("-created_at")[:50])
@@ -224,6 +277,16 @@ class OrdersMapView(SuperuserRequiredMixin, TemplateView):
         if selected_ids:
             qs = qs.filter(courier_id__in=selected_ids)
 
+        selected_assignment = req.GET.get("assignment", "").strip()
+        if selected_assignment == "assigned":
+            qs = qs.filter(courier_id__isnull=False)
+        elif selected_assignment == "unassigned":
+            qs = qs.filter(courier_id__isnull=True)
+
+        selected_status = req.GET.get("status", "").strip()
+        if selected_status in {"pending", "completed", "cancelled"}:
+            qs = qs.filter(status=selected_status)
+
         ctx["points"] = [
             {
                 "id": o.id,
@@ -248,6 +311,8 @@ class OrdersMapView(SuperuserRequiredMixin, TemplateView):
         ctx["end_date"] = end
         ctx["preset"] = preset
         ctx["selected_couriers"] = selected_ids
+        ctx["selected_assignment"] = selected_assignment
+        ctx["selected_status"] = selected_status
         
         # Marshrut ma'lumotlarini olish
         routes = CourierRoute.objects.filter(
@@ -381,6 +446,13 @@ class OrderCreateView(SuperuserRequiredMixin, CreateView):
     form_class = OrderForm
     template_name = "orders/order_form.html"
     success_url = reverse_lazy("orders:list")
+
+    def get_initial(self):
+        initial = super().get_initial()
+        client_id = self.request.GET.get("client")
+        if client_id:
+            initial["client"] = client_id
+        return initial
 
 
 class OrderDetailView(SuperuserRequiredMixin, DetailView):

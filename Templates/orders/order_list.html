@@ -4,287 +4,328 @@
 
 {% block extra_head %}
   <style>
-    /* Mobilga mos xarita: */
+    .admin-scroll {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(37, 99, 235, .45) transparent;
+    }
+    .admin-scroll::-webkit-scrollbar {
+      height: 6px;
+      width: 6px;
+    }
+    .admin-scroll::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .admin-scroll::-webkit-scrollbar-thumb {
+      background: rgba(37, 99, 235, .35);
+      border-radius: 999px;
+    }
+    .admin-scroll::-webkit-scrollbar-thumb:hover {
+      background: rgba(37, 99, 235, .55);
+    }
     #orders-mini-map {
-      height: 42vh;          /* telefonlarda yarim ekranga yaqin */
-      min-height: 260px;     /* juda kichik ekranlarda ham ko‘rinsin */
-      border-radius: .75rem;
+      height: 280px;
+      border-radius: .5rem;
       overflow: hidden;
     }
-    @media (min-width: 768px) {
-      #orders-mini-map { height: 300px; }
+    @media (max-width: 767px) {
+      #orders-mini-map { height: 240px; }
     }
   </style>
   <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU" type="text/javascript"></script>
 {% endblock %}
 
 {% block content %}
-
-<!-- Sarlavha + Create -->
-<div class="mb-3 sm:mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
-  <div class="space-y-1">
-    <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Buyurtmalar</h1>
-    <p class="text-gray-600 dark:text-gray-400">Sana bo‘yicha filtrlash va mini xarita</p>
+<div class="mx-auto max-w-7xl space-y-4">
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Buyurtmalar</h1>
+      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        {% if start_date and end_date %}{{ start_date|date:"Y-m-d" }} — {{ end_date|date:"Y-m-d" }}{% else %}Sana tanlanmagan{% endif %}
+      </p>
+    </div>
+    <div class="flex gap-2">
+      <a href="{% url 'orders:map' %}?{% query_transform %}" class="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-800 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700">
+        Xarita
+      </a>
+      <a href="{% url 'orders:create' %}{% if end_date %}?date={{ end_date|date:'Y-m-d' }}{% endif %}" class="inline-flex min-h-10 items-center justify-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+        + Buyurtma
+      </a>
+    </div>
   </div>
 
-  <a href="{% url 'orders:create' %}{% if end_date %}?date={{ end_date|date:'Y-m-d' }}{% endif %}"
-     class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl
-            bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 transition">
-    <span class="text-base">+ Buyurtma qo'shish</span>
-  </a>
-</div>
-
-<!-- Sana filtri (mobilda accordion) -->
-<details class="bg-white dark:bg-gray-800 rounded-xl shadow p-3 sm:p-4 mb-3 sm:mb-4 group" {% if start_date or end_date or preset %}open{% endif %}>
-  <summary class="cursor-pointer list-none flex items-center justify-between">
-    <div class="font-medium text-gray-900 dark:text-gray-100">Filtr (sana)</div>
-    <div class="text-sm text-gray-500 dark:text-gray-400">
-      {% if start_date and end_date %}
-        {{ start_date|date:"Y-m-d" }} — {{ end_date|date:"Y-m-d" }}{% if preset %} ({{ preset }}){% endif %}
-      {% else %}
-        Tanlanmagan
-      {% endif %}
+  <section class="grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-7">
+    <div class="rounded-lg border border-gray-200 bg-white p-2.5 shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:p-3">
+      <span class="text-xs text-gray-500 dark:text-gray-400">Jami</span>
+      <p class="mt-1 text-lg font-bold text-gray-900 dark:text-white sm:text-xl">{{ status_counts.all }}</p>
     </div>
-  </summary>
+    <div class="rounded-lg border border-blue-100 bg-blue-50 p-2.5 shadow-sm dark:border-blue-900 dark:bg-blue-900/30 sm:p-3">
+      <span class="text-xs text-blue-700 dark:text-blue-200">Kutilmoqda</span>
+      <p class="mt-1 text-lg font-bold text-blue-900 dark:text-blue-100 sm:text-xl">{{ status_counts.pending }}</p>
+    </div>
+    <div class="rounded-lg border border-emerald-100 bg-emerald-50 p-2.5 shadow-sm dark:border-emerald-900 dark:bg-emerald-900/30 sm:p-3">
+      <span class="text-xs text-emerald-700 dark:text-emerald-200">Bajarildi</span>
+      <p class="mt-1 text-lg font-bold text-emerald-900 dark:text-emerald-100 sm:text-xl">{{ status_counts.completed }}</p>
+    </div>
+    <div class="rounded-lg border border-rose-100 bg-rose-50 p-2.5 shadow-sm dark:border-rose-900 dark:bg-rose-900/30 sm:p-3">
+      <span class="text-xs text-rose-700 dark:text-rose-200">Bekor</span>
+      <p class="mt-1 text-lg font-bold text-rose-900 dark:text-rose-100 sm:text-xl">{{ status_counts.cancelled }}</p>
+    </div>
+    <div class="col-span-2 rounded-lg border border-blue-100 bg-blue-50 p-2.5 shadow-sm dark:border-blue-900 dark:bg-blue-900/30 sm:p-3 md:col-span-1">
+      <span class="text-xs text-blue-700 dark:text-blue-200">Tushum</span>
+      <p class="mt-1 text-lg font-bold text-blue-900 dark:text-blue-100">{{ daily_total|floatformat:0 }}</p>
+    </div>
+    <div class="rounded-lg border border-cyan-100 bg-cyan-50 p-2.5 shadow-sm dark:border-cyan-900 dark:bg-cyan-900/30 sm:p-3">
+      <span class="text-xs text-cyan-700 dark:text-cyan-200">Oldim</span>
+      <p class="mt-1 text-lg font-bold text-cyan-900 dark:text-cyan-100 sm:text-xl">{{ inquantity_total }}</p>
+    </div>
+    <div class="rounded-lg border border-violet-100 bg-violet-50 p-2.5 shadow-sm dark:border-violet-900 dark:bg-violet-900/30 sm:p-3">
+      <span class="text-xs text-violet-700 dark:text-violet-200">Berdim</span>
+      <p class="mt-1 text-lg font-bold text-violet-900 dark:text-violet-100 sm:text-xl">{{ outquantity_total }}</p>
+    </div>
+  </section>
 
-  <form method="get" class="mt-3 sm:mt-4">
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+  <details class="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800" open>
+    <summary class="flex cursor-pointer list-none items-center justify-between gap-3 p-3 lg:hidden">
       <div>
-        <label class="block text-sm text-gray-600 dark:text-gray-300 mb-1">Boshlanish sanasi</label>
-        <input type="date" name="start_date" value="{{ start_date|date:'Y-m-d' }}"
-               class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
-                      text-gray-900 dark:text-gray-100 px-3 py-2.5 focus:ring-2 focus:ring-blue-500">
+        <span class="text-sm font-semibold text-gray-900 dark:text-white">Filterlar</span>
+        <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+          {% if q %}{{ q }} · {% endif %}{% if selected_status %}{{ selected_status }} · {% endif %}{% if selected_courier %}kuryer #{{ selected_courier }} · {% endif %}{% if start_date %}{{ start_date|date:"Y-m-d" }}{% endif %}
+        </p>
+      </div>
+      <svg class="h-5 w-5 text-gray-500 transition group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7"/>
+      </svg>
+    </summary>
+    <form method="get" class="grid gap-3 border-t border-gray-100 p-3 dark:border-gray-700 lg:grid-cols-[1fr_1fr_1fr_1fr_auto] lg:border-t-0">
+      <div>
+        <label class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Qidirish</label>
+        <input type="search" name="q" value="{{ q }}" placeholder="Mijoz nomi"
+               class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
       </div>
       <div>
-        <label class="block text-sm text-gray-600 dark:text-gray-300 mb-1">Tugash sanasi</label>
-        <input type="date" name="end_date" value="{{ end_date|date:'Y-m-d' }}"
-               class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
-                      text-gray-900 dark:text-gray-100 px-3 py-2.5 focus:ring-2 focus:ring-blue-500">
+        <label class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Status</label>
+        <select name="status" class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
+          <option value="">Hammasi</option>
+          <option value="pending" {% if selected_status == "pending" %}selected{% endif %}>Kutilmoqda</option>
+          <option value="completed" {% if selected_status == "completed" %}selected{% endif %}>Bajarildi</option>
+          <option value="cancelled" {% if selected_status == "cancelled" %}selected{% endif %}>Bekor</option>
+        </select>
       </div>
-
-      <!-- Tez tanlov tugmalari (mobilda segment) -->
-      <div class="flex md:items-end gap-2">
-        <button type="submit"
-                class="flex-1 md:flex-none px-4 py-2.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition">
-          Qo‘llash
-        </button>
-
-        <div class="hidden md:flex items-end gap-2">
-          <a href="?{% query_transform preset='yesterday' start_date=None end_date=None page=None %}"
-             aria-pressed="{% if preset == 'yesterday' %}true{% else %}false{% endif %}"
-             class="px-3 py-2.5 rounded-lg text-sm transition
-                    {% if preset == 'yesterday' %} bg-blue-600 text-white
-                    {% else %} bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-600 {% endif %}">
-            Kecha
-          </a>
-          <a href="?{% query_transform preset='today' start_date=None end_date=None page=None %}"
-             aria-pressed="{% if preset == 'today' %}true{% else %}false{% endif %}"
-             class="px-3 py-2.5 rounded-lg text-sm transition
-                    {% if preset == 'today' %} bg-blue-600 text-white
-                    {% else %} bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-600 {% endif %}">
-            Bugun
-          </a>
-          <a href="?{% query_transform preset='tomorrow' start_date=None end_date=None page=None %}"
-             aria-pressed="{% if preset == 'tomorrow' %}true{% else %}false{% endif %}"
-             class="px-3 py-2.5 rounded-lg text-sm transition
-                    {% if preset == 'tomorrow' %} bg-blue-600 text-white
-                    {% else %} bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-600 {% endif %}">
-            Ertaga
-          </a>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Kuryer</label>
+        <select name="courier" class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
+          <option value="">Hammasi</option>
+          {% for courier in couriers %}
+          <option value="{{ courier.id }}" {% if selected_courier == courier.id|stringformat:"s" %}selected{% endif %}>{{ courier.username }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Boshlanish</label>
+          <input type="date" name="start_date" value="{{ start_date|date:'Y-m-d' }}"
+                 class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
+        </div>
+        <div>
+          <label class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Tugash</label>
+          <input type="date" name="end_date" value="{{ end_date|date:'Y-m-d' }}"
+                 class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
         </div>
       </div>
+      <div class="flex items-end gap-2">
+        <button type="submit" class="min-h-10 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">Filter</button>
+        <a href="?{% query_transform preset='today' start_date=None end_date=None status=None courier=None q=None page=None %}" class="min-h-10 rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-800 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-100 dark:hover:bg-gray-700">Reset</a>
+      </div>
+    </form>
+
+    <div class="mt-3 flex flex-wrap gap-2">
+      <a href="?{% query_transform preset='yesterday' start_date=None end_date=None page=None %}" class="rounded-lg px-3 py-2 text-sm font-semibold {% if preset == 'yesterday' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600{% endif %}">Kecha</a>
+      <a href="?{% query_transform preset='today' start_date=None end_date=None page=None %}" class="rounded-lg px-3 py-2 text-sm font-semibold {% if preset == 'today' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600{% endif %}">Bugun</a>
+      <a href="?{% query_transform preset='tomorrow' start_date=None end_date=None page=None %}" class="rounded-lg px-3 py-2 text-sm font-semibold {% if preset == 'tomorrow' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600{% endif %}">Ertaga</a>
+      <div class="flex w-full flex-wrap gap-2 text-xs sm:ml-auto sm:w-auto">
+        <span class="inline-flex items-center gap-1 rounded-full bg-cyan-50 px-2.5 py-1 font-semibold text-cyan-800 ring-1 ring-cyan-100 dark:bg-cyan-500/15 dark:text-cyan-200 dark:ring-cyan-500/20">
+          <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14m0 0l-5-5m5 5l5-5"/></svg>
+          Oldim {{ inquantity_total }}
+        </span>
+        <span class="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2.5 py-1 font-semibold text-violet-800 ring-1 ring-violet-100 dark:bg-violet-500/15 dark:text-violet-200 dark:ring-violet-500/20">
+          <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19V5m0 0l-5 5m5-5l5 5"/></svg>
+          Berdim {{ outquantity_total }}
+        </span>
+      </div>
     </div>
+  </details>
 
-    <!-- Mobil uchun segmentli tez tanlov -->
-    <div class="mt-3 md:hidden grid grid-cols-3 gap-2">
-      <a href="?{% query_transform preset='yesterday' start_date=None end_date=None page=None %}"
-         class="text-center px-3 py-2.5 rounded-lg text-sm transition
-                {% if preset == 'yesterday' %} bg-blue-600 text-white
-                {% else %} bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 {% endif %}">
-        Kecha
-      </a>
-      <a href="?{% query_transform preset='today' start_date=None end_date=None page=None %}"
-         class="text-center px-3 py-2.5 rounded-lg text-sm transition
-                {% if preset == 'today' %} bg-blue-600 text-white
-                {% else %} bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 {% endif %}">
-        Bugun
-      </a>
-      <a href="?{% query_transform preset='tomorrow' start_date=None end_date=None page=None %}"
-         class="text-center px-3 py-2.5 rounded-lg text-sm transition
-                {% if preset == 'tomorrow' %} bg-blue-600 text-white
-                {% else %} bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 {% endif %}">
-        Ertaga
-      </a>
-    </div>
+  <section class="rounded-lg border border-gray-200 bg-white p-2 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+    <div id="orders-mini-map" class="bg-gray-200 dark:bg-gray-700"></div>
+  </section>
 
-    <div class="mt-3 flex items-center gap-3">
-      <a href="?{% query_transform preset='today' start_date=None end_date=None page=None %}"
-         class="ml-auto px-3 py-2.5 rounded-lg bg-gray-100 dark:bg-gray-700 text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition text-gray-800 dark:text-gray-100">
-        Tozalash
-      </a>
-    </div>
-  </form>
-</details>
-
-<!-- Mini xarita + "xaritada ko'rish" -->
-<div class="bg-white dark:bg-gray-800 rounded-xl shadow p-3 sm:p-4 mb-3 sm:mb-4">
-  <div id="orders-mini-map" class="bg-gray-200 dark:bg-gray-700"></div>
-  <div class="mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-end">
-    <a href="{% url 'orders:map' %}?{% query_transform %}"
-       class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg
-              bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-600 transition">
-      Buyurtmalarni xaritada ko'rish
-    </a>
-  </div>
-</div>
-
-{% if orders %}
-  <!-- Ro'yxat kartalari (mobil uchun bitta ustun, katta ekranda 2-3) -->
-  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
-    {% for o in orders %}
-      <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-3 sm:p-4 flex flex-col justify-between">
-        <div>
-          <div class="flex items-center justify-between gap-2">
-            <div class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{{ o.effective_date|date:"Y-m-d" }}</div>
-            <span class="px-2 py-0.5 sm:py-1 rounded text-[11px] sm:text-xs
-                         {% if o.status == 'pending' %}bg-yellow-100 text-yellow-800
-                         {% elif o.status == 'completed' %}bg-green-100 text-green-800
-                         {% else %}bg-red-100 text-red-800{% endif %}">
+  {% if orders %}
+  <section class="hidden overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800 lg:block">
+    <table class="min-w-full divide-y divide-gray-200 text-sm dark:divide-gray-700">
+      <thead class="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-500 dark:bg-gray-900 dark:text-gray-400">
+        <tr>
+          <th class="px-4 py-3">Mijoz</th>
+          <th class="px-4 py-3">Kuryer</th>
+          <th class="px-4 py-3">Oldim / Berdim</th>
+          <th class="px-4 py-3">Summa</th>
+          <th class="px-4 py-3">To'lov</th>
+          <th class="px-4 py-3">Status</th>
+          <th class="px-4 py-3">Sana</th>
+          <th class="px-4 py-3 text-right">Amal</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+        {% for o in orders %}
+        <tr class="hover:bg-gray-50 dark:hover:bg-gray-900/60">
+          <td class="px-4 py-3">
+            <div class="font-semibold text-gray-900 dark:text-white">{{ o.client.name }}</div>
+            {% if o.notes %}<div class="mt-0.5 max-w-xs truncate text-xs text-gray-500 dark:text-gray-400">{{ o.notes }}</div>{% endif %}
+          </td>
+          <td class="px-4 py-3 text-gray-700 dark:text-gray-200">{{ o.courier.username|default:"-" }}</td>
+          <td class="px-4 py-3">
+            <div class="flex min-w-[8rem] items-center gap-1.5">
+              <span class="inline-flex min-w-14 items-center justify-center gap-1 rounded-lg bg-cyan-50 px-2 py-1 text-xs font-bold text-cyan-800 ring-1 ring-cyan-100 dark:bg-cyan-500/15 dark:text-cyan-200 dark:ring-cyan-500/20">
+                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14m0 0l-5-5m5 5l5-5"/></svg>
+                {{ o.inquantity }}
+              </span>
+              <span class="inline-flex min-w-14 items-center justify-center gap-1 rounded-lg bg-violet-50 px-2 py-1 text-xs font-bold text-violet-800 ring-1 ring-violet-100 dark:bg-violet-500/15 dark:text-violet-200 dark:ring-violet-500/20">
+                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19V5m0 0l-5 5m5-5l5 5"/></svg>
+                {{ o.outquantity }}
+              </span>
+            </div>
+          </td>
+          <td class="px-4 py-3 font-semibold text-gray-900 dark:text-white">{{ o.get_total_price|floatformat:0 }}</td>
+          <td class="px-4 py-3 text-gray-700 dark:text-gray-200">{{ o.get_payment_summary }}</td>
+          <td class="px-4 py-3">
+            <span class="rounded-full px-2.5 py-1 text-xs font-semibold {% if o.status == 'pending' %}bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100{% elif o.status == 'completed' %}bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-100{% else %}bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-100{% endif %}">
               {{ o.get_status_display }}
             </span>
-          </div>
+          </td>
+          <td class="px-4 py-3 text-gray-700 dark:text-gray-200">{{ o.effective_date|date:"Y-m-d" }}</td>
+          <td class="px-4 py-3">
+            <div class="flex justify-end gap-1.5">
+              <a href="{% url 'orders:detail' o.pk %}" title="Ko'rish" aria-label="Ko'rish" class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-100 dark:hover:bg-gray-700">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.46 12C3.73 7.94 7.52 5 12 5s8.27 2.94 9.54 7c-1.27 4.06-5.06 7-9.54 7s-8.27-2.94-9.54-7z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              </a>
+              <a href="{% url 'orders:update' o.pk %}" title="Tahrirlash" aria-label="Tahrirlash" class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-white hover:bg-blue-700">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.41-9.41a2 2 0 112.82 2.82L11.83 15H9v-2.83l8.59-8.58z"/></svg>
+              </a>
+              <a href="{% url 'orders:delete' o.pk %}" title="O'chirish" aria-label="O'chirish" class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-rose-600 text-white hover:bg-rose-700">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 7h12M9 7V5h6v2m-8 0l1 13h8l1-13"/></svg>
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
 
-          <h3 class="mt-1.5 sm:mt-2 text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 break-words">
-            {{ o.client.name }}
-          </h3>
-
-          <div class="mt-1 text-sm text-gray-600 dark:text-gray-300 space-y-0.5">
-            <div>Oldim: <strong>{{ o.inquantity }}</strong> | Berdim: <strong>{{ o.outquantity }}</strong></div>
-            <div>Narx: <strong>{{ o.get_price_display }}</strong></div>
-            <div>Kurer: <strong>{{ o.courier.username|default:"—" }}</strong></div>
-            <div>To'lov: <strong>{{ o.get_payment_summary }}</strong></div>
-            {% if o.client.phone_numbers.all %}
-              <div>Telefon: 
-                {% for phone in o.client.phone_numbers.all %}
-                  <span class="font-mono">{{ phone.phone_number }}</span>{% if phone.is_primary %} (Asosiy){% endif %}{% if not forloop.last %}, {% endif %}
-                {% endfor %}
-              </div>
-            {% else %}
-              <div>Telefon: <span class="text-gray-500">yo'q</span></div>
-            {% endif %}
-          </div>
-
-          {% if o.notes %}
-            <p class="mt-2 text-sm text-gray-500 line-clamp-3 sm:line-clamp-2 break-words">{{ o.notes }}</p>
-          {% endif %}
+  <section class="grid gap-2 lg:hidden">
+    {% for o in orders %}
+    <article class="relative rounded-lg border border-l-4 bg-white p-3 pr-32 shadow-sm dark:bg-gray-800
+      {% if o.status == 'pending' %}border-gray-200 border-l-blue-500 dark:border-gray-700 dark:border-l-blue-500
+      {% elif o.status == 'completed' %}border-gray-200 border-l-emerald-500 dark:border-gray-700 dark:border-l-emerald-500
+      {% else %}border-gray-200 border-l-rose-500 dark:border-gray-700 dark:border-l-rose-500{% endif %}">
+      <div class="min-w-0">
+        <div class="flex items-center gap-2">
+          <h2 class="truncate text-sm font-semibold text-gray-900 dark:text-white">{{ o.client.name }}</h2>
+          <span class="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold {% if o.status == 'pending' %}bg-blue-100 text-blue-800{% elif o.status == 'completed' %}bg-emerald-100 text-emerald-800{% else %}bg-rose-100 text-rose-800{% endif %}">
+            {{ o.get_status_display }}
+          </span>
         </div>
-
-        <!-- Amal tugmalari: mobilga mos, yirik touch-area -->
-        <div class="mt-3 sm:mt-3 grid grid-cols-3 gap-2">
-          <a href="{% url 'orders:detail' o.pk %}"
-             class="text-center px-3 py-2.5 rounded-md bg-gray-100 dark:bg-gray-700 text-sm hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-100">
-            Ko‘rish
-          </a>
-          <a href="{% url 'orders:update' o.pk %}"
-             class="text-center px-3 py-2.5 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700">
-            Tahrirlash
-          </a>
-          <a href="{% url 'orders:delete' o.pk %}"
-             class="text-center px-3 py-2.5 rounded-md bg-red-600 text-white text-sm hover:bg-red-700">
-            O‘chirish
-          </a>
-        </div>
+        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ o.effective_date|date:"Y-m-d" }} · {{ o.courier.username|default:"-" }}</p>
       </div>
+      <div class="mt-2 flex flex-wrap gap-1.5 text-xs">
+        <span class="inline-flex items-center gap-1 rounded-lg bg-cyan-50 px-2 py-1 font-semibold text-cyan-800 ring-1 ring-cyan-100 dark:bg-cyan-500/15 dark:text-cyan-200 dark:ring-cyan-500/20">
+          <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14m0 0l-5-5m5 5l5-5"/></svg>
+          Oldim {{ o.inquantity }}
+        </span>
+        <span class="inline-flex items-center gap-1 rounded-lg bg-violet-50 px-2 py-1 font-semibold text-violet-800 ring-1 ring-violet-100 dark:bg-violet-500/15 dark:text-violet-200 dark:ring-violet-500/20">
+          <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19V5m0 0l-5 5m5-5l5 5"/></svg>
+          Berdim {{ o.outquantity }}
+        </span>
+        <span>Summa: <strong class="text-gray-900 dark:text-white">{{ o.get_total_price|floatformat:0 }}</strong></span>
+      </div>
+      <div class="absolute right-3 top-3 flex gap-1.5">
+        <a href="{% url 'orders:detail' o.pk %}" class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" aria-label="Ko'rish"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.46 12C3.73 7.94 7.52 5 12 5s8.27 2.94 9.54 7c-1.27 4.06-5.06 7-9.54 7s-8.27-2.94-9.54-7z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg></a>
+        <a href="{% url 'orders:update' o.pk %}" class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white" aria-label="Tahrirlash"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.41-9.41a2 2 0 112.82 2.82L11.83 15H9v-2.83l8.59-8.58z"/></svg></a>
+        <a href="{% url 'orders:delete' o.pk %}" class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-rose-600 text-white" aria-label="O'chirish"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 7h12M9 7V5h6v2m-8 0l1 13h8l1-13"/></svg></a>
+      </div>
+    </article>
     {% endfor %}
-  </div>
+  </section>
 
-  <!-- Pagination -->
   {% if page_obj %}
-    <div class="mt-5 flex items-center justify-center gap-2 text-sm">
-      {% if page_obj.has_previous %}
-        <a href="?{% query_transform page=page_obj.previous_page_number %}"
-           class="px-3 py-2 rounded-md bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600">
-          Oldingi
-        </a>
-      {% else %}
-        <span class="px-3 py-2 rounded-md bg-gray-100/60 dark:bg-gray-700/60 text-gray-400">Oldingi</span>
-      {% endif %}
-
-      <span class="px-3 py-2 text-gray-700 dark:text-gray-300">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
-
-      {% if page_obj.has_next %}
-        <a href="?{% query_transform page=page_obj.next_page_number %}"
-           class="px-3 py-2 rounded-md bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600">
-          Keyingi
-        </a>
-      {% else %}
-        <span class="px-3 py-2 rounded-md bg-gray-100/60 dark:bg-gray-700/60 text-gray-400">Keyingi</span>
-      {% endif %}
-    </div>
-  {% endif %}
-{% else %}
-  <!-- Empty state -->
-  <div class="flex flex-col items-center justify-center py-12 sm:py-16 px-4 text-center">
-    <svg class="w-16 h-16 sm:w-20 sm:h-20 text-gray-400 dark:text-gray-600 mb-4 sm:mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path d="M9 17v-2h6v2m-7 4h8a2 2 0 002-2v-9a2 2 0 00-2-2h-3l-1-2H9l-1 2H5a2 2 0 00-2 2v9a2 2 0 002 2z"
-            stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-    <h2 class="text-lg sm:text-xl font-semibold text-gray-800 dark:text-gray-200">Tanlangan oraliqda buyurtmalar yo‘q</h2>
-    <p class="text-gray-500 dark:text-gray-400 mt-2 max-w-md">
-      Sana oralig‘ini o‘zgartirib ko‘ring yoki yangi buyurtma qo‘shing.
-    </p>
-    <a href="{% url 'orders:create' %}"
-       class="mt-5 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">+ Buyurtma qo‘shish</a>
+  <div class="flex items-center justify-center gap-2 text-sm">
+    {% if page_obj.has_previous %}
+    <a href="?{% query_transform page=page_obj.previous_page_number %}" class="rounded-lg border border-gray-300 px-3 py-2 text-gray-800 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-100 dark:hover:bg-gray-700">Oldingi</a>
+    {% else %}
+    <span class="rounded-lg border border-gray-200 px-3 py-2 text-gray-400 dark:border-gray-700">Oldingi</span>
+    {% endif %}
+    <span class="px-3 py-2 text-gray-700 dark:text-gray-300">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+    <a href="?{% query_transform page=page_obj.next_page_number %}" class="rounded-lg border border-gray-300 px-3 py-2 text-gray-800 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-100 dark:hover:bg-gray-700">Keyingi</a>
+    {% else %}
+    <span class="rounded-lg border border-gray-200 px-3 py-2 text-gray-400 dark:border-gray-700">Keyingi</span>
+    {% endif %}
   </div>
-{% endif %}
+  {% endif %}
+  {% else %}
+  <section class="rounded-lg border border-dashed border-gray-300 bg-white p-10 text-center dark:border-gray-700 dark:bg-gray-800">
+    <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Buyurtmalar yo'q</h2>
+    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Filterlarni o'zgartiring yoki yangi buyurtma qo'shing.</p>
+  </section>
+  {% endif %}
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
   const points = {{ map_points|safe }};
-  const center = [41.311081, 69.240562]; // Toshkent
+  const center = [41.311081, 69.240562];
 
-  function presetForStatus(p){
-    const raw = (p.status_raw || p.status || '').toLowerCase();
-    if (raw.includes('completed') || raw.includes('bajardi')) return 'islands#greenStretchyIcon';
-    if (raw.includes('cancelled') || raw.includes('bekor'))  return 'islands#redStretchyIcon';
+  function presetForStatus(point) {
+    const raw = (point.status || '').toLowerCase();
+    if (raw.includes('bajardi')) return 'islands#greenStretchyIcon';
+    if (raw.includes('bekor')) return 'islands#redStretchyIcon';
     return 'islands#blueStretchyIcon';
   }
-  function esc(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&gt;','>':'&lt;','"':'&quot;',"'":'&#39;'}[m])); }
 
-  ymaps.ready(init);
-  function init() {
+  function esc(value) {
+    return String(value || '').replace(/[&<>"']/g, (match) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[match]));
+  }
+
+  ymaps.ready(function () {
     const map = new ymaps.Map("orders-mini-map", {
-      center, zoom: 12, controls: ["zoomControl", "fullscreenControl"]
+      center,
+      zoom: 12,
+      controls: ["zoomControl", "fullscreenControl"]
     });
-
-    // Mobil UX: sahifa scrolli paytida tasodifiy zoomni oldini olish
     map.behaviors.disable('scrollZoom');
-    // Istasangiz: map.behaviors.disable('multiTouch'); // juda kichik ekranlar uchun
 
     const collection = new ymaps.GeoObjectCollection();
-
-    points.forEach(p => {
-      const preset = presetForStatus(p);
-      const placemark = new ymaps.Placemark([p.lat, p.lon], {
-        iconContent: esc(p.client),
+    points.forEach((point) => {
+      collection.add(new ymaps.Placemark([point.lat, point.lon], {
+        iconContent: esc(point.client),
         balloonContent: `
-          <strong>Mijoz:</strong> ${esc(p.client)}<br>
-          <strong>Status:</strong> ${esc(p.status)}<br>
-          <strong>Narx:</strong> ${Number(p.price).toLocaleString()} so'm<br>
-          ${p.notes ? `<strong>Izoh:</strong> ${esc(p.notes)}<br>` : ''}
+          <div style="min-width:180px">
+            <strong>${esc(point.client)}</strong><br>
+            Status: ${esc(point.status)}<br>
+            Summa: ${Number(point.price).toLocaleString()} so'm
+          </div>
         `
       }, {
-        preset,
+        preset: presetForStatus(point),
         iconMaxWidth: 220
-      });
-      collection.add(placemark);
+      }));
     });
 
     map.geoObjects.add(collection);
-
     const bounds = map.geoObjects.getBounds();
-    if (bounds) map.setBounds(bounds, { checkZoomRange: true, zoomMargin: 20 });
-  }
+    if (bounds) map.setBounds(bounds, { checkZoomRange: true, zoomMargin: 24 });
+  });
 </script>
 {% endblock %}

@@ -88,10 +88,10 @@ class CourierOrderUpdateForm(forms.ModelForm):
         self.fields['inquantity'].label = "Oldim"
         self.fields['outquantity'].label = "Berdim"
         self.fields['status'].label = "Buyurtma holati"
-        self.fields['cash_amount'].label = "💵 Naqd (so'm)"
-        self.fields['card_amount'].label = "💳 Karta (so'm)"
-        self.fields['perechesleniya_amount'].label = "🏦 Perechisleniya (so'm)"
-        self.fields['debt_amount'].label = "📝 Qarz (so'm)"
+        self.fields['cash_amount'].label = "Naqd (so'm)"
+        self.fields['card_amount'].label = "Karta (so'm)"
+        self.fields['perechesleniya_amount'].label = "Perechisleniya (so'm)"
+        self.fields['debt_amount'].label = "Qarz (so'm)"
         self.fields['notes'].label = "Izohlar"
 
     def clean(self):

@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from django.db.models import Sum, F, Count, Avg, Q, Case, When, IntegerField, DecimalField
 from django.utils.timezone import now
@@ -6,6 +6,7 @@ from django.core.paginator import Paginator
 from datetime import timedelta, date
 from collections import defaultdict
 from orders.models import Order
+from clients.models import Client
 import json
 try:
     from openpyxl import Workbook
@@ -22,6 +23,9 @@ def reports_view(request):
     end = request.GET.get("end")
     quick = request.GET.get("quick")  # default = None
     page_num = request.GET.get("page", 1)
+    payment = request.GET.get("payment", "all")
+    if payment not in {"all", "cash", "card", "pereches", "debt"}:
+        payment = "all"
 
     if quick == "today":
         start_date = today
@@ -59,6 +63,15 @@ def reports_view(request):
         status="completed"  # faqat tugagan buyurtmalar
     ).select_related("client", "courier")
 
+    payment_filters = {
+        "cash": Q(cash_amount__gt=0),
+        "card": Q(card_amount__gt=0),
+        "pereches": Q(perechesleniya_amount__gt=0),
+        "debt": Q(debt_amount__gt=0),
+    }
+    if payment != "all":
+        qs = qs.filter(payment_filters[payment])
+
     # === UMUMIY STATISTIKA ===
     pay_totals = qs.aggregate(
         cash_total=Sum("cash_amount"),
@@ -79,6 +92,13 @@ def reports_view(request):
     # Jami sotilgan mahsulotlar miqdori
     total_sold = qs.aggregate(total=Sum("outquantity"))["total"] or 0
     total_received = qs.aggregate(total=Sum("inquantity"))["total"] or 0
+
+    payment_mix = [
+        {"key": "cash", "label": "Naqd", "amount": cash_total, "orders": qs.filter(cash_amount__gt=0).count(), "inquantity": qs.filter(cash_amount__gt=0).aggregate(v=Sum("inquantity"))["v"] or 0, "outquantity": qs.filter(cash_amount__gt=0).aggregate(v=Sum("outquantity"))["v"] or 0},
+        {"key": "card", "label": "Karta", "amount": card_total, "orders": qs.filter(card_amount__gt=0).count(), "inquantity": qs.filter(card_amount__gt=0).aggregate(v=Sum("inquantity"))["v"] or 0, "outquantity": qs.filter(card_amount__gt=0).aggregate(v=Sum("outquantity"))["v"] or 0},
+        {"key": "pereches", "label": "Perechesleniya", "amount": pereches_total, "orders": qs.filter(perechesleniya_amount__gt=0).count(), "inquantity": qs.filter(perechesleniya_amount__gt=0).aggregate(v=Sum("inquantity"))["v"] or 0, "outquantity": qs.filter(perechesleniya_amount__gt=0).aggregate(v=Sum("outquantity"))["v"] or 0},
+        {"key": "debt", "label": "Qarz", "amount": debt_total, "orders": qs.filter(debt_amount__gt=0).count(), "inquantity": qs.filter(debt_amount__gt=0).aggregate(v=Sum("inquantity"))["v"] or 0, "outquantity": qs.filter(debt_amount__gt=0).aggregate(v=Sum("outquantity"))["v"] or 0},
+    ]
 
     # === KUNLIK SAVDO DINAMIKASI (chiziqli diagramma uchun) ===
     daily_sales = defaultdict(lambda: {"revenue": 0, "orders": 0, "quantity": 0})
@@ -115,7 +135,12 @@ def reports_view(request):
         qs.values("courier__id", "courier__username")
         .annotate(
             total_revenue=Sum(F("price") * F("outquantity")),
+            cash_total=Sum("cash_amount", output_field=DecimalField()),
+            card_total=Sum("card_amount", output_field=DecimalField()),
+            pereches_total=Sum("perechesleniya_amount", output_field=DecimalField()),
+            debt_total=Sum("debt_amount", output_field=DecimalField()),
             total_orders=Count("id"),
+            total_received=Sum("inquantity"),
             total_quantity=Sum("outquantity"),
             avg_order=Avg(F("price") * F("outquantity"))
         )
@@ -127,7 +152,12 @@ def reports_view(request):
         qs.values("client__id", "client__name", "client__caption")
         .annotate(
             total_revenue=Sum(F("price") * F("outquantity")),
+            cash_total=Sum("cash_amount", output_field=DecimalField()),
+            card_total=Sum("card_amount", output_field=DecimalField()),
+            pereches_total=Sum("perechesleniya_amount", output_field=DecimalField()),
+            debt_total=Sum("debt_amount", output_field=DecimalField()),
             total_orders=Count("id"),
+            total_received=Sum("inquantity"),
             total_quantity=Sum("outquantity"),
             avg_order=Avg(F("price") * F("outquantity"))
         )
@@ -152,6 +182,7 @@ def reports_view(request):
         "start_date": start_date,
         "end_date": end_date,
         "quick": quick,
+        "payment": payment,
         
         # Umumiy statistika
         "cash_total": cash_total,
@@ -163,6 +194,7 @@ def reports_view(request):
         "avg_order_value": avg_order_value,
         "total_sold": total_sold,
         "total_received": total_received,
+        "payment_mix": payment_mix,
         
         # Diagramma ma'lumotlari
         "chart_labels": json.dumps(chart_labels),
@@ -180,6 +212,110 @@ def reports_view(request):
         # Top mijozlar
         "top_clients": top_clients,
         "excel_available": EXCEL_AVAILABLE,
+    })
+
+
+def client_history_view(request, client_id):
+    today = now().date()
+    start = request.GET.get("start")
+    end = request.GET.get("end")
+    quick = request.GET.get("quick", "month")
+    payment = request.GET.get("payment", "all")
+    page_num = request.GET.get("page", 1)
+
+    if payment not in {"all", "cash", "card", "pereches", "debt"}:
+        payment = "all"
+
+    if quick == "today":
+        start_date = today
+        end_date = today
+    elif quick == "week":
+        start_date = today - timedelta(days=today.weekday())
+        end_date = today
+    elif quick == "month":
+        start_date = today.replace(day=1)
+        end_date = today
+    elif quick == "6months":
+        start_date = today - timedelta(days=180)
+        end_date = today
+    elif quick == "year":
+        start_date = today - timedelta(days=365)
+        end_date = today
+    elif start and end:
+        try:
+            start_date = date.fromisoformat(start)
+            end_date = date.fromisoformat(end)
+        except (ValueError, TypeError):
+            start_date = today.replace(day=1)
+            end_date = today
+            quick = "month"
+    else:
+        start_date = today.replace(day=1)
+        end_date = today
+        quick = "month"
+
+    client = get_object_or_404(Client, pk=client_id)
+    qs = (
+        Order.objects
+        .filter(client=client, effective_date__range=[start_date, end_date], status="completed")
+        .select_related("courier", "client")
+        .order_by("-effective_date", "-created_at")
+    )
+
+    payment_filters = {
+        "cash": Q(cash_amount__gt=0),
+        "card": Q(card_amount__gt=0),
+        "pereches": Q(perechesleniya_amount__gt=0),
+        "debt": Q(debt_amount__gt=0),
+    }
+    if payment != "all":
+        qs = qs.filter(payment_filters[payment])
+
+    totals = qs.aggregate(
+        cash_total=Sum("cash_amount", output_field=DecimalField()),
+        card_total=Sum("card_amount", output_field=DecimalField()),
+        pereches_total=Sum("perechesleniya_amount", output_field=DecimalField()),
+        debt_total=Sum("debt_amount", output_field=DecimalField()),
+        inquantity_total=Sum("inquantity"),
+        outquantity_total=Sum("outquantity"),
+    )
+    cash_total = totals["cash_total"] or 0
+    card_total = totals["card_total"] or 0
+    pereches_total = totals["pereches_total"] or 0
+    debt_total = totals["debt_total"] or 0
+
+    courier_breakdown = (
+        qs.values("courier__id", "courier__username")
+        .annotate(
+            total_orders=Count("id"),
+            cash_total=Sum("cash_amount", output_field=DecimalField()),
+            card_total=Sum("card_amount", output_field=DecimalField()),
+            pereches_total=Sum("perechesleniya_amount", output_field=DecimalField()),
+            debt_total=Sum("debt_amount", output_field=DecimalField()),
+            inquantity_total=Sum("inquantity"),
+            outquantity_total=Sum("outquantity"),
+        )
+        .order_by("-total_orders")
+    )
+
+    paginator = Paginator(qs, 25)
+    orders_page = paginator.get_page(page_num)
+
+    return render(request, "hisobotlar/client_history.html", {
+        "client": client,
+        "orders_page": orders_page,
+        "courier_breakdown": courier_breakdown,
+        "start_date": start_date,
+        "end_date": end_date,
+        "quick": quick,
+        "payment": payment,
+        "cash_total": cash_total,
+        "card_total": card_total,
+        "pereches_total": pereches_total,
+        "debt_total": debt_total,
+        "total": cash_total + card_total + pereches_total + debt_total,
+        "inquantity_total": totals["inquantity_total"] or 0,
+        "outquantity_total": totals["outquantity_total"] or 0,
     })
 
 

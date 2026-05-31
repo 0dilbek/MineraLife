@@ -48,17 +48,26 @@ def courier_dashboard(request):
           .order_by("-created_at"))
 
     completed_qs = qs.filter(status="completed")
+    pending_count = qs.filter(status="pending").count()
+    completed_count = completed_qs.count()
+    cancelled_count = qs.filter(status="cancelled").count()
     totals = completed_qs.aggregate(
         cash_total=Sum("cash_amount"),
         card_total=Sum("card_amount"),
         perechesleniya_total=Sum("perechesleniya_amount"),
         debt_total=Sum("debt_amount"),
     )
+    quantity_totals = qs.aggregate(
+        inquantity_total=Sum("inquantity"),
+        outquantity_total=Sum("outquantity"),
+    )
     cash_total = totals["cash_total"] or 0
     card_total = totals["card_total"] or 0
     perechesleniya_total = totals["perechesleniya_total"] or 0
     debt_total = totals["debt_total"] or 0
     daily_total = cash_total + card_total + perechesleniya_total
+    inquantity_total = quantity_totals["inquantity_total"] or 0
+    outquantity_total = quantity_totals["outquantity_total"] or 0
 
     return render(request, "couriers/dashboard.html", {
         "orders": qs,
@@ -67,6 +76,11 @@ def courier_dashboard(request):
         "perechesleniya_total": perechesleniya_total,
         "debt_total": debt_total,
         "daily_total": daily_total,
+        "inquantity_total": inquantity_total,
+        "outquantity_total": outquantity_total,
+        "pending_count": pending_count,
+        "completed_count": completed_count,
+        "cancelled_count": cancelled_count,
         "today": today,
     })
 

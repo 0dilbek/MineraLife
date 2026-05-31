@@ -25,22 +25,35 @@
       <a href="{% url 'clients:list' %}" class="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-gray-600 transition">
         ← Ro‘yxatga qaytish
       </a>
-      <a href="{% url 'clients:update' client.id %}" class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition">
-        Tahrirlash
-      </a>
-      <a href="{% url 'clients:delete' client.id %}" class="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition">
-        O‘chirish
-      </a>
+	      <a href="{% url 'clients:update' client.id %}" class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition">
+	        Tahrirlash
+	      </a>
+	      <form method="post" action="{% url 'clients:toggle_departed' client.id %}">
+	        {% csrf_token %}
+	        <button type="submit" class="px-4 py-2 rounded-lg {% if client.is_departed %}bg-emerald-600 hover:bg-emerald-700{% else %}bg-indigo-900 hover:bg-indigo-950{% endif %} text-white transition">
+	          {% if client.is_departed %}Faol qilish{% else %}Bizdan ketgan{% endif %}
+	        </button>
+	      </form>
+	      <a href="{% url 'clients:delete' client.id %}" class="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition">
+	        O‘chirish
+	      </a>
     </div>
   </div>
 
   <!-- Info card -->
   <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6 space-y-4">
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <div>
-        <div class="text-sm text-gray-500 dark:text-gray-400">Ism</div>
-        <div class="font-medium text-gray-900 dark:text-gray-100">{{ client.name }}</div>
-      </div>
+	      <div>
+	        <div class="text-sm text-gray-500 dark:text-gray-400">Ism</div>
+	        <div class="flex flex-wrap items-center gap-2 font-medium text-gray-900 dark:text-gray-100">
+	          <span>{{ client.name }}</span>
+	          {% if client.is_departed %}
+	            <span class="rounded-full bg-indigo-950 px-2 py-0.5 text-xs font-semibold text-white">Bizdan ketgan</span>
+	          {% else %}
+	            <span class="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">Faol</span>
+	          {% endif %}
+	        </div>
+	      </div>
       <div>
         <div class="text-sm text-gray-500 dark:text-gray-400">Telefon raqamlar</div>
         <div class="space-y-1">
@@ -152,10 +165,21 @@
     });
 
     const placemark = new ymaps.Placemark([LAT, LON], {
-      balloonContent: "{{ client.name|escapejs }}"
-    }, {
-      preset: "islands#blueDotIcon"
-    });
+      balloonContent: `
+        <div style="min-width: 180px;">
+          <strong>{{ client.name|escapejs }}</strong><br>
+          <div style="margin-top: 8px;">
+            <a href="https://yandex.com/maps/?rtext=~${LAT},${LON}&rtt=auto" target="_blank"
+               style="padding: 6px 12px; background: #FFD600; color: #000; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+              Yandex Navigator
+            </a>
+          </div>
+        </div>
+      `
+	    }, {
+	      preset: "{% if client.is_departed %}islands#darkBlueDotIcon{% else %}islands#blueDotIcon{% endif %}"
+	    });
     map.geoObjects.add(placemark);
 
     // Yandex link

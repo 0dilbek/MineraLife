@@ -8,11 +8,13 @@ from .forms import ClientForm, ClientPhoneNumberFormSet
 from admin_panel.mixins import SuperuserRequiredMixin
 from django.db import transaction
 from django.http import JsonResponse
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_http_methods, require_POST
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.conf import settings
-from django.db.models import Max, Q
+from datetime import timedelta
+
+from django.db.models import Count, Max, Min, OuterRef, Q, Subquery
 from django.utils import timezone
 from django.core.paginator import Paginator
 import json
@@ -25,18 +27,63 @@ class ClientListView(SuperuserRequiredMixin, ListView):
     ordering = '-created_at'  # xohlasangiz
     
     def get_queryset(self):
-        queryset = Client.objects.prefetch_related('phone_numbers').order_by(self.ordering)
+        from orders.models import Order
+
+        today = timezone.localdate()
+        week_start = today - timedelta(days=today.weekday())
+        last_order = (
+            Order.objects
+            .filter(client=OuterRef("pk"))
+            .order_by("-effective_date", "-created_at", "-pk")
+        )
+        queryset = (
+            Client.objects
+            .prefetch_related('phone_numbers')
+            .annotate(
+                phone_count=Count("phone_numbers", distinct=True),
+                first_order_date=Min("orders__effective_date"),
+                last_order_id=Subquery(last_order.values("pk")[:1]),
+                last_order_date=Subquery(last_order.values("effective_date")[:1]),
+            )
+            .order_by(self.ordering)
+        )
         q = self.request.GET.get('q', '').strip()
         if q:
             queryset = queryset.filter(
                 Q(name__icontains=q) | 
                 Q(phone_numbers__phone_number__icontains=q)
             ).distinct()
+
+        status_filter = self.request.GET.get("status", "").strip()
+        if status_filter == "new":
+            queryset = queryset.filter(is_departed=False, first_order_date__gte=week_start, first_order_date__lte=today)
+        elif status_filter == "active":
+            queryset = queryset.filter(is_departed=False, last_order_id__isnull=False)
+        elif status_filter == "departed":
+            queryset = queryset.filter(is_departed=True)
+        elif status_filter == "no_orders":
+            queryset = queryset.filter(last_order_id__isnull=True)
+        elif status_filter == "no_phone":
+            queryset = queryset.filter(phone_count=0)
+        elif status_filter == "no_location":
+            queryset = queryset.filter(Q(latitude__isnull=True) | Q(longitude__isnull=True))
         return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['q'] = self.request.GET.get('q', '')
+        context["status"] = self.request.GET.get("status", "")
+        context["new_clients_start"] = timezone.localdate() - timedelta(days=timezone.localdate().weekday())
+        context["today"] = timezone.localdate()
+        context["client_filters"] = [
+            {"key": "", "label": "Barchasi"},
+            {"key": "new", "label": "Yangi mijozlar"},
+            {"key": "active", "label": "Faollar"},
+            {"key": "departed", "label": "Bizdan ketgan"},
+            {"key": "no_orders", "label": "Buyurtmasiz"},
+            {"key": "no_phone", "label": "Telefonsiz"},
+            {"key": "no_location", "label": "Koordinatasiz"},
+        ]
         return context
 
 class ClientCreateView(SuperuserRequiredMixin, CreateView):
@@ -119,6 +166,23 @@ class ClientUpdateView(SuperuserRequiredMixin, UpdateView):
         return reverse_lazy("clients:detail", kwargs={"pk": self.object.pk})
 
 
+@require_POST
+@login_required
+def toggle_client_departed(request, pk):
+    if not request.user.is_superuser:
+        messages.error(request, "Bu amal uchun ruxsat yo'q.")
+        return redirect("clients:detail", pk=pk)
+
+    client = get_object_or_404(Client, pk=pk)
+    client.is_departed = not client.is_departed
+    client.save(update_fields=["is_departed", "updated_at"])
+    if client.is_departed:
+        messages.success(request, f"{client.name} 'bizdan ketgan' deb belgilandi.")
+    else:
+        messages.success(request, f"{client.name} yana faol mijoz sifatida belgilandi.")
+    return redirect("clients:detail", pk=pk)
+
+
 @require_http_methods(["GET"])
 def check_name_exists(request):
     """AJAX endpoint to check if client name already exists"""
@@ -158,6 +222,7 @@ def clients_map(request):
         "caption": c.caption or "",
         "lat": c.latitude,
         "lon": c.longitude,
+        "is_departed": c.is_departed,
         "last_order_date": c.last_order_date.isoformat() if c.last_order_date else None,
     } for c in clients]
     

@@ -94,6 +94,10 @@
       {{ form.caption }}
       {% if form.caption.errors %}<p class="mt-1 text-sm text-red-600">{{ form.caption.errors.0 }}</p>{% endif %}
     </div>
+    <label class="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
+      {{ form.is_departed }}
+      <span>Bizdan ketgan mijoz</span>
+    </label>
     <!-- Koordinatalar (bitta input) -->
     <div>
       <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-200">Koordinatalar (lat, lon)</label>

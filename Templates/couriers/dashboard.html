@@ -1,377 +1,203 @@
 {% extends "base.html" %}
 {% block title %}Kuryer Dashboard{% endblock %}
 
+{% block extra_head %}
+<style>
+  .courier-water-bg {
+    position: relative;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 18% 12%, rgba(14,165,233,.20), transparent 28%),
+      radial-gradient(circle at 86% 18%, rgba(45,212,191,.16), transparent 26%),
+      linear-gradient(135deg, rgba(240,249,255,.96), rgba(236,253,245,.86) 58%, rgba(224,242,254,.92));
+  }
+
+  .courier-water-bg::before,
+  .courier-water-bg::after {
+    content: "";
+    position: absolute;
+    inset: -120px;
+    pointer-events: none;
+    background-repeat: repeat;
+    will-change: transform;
+  }
+
+  .courier-water-bg::before {
+    opacity: .55;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150' viewBox='0 0 150 150'%3E%3Cg fill='none' stroke='%230ea5e9' stroke-opacity='.18' stroke-width='1.2'%3E%3Cpath d='M32 18c8 10 13 18 13 25a13 13 0 0 1-26 0c0-7 5-15 13-25Z'/%3E%3Cpath d='M112 64c6 7 9 13 9 18a9 9 0 0 1-18 0c0-5 3-11 9-18Z'/%3E%3Cpath d='M72 112c4 5 7 10 7 14a7 7 0 0 1-14 0c0-4 3-9 7-14Z'/%3E%3C/g%3E%3C/svg%3E");
+    background-size: 150px 150px;
+    animation: water-drift 34s linear infinite;
+  }
+
+  .courier-water-bg::after {
+    opacity: .45;
+    background-image:
+      radial-gradient(circle at 20px 24px, rgba(56,189,248,.18) 0 2px, transparent 3px),
+      radial-gradient(circle at 82px 70px, rgba(20,184,166,.16) 0 2px, transparent 3px),
+      radial-gradient(circle at 126px 118px, rgba(14,165,233,.12) 0 1.5px, transparent 3px);
+    background-size: 160px 160px;
+    animation: water-float 24s ease-in-out infinite alternate;
+  }
+
+  .dark .courier-water-bg {
+    background:
+      radial-gradient(circle at 18% 12%, rgba(56,189,248,.22), transparent 28%),
+      radial-gradient(circle at 86% 18%, rgba(45,212,191,.16), transparent 26%),
+      linear-gradient(135deg, rgba(8,47,73,.54), rgba(6,78,59,.34) 58%, rgba(15,23,42,.72));
+  }
+
+  @keyframes water-drift {
+    from { transform: translate3d(0, 0, 0); }
+    to { transform: translate3d(150px, 150px, 0); }
+  }
+
+  @keyframes water-float {
+    from { transform: translate3d(-18px, 12px, 0) scale(1); }
+    to { transform: translate3d(22px, -18px, 0) scale(1.04); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .courier-water-bg::before,
+    .courier-water-bg::after {
+      animation: none;
+    }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="max-w-6xl mx-auto space-y-6">
-
-    <!-- Dashboard Header -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-            <div>
-                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Kuryer Dashboard</h1>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">{{ today }} - Bugungi buyurtmalar</p>
-            </div>
-            <div class="mt-4 sm:mt-0 flex gap-3">
-                <a href="{% url 'couriers:map' %}" 
-                   class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700 transition-colors">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    </svg>
-                    Xaritada ko'rish
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Kunlik tushum tugmasi -->
-    <div class="flex justify-center">
-        <button onclick="openIncomeModal()" 
-                class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg shadow-lg hover:from-indigo-700 hover:to-purple-700 transition-all transform hover:scale-105">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-            </svg>
-            Kunlik Tushum
-        </button>
-    </div>
-
-    <!-- Buyurtmalar ro'yxati -->
-    {% if orders %}
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow">
-            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Bugungi buyurtmalar</h2>
-                <p class="text-sm text-gray-600 dark:text-gray-400">Jami {{ orders|length }} ta buyurtma</p>
-            </div>
-            
-            <div class="divide-y divide-gray-200 dark:divide-gray-700">
-                {% for order in orders %}
-                <div class="p-6 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-                        <!-- Mijoz ma'lumotlari -->
-                        <div class="flex-1">
-                            <div class="flex items-start justify-between">
-                                <div>
-                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                                        {{ order.client.name }}
-                                    </h3>
-                                    <div class="mt-1 flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
-                                        <span class="flex items-center">
-                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
-                                            </svg>
-                                            oldim: {{ order.inquantity }}
-                                        </span>
-                                        <span class="flex items-center">
-                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 11l3 3m0 0l3-3m-3 3V4"/>
-                                            </svg>
-                                            berdim: {{ order.outquantity }}
-                                        </span>
-                                    </div>
-                                    
-                                    <div class="mt-2 flex items-center gap-4 text-sm">
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                            {% if order.status == 'pending' %}bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200
-                                            {% elif order.status == 'completed' %}bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200
-                                            {% else %}bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200{% endif %}">
-                                            {{ order.get_status_display }}
-                                        </span>
-                                        
-                                        <span class="text-gray-600 dark:text-gray-400">
-                                            {{ order.get_payment_summary }}
-                                        </span>
-                                        
-                                        <span class="font-semibold text-green-600 dark:text-green-400">
-                                            {{ order.get_price_display }}
-                                        </span>
-                                    </div>
-                                    {% if order.client.caption %}
-                                    <div class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                                        {{ order.client.caption }}
-                                    </div>
-                                    {% endif %}
-                                    {% if order.client.phone_numbers.all %}
-                                    <div class="mt-2 flex items-center text-sm text-gray-600 dark:text-gray-400">
-                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
-                                        </svg>
-                                        {% for phone in order.client.phone_numbers.all %}
-                                            <a href="tel:{{ phone.phone_number }}" class="hover:text-blue-600 dark:hover:text-blue-400">
-                                                {{ phone.phone_number }}
-                                            </a>{% if phone.is_primary %} <span class="text-xs">(Asosiy)</span>{% endif %}{% if not forloop.last %}, {% endif %}
-                                        {% endfor %}
-                                    </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Harakat tugmalari -->
-                        <div class="flex flex-wrap gap-2 lg:flex-col lg:w-auto">
-                            <!-- Faqat tahrirlash tugmasi -->
-                            <a href="{% url 'couriers:order_update' order.pk %}" 
-                               class="inline-flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
-                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                                </svg>
-                                Tahrirlash
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-    {% else %}
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-12 text-center">
-            <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-            </svg>
-            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">Buyurtma yo'q</h3>
-            <p class="text-gray-600 dark:text-gray-400">Bugun sizga biriktirilgan buyurtmalar yo'q.</p>
-        </div>
-    {% endif %}
-</div>
-
-<!-- Buyurtmani Bajarish Modali -->
-<div id="complete-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
-    <div class="flex items-center justify-center min-h-screen p-4">
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full">
-            <!-- Modal Header -->
-            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-xl font-bold text-gray-900 dark:text-white">
-                        ✅ Buyurtmani Bajarish
-                    </h3>
-                    <button onclick="closeCompleteModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                    </button>
-                </div>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    Mijoz: <span id="modal-client-name" class="font-semibold">—</span>
-                </p>
-            </div>
-
-            <!-- Modal Content -->
-            <div class="px-6 py-6">
-                <form id="complete-form" method="post">
-                    {% csrf_token %}
-                    <input type="hidden" name="quick_action" value="1">
-                    <input type="hidden" name="status" value="completed">
-                    <input type="hidden" id="order-id" name="order_id">
-
-                    <!-- Berdim miqdor -->
-                    <div class="mb-4">
-                        <label for="modal-outquantity" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 11l3 3m0 0l3-3m-3 3V4"/>
-                            </svg>
-                            Berdim miqdor
-                        </label>
-                        <div class="relative">
-                            <input type="number" 
-                                   id="modal-outquantity" 
-                                   name="outquantity"
-                                   min="1" 
-                                   required
-                                   class="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
-                                   placeholder="Nechta mahsulot chiqdi?"
-                                   onchange="updatePrice()">
-                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                                <span class="text-gray-500 text-sm">dona</span>
-                            </div>
-                        </div>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Mijozdan olingan mahsulot miqdori</p>
-                    </div>
-
-                    <!-- Narx ko'rsatkichi -->
-                    <div class="mb-4 p-4 bg-green-50 dark:bg-green-900 rounded-lg border border-green-200 dark:border-green-700">
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm font-medium text-green-800 dark:text-green-200">Jami narx:</span>
-                            <span id="total-price-display" class="text-lg font-bold text-green-600 dark:text-green-400">0 so'm</span>
-                        </div>
-                        <p class="text-xs text-green-600 dark:text-green-300 mt-1">
-                            <span id="price-calculation">0 x 0 = 0</span>
+<div class="courier-water-bg -mx-4 -my-6 min-h-[calc(100vh-8rem)] px-4 py-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+<div class="relative z-10 mx-auto max-w-5xl space-y-3 sm:space-y-5">
+    <section class="overflow-hidden rounded-lg border border-white/70 bg-white/72 shadow-sm shadow-sky-900/5 backdrop-blur-xl dark:border-white/10 dark:bg-gray-900/58 dark:shadow-black/20">
+        <div class="grid lg:grid-cols-[1fr_360px]">
+            <div class="p-3 sm:p-5">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-blue-600 dark:text-blue-400 sm:text-sm">{{ today }}</p>
+                        <h1 class="mt-1 text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">Bugungi yo'nalish</h1>
+                        <p class="mt-1 text-xs text-gray-600 dark:text-gray-300 sm:text-sm">
+                            {{ orders|length }} ta buyurtma ichida {{ pending_count }} tasi kutilmoqda.
                         </p>
                     </div>
-
-                    <!-- Izoh -->
-                    <div class="mb-6">
-                        <label for="modal-notes" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
-                            </svg>
-                            Izohlar (ixtiyoriy)
-                        </label>
-                        <textarea id="modal-notes" 
-                                  name="notes"
-                                  rows="3"
-                                  class="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors resize-none"
-                                  placeholder="Buyurtma haqida qo'shimcha ma'lumot..."></textarea>
-                    </div>
-
-                    <!-- Tugmalar -->
-                    <div class="flex gap-3">
-                        <button type="submit" 
-                                class="flex-1 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
-                            ✅ Bajarildi
-                        </button>
-                        <button type="button" 
-                                onclick="closeCompleteModal()"
-                                class="px-6 py-3 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors">
-                            Bekor qilish
+                    <div class="flex gap-2">
+                        <a href="{% url 'couriers:map' %}" class="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 sm:min-h-11 sm:px-4 sm:text-sm">
+                            Xarita
+                        </a>
+                        <button type="button" onclick="openIncomeModal()" class="inline-flex min-h-10 items-center justify-center rounded-lg border border-white/70 bg-white/58 px-3 py-2 text-xs font-semibold text-gray-800 shadow-sm backdrop-blur hover:bg-white/78 dark:border-white/10 dark:bg-white/10 dark:text-gray-100 dark:hover:bg-white/15 sm:min-h-11 sm:px-4 sm:text-sm">
+                            Tushum
                         </button>
                     </div>
-                </form>
+                </div>
+            </div>
+
+            <div class="border-t border-white/60 bg-sky-50/42 p-3 backdrop-blur-xl dark:border-white/10 dark:bg-white/5 sm:p-4 lg:border-l lg:border-t-0">
+                <div class="grid grid-cols-3 gap-2 sm:gap-3">
+                    <div>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">Tushum</span>
+                        <p class="mt-1 text-base font-bold text-gray-900 dark:text-white sm:text-lg">{{ daily_total|floatformat:0 }}</p>
+                    </div>
+                    <div>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">Oldim</span>
+                        <p class="mt-1 text-base font-bold text-gray-900 dark:text-white sm:text-lg">{{ inquantity_total }}</p>
+                    </div>
+                    <div>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">Berdim</span>
+                        <p class="mt-1 text-base font-bold text-gray-900 dark:text-white sm:text-lg">{{ outquantity_total }}</p>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
+    </section>
+
+    <section class="rounded-lg border border-white/70 bg-white/62 p-1.5 shadow-sm shadow-sky-900/5 backdrop-blur-xl dark:border-white/10 dark:bg-gray-900/52 sm:p-2">
+        <div class="flex gap-2 overflow-x-auto">
+            <button type="button" data-filter="all" title="Jami" aria-label="Jami buyurtmalar" class="inline-flex min-h-10 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-2 text-xs font-semibold text-gray-700 transition hover:bg-white/80 data-[active=true]:bg-gray-900 data-[active=true]:text-white dark:text-gray-200 dark:hover:bg-white/10 dark:data-[active=true]:bg-white dark:data-[active=true]:text-gray-900 sm:min-h-11 sm:gap-2 sm:px-4 sm:text-sm">
+                <svg class="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+                <span>{{ orders|length }}</span>
+            </button>
+            <button type="button" data-filter="pending" title="Kutilmoqda" aria-label="Kutilayotgan buyurtmalar" class="inline-flex min-h-10 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-2 text-xs font-semibold text-blue-700 transition hover:bg-blue-50 data-[active=true]:bg-blue-600 data-[active=true]:text-white dark:text-blue-200 dark:hover:bg-blue-900/30 sm:min-h-11 sm:gap-2 sm:px-4 sm:text-sm">
+                <svg class="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span>{{ pending_count }}</span>
+            </button>
+            <button type="button" data-filter="completed" title="Bajarildi" aria-label="Bajarilgan buyurtmalar" class="inline-flex min-h-10 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-2 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-50 data-[active=true]:bg-emerald-600 data-[active=true]:text-white dark:text-emerald-200 dark:hover:bg-emerald-900/30 sm:min-h-11 sm:gap-2 sm:px-4 sm:text-sm">
+                <svg class="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                <span>{{ completed_count }}</span>
+            </button>
+            <button type="button" data-filter="cancelled" title="Bekor" aria-label="Bekor qilingan buyurtmalar" class="inline-flex min-h-10 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-2 text-xs font-semibold text-rose-700 transition hover:bg-rose-50 data-[active=true]:bg-rose-600 data-[active=true]:text-white dark:text-rose-200 dark:hover:bg-rose-900/30 sm:min-h-11 sm:gap-2 sm:px-4 sm:text-sm">
+                <svg class="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+                <span>{{ cancelled_count }}</span>
+            </button>
+        </div>
+    </section>
+
+    {% if orders %}
+    <section class="space-y-2 sm:space-y-3">
+        {% for order in orders %}
+        <article data-order-card data-status="{{ order.status }}" class="relative rounded-lg border border-l-4 bg-white/76 p-3 pr-24 shadow-sm shadow-sky-900/5 backdrop-blur-xl transition hover:bg-white/88 dark:bg-gray-900/58 dark:shadow-black/20 dark:hover:bg-gray-900/70 sm:p-4 sm:pr-28
+            {% if order.status == 'pending' %}border-white/70 border-l-blue-500 dark:border-white/10 dark:border-l-blue-500
+            {% elif order.status == 'completed' %}border-white/70 border-l-emerald-500 dark:border-white/10 dark:border-l-emerald-500
+            {% else %}border-white/70 border-l-rose-500 dark:border-white/10 dark:border-l-rose-500{% endif %}">
+            <div class="min-w-0">
+                <h2 class="truncate text-base font-semibold text-gray-900 dark:text-white sm:text-lg">{{ order.client.name }}</h2>
+                <div class="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500 dark:text-gray-400 sm:gap-x-4 sm:text-sm">
+                        <span>Oldim: <span class="font-semibold text-gray-900 dark:text-white">{{ order.inquantity }} dona</span></span>
+                        <span>Berdim: <span class="font-semibold text-gray-900 dark:text-white">{{ order.outquantity }} dona</span></span>
+                </div>
+            </div>
+                <div class="absolute right-3 top-3 flex shrink-0 gap-1.5 sm:right-4 sm:top-4 sm:gap-2">
+                {% if order.client.latitude and order.client.longitude %}
+                <a href="https://www.google.com/maps/search/?api=1&query={{ order.client.latitude }},{{ order.client.longitude }}" target="_blank" rel="noopener" title="Manzil" aria-label="Manzilni ochish" class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/70 bg-white/62 text-gray-800 shadow-sm backdrop-blur hover:bg-white/82 dark:border-white/10 dark:bg-white/10 dark:text-gray-100 dark:hover:bg-white/15 sm:h-10 sm:w-10">
+                    <svg class="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21s7-4.35 7-11a7 7 0 10-14 0c0 6.65 7 11 7 11z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10h.01"/>
+                    </svg>
+                </a>
+                {% endif %}
+                <a href="{% url 'couriers:order_update' order.pk %}" title="Ko'rish" aria-label="Buyurtmani ko'rish" class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-white hover:bg-blue-700 sm:h-10 sm:w-10">
+                    <svg class="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.46 12C3.73 7.94 7.52 5 12 5s8.27 2.94 9.54 7c-1.27 4.06-5.06 7-9.54 7s-8.27-2.94-9.54-7z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                </a>
+                </div>
+        </article>
+        {% endfor %}
+    </section>
+    {% else %}
+    <section class="rounded-lg border border-dashed border-white/70 bg-white/68 p-10 text-center shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-gray-900/58">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Bugun buyurtma yo'q</h2>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Yangi buyurtmalar shu yerda ko'rinadi.</p>
+    </section>
+    {% endif %}
+</div>
 </div>
 
-<!-- Kunlik Tushum Modali -->
-<div id="income-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
-    <div class="flex items-center justify-center min-h-screen p-4">
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-lg w-full">
-            <!-- Modal Header -->
-            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-t-xl">
-                <div class="flex items-center justify-between">
-                    <div class="text-white">
-                        <h3 class="text-xl font-bold">📊 Kunlik Tushum</h3>
-                        <p class="text-sm text-indigo-100 mt-1">{{ today }}</p>
-                    </div>
-                    <button onclick="closeIncomeModal()" class="text-white hover:text-gray-200">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                    </button>
-                </div>
+<div id="income-modal" class="fixed inset-0 z-50 hidden bg-black/50 p-4">
+    <div class="flex min-h-full items-center justify-center">
+        <div class="w-full max-w-sm rounded-lg border border-white/70 bg-white/82 p-5 shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-gray-900/82">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Kunlik tushum</h3>
+            <div class="mt-4 space-y-2 text-sm">
+                <div class="flex justify-between"><span class="text-gray-500 dark:text-gray-400">Naqd</span><strong class="text-gray-900 dark:text-white">{{ cash_total|floatformat:0 }} so'm</strong></div>
+                <div class="flex justify-between"><span class="text-gray-500 dark:text-gray-400">Karta</span><strong class="text-gray-900 dark:text-white">{{ card_total|floatformat:0 }} so'm</strong></div>
+                <div class="flex justify-between"><span class="text-gray-500 dark:text-gray-400">Perechisleniya</span><strong class="text-gray-900 dark:text-white">{{ perechesleniya_total|floatformat:0 }} so'm</strong></div>
+                <div class="flex justify-between"><span class="text-gray-500 dark:text-gray-400">Qarz</span><strong class="text-gray-900 dark:text-white">{{ debt_total|floatformat:0 }} so'm</strong></div>
+                <div class="border-t border-gray-200 pt-2 dark:border-gray-700"></div>
+                <div class="flex justify-between text-base"><span class="font-semibold text-gray-700 dark:text-gray-200">Jami</span><strong class="text-gray-900 dark:text-white">{{ daily_total|floatformat:0 }} so'm</strong></div>
             </div>
-
-            <!-- Modal Content -->
-            <div class="px-6 py-6">
-                <!-- To'lov turlari statistikasi -->
-                <div class="space-y-4">
-                    <!-- Naqd -->
-                    <div class="flex items-center justify-between p-4 bg-green-50 dark:bg-green-900 rounded-lg border border-green-200 dark:border-green-700">
-                        <div class="flex items-center">
-                            <div class="p-3 bg-green-500 rounded-full">
-                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
-                                </svg>
-                            </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Naqd pul</p>
-                                <p class="text-2xl font-bold text-green-600 dark:text-green-400">{{ cash_total|floatformat:0 }} so'm</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Karta -->
-                    <div class="flex items-center justify-between p-4 bg-blue-50 dark:bg-blue-900 rounded-lg border border-blue-200 dark:border-blue-700">
-                        <div class="flex items-center">
-                            <div class="p-3 bg-blue-500 rounded-full">
-                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
-                                </svg>
-                            </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Karta</p>
-                                <p class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ card_total|floatformat:0 }} so'm</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Perechisleniya -->
-                    <div class="flex items-center justify-between p-4 bg-purple-50 dark:bg-purple-900 rounded-lg border border-purple-200 dark:border-purple-700">
-                        <div class="flex items-center">
-                            <div class="p-3 bg-purple-500 rounded-full">
-                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                                </svg>
-                            </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Perechisleniya</p>
-                                <p class="text-2xl font-bold text-purple-600 dark:text-purple-400">{{ perechesleniya_total|floatformat:0 }} so'm</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Qarz -->
-                    <div class="flex items-center justify-between p-4 bg-orange-50 dark:bg-orange-900 rounded-lg border border-orange-200 dark:border-orange-700">
-                        <div class="flex items-center">
-                            <div class="p-3 bg-orange-500 rounded-full">
-                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                                </svg>
-                            </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Qarz</p>
-                                <p class="text-2xl font-bold text-orange-600 dark:text-orange-400">{{ debt_total|floatformat:0 }} so'm</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Umumiy tushum -->
-                    <div class="mt-6 p-6 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900 dark:to-purple-900 rounded-lg border-2 border-indigo-300 dark:border-indigo-600">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Jami tushum</p>
-                                <p class="text-3xl font-bold text-indigo-600 dark:text-indigo-400">
-                                    {{ daily_total|floatformat:0 }} so'm
-                                </p>
-                            </div>
-                            <div class="p-4 bg-indigo-600 rounded-full">
-                                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Yopish tugmasi -->
-                <div class="mt-6">
-                    <button onclick="closeIncomeModal()" 
-                            class="w-full px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-medium hover:from-indigo-700 hover:to-purple-700 transition-all transform hover:scale-105">
-                        Yopish
-                    </button>
-                </div>
-            </div>
+            <button type="button" onclick="closeIncomeModal()" class="mt-5 w-full min-h-11 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">Yopish</button>
         </div>
     </div>
 </div>
 
 <script>
-let currentOrderPrice = 0;
-
-function openCompleteModal(orderId, clientName, unitPrice, currentOutquantity) {
-    currentOrderPrice = unitPrice;
-    
-    document.getElementById('order-id').value = orderId;
-    document.getElementById('modal-client-name').textContent = clientName;
-    document.getElementById('modal-outquantity').value = currentOutquantity;
-    document.getElementById('complete-form').action = `/couriers/order/${orderId}/update/`;
-    
-    updatePrice();
-    document.getElementById('complete-modal').classList.remove('hidden');
-    document.getElementById('modal-outquantity').focus();
-}
-
-function closeCompleteModal() {
-    document.getElementById('complete-modal').classList.add('hidden');
-    document.getElementById('complete-form').reset();
-}
-
-function updatePrice() {
-    const quantity = parseInt(document.getElementById('modal-outquantity').value) || 0;
-    const total = quantity * currentOrderPrice;
-    
-    document.getElementById('total-price-display').textContent = total.toLocaleString() + ' so\'m';
-    document.getElementById('price-calculation').textContent = `${quantity} x ${currentOrderPrice.toLocaleString()} = ${total.toLocaleString()}`;
-}
-
 function openIncomeModal() {
     document.getElementById('income-modal').classList.remove('hidden');
 }
@@ -380,43 +206,36 @@ function closeIncomeModal() {
     document.getElementById('income-modal').classList.add('hidden');
 }
 
-function confirmCancel(orderId) {
-    if (confirm('Buyurtmani bekor qilishni tasdiqlaysizmi?')) {
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = `/couriers/order/${orderId}/update/`;
-        
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-        form.innerHTML = `
-            <input type="hidden" name="csrfmiddlewaretoken" value="${csrfToken}">
-            <input type="hidden" name="quick_action" value="1">
-            <input type="hidden" name="status" value="cancelled">
-        `;
-        
-        document.body.appendChild(form);
-        form.submit();
-    }
-}
-
-// Modallarni tashqarisini bosish bilan yopish
-document.getElementById('complete-modal').addEventListener('click', function(e) {
-    if (e.target === this) {
-        closeCompleteModal();
-    }
+document.getElementById('income-modal').addEventListener('click', function (event) {
+    if (event.target === this) closeIncomeModal();
 });
 
-document.getElementById('income-modal').addEventListener('click', function(e) {
-    if (e.target === this) {
+document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape') {
         closeIncomeModal();
     }
 });
 
-// Escape tugmasi bilan yopish
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        closeCompleteModal();
-        closeIncomeModal();
+document.addEventListener('DOMContentLoaded', function () {
+    const filterButtons = document.querySelectorAll('[data-filter]');
+    const orderCards = document.querySelectorAll('[data-order-card]');
+
+    function applyFilter(status) {
+        filterButtons.forEach((button) => {
+            button.dataset.active = String(button.dataset.filter === status);
+        });
+
+        orderCards.forEach((card) => {
+            const shouldShow = status === 'all' || card.dataset.status === status;
+            card.classList.toggle('hidden', !shouldShow);
+        });
     }
+
+    filterButtons.forEach((button) => {
+        button.addEventListener('click', () => applyFilter(button.dataset.filter));
+    });
+
+    applyFilter('all');
 });
 </script>
 {% endblock %}

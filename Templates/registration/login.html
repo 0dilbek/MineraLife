@@ -2,40 +2,42 @@
 {% block title %}Kirish{% endblock %}
 
 {% block content %}
-<div class="max-w-md mx-auto bg-white dark:bg-gray-800 rounded-xl shadow p-6">
-  <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Tizimga kirish</h1>
+<div class="mx-auto flex min-h-[60vh] max-w-md items-center">
+  <section class="w-full rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">MineraLife</h1>
+      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Tizimga kirish</p>
+    </div>
 
-  <form method="post" class="space-y-4">
-    {% csrf_token %}
+    <form method="post" class="mt-6 space-y-4">
+      {% csrf_token %}
 
-    {% if form.errors %}
-      <div class="px-4 py-2 rounded-lg bg-red-100 text-red-800">
+      {% if form.errors %}
+      <div class="rounded-lg bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:bg-rose-900/40 dark:text-rose-100">
         Login yoki parol xato.
       </div>
-    {% endif %}
+      {% endif %}
 
-    <div>
-      <label class="block text-sm mb-1 text-gray-700 dark:text-gray-200">Login</label>
-      <input type="text" name="username" autofocus required
-             class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
-                    text-gray-900 dark:text-gray-100 px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500">
-    </div>
+      <div>
+        <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">Login</label>
+        <input type="text" name="username" autofocus required
+               class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100">
+      </div>
 
-    <div>
-      <label class="block text-sm mb-1 text-gray-700 dark:text-gray-200">Parol</label>
-      <input type="password" name="password" required
-             class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
-                    text-gray-900 dark:text-gray-100 px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500">
-    </div>
+      <div>
+        <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">Parol</label>
+        <input type="password" name="password" required
+               class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100">
+      </div>
 
-    {# Agar /accounts/login/?next=/couriers/ orqali kelgan bo'lsa saqlab yuboramiz #}
-    {% if next %}
+      {% if next %}
       <input type="hidden" name="next" value="{{ next }}">
-    {% endif %}
+      {% endif %}
 
-    <button type="submit" class="w-full px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition">
-      Kirish
-    </button>
-  </form>
+      <button type="submit" class="w-full min-h-11 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+        Kirish
+      </button>
+    </form>
+  </section>
 </div>
 {% endblock %}

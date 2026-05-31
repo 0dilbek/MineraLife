@@ -43,6 +43,7 @@ class Client(models.Model):
     longitude = models.FloatField(blank=True, null=True)
     latitude = models.FloatField(blank=True, null=True)
     caption = models.TextField(blank=True, null=True)
+    is_departed = models.BooleanField(default=False, help_text="Mijoz endi bizdan buyurtma olmayaptimi?")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     

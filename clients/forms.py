@@ -56,13 +56,14 @@ class ClientForm(forms.ModelForm):
 
     class Meta:
         model = Client
-        fields = ["name", "latitude", "longitude", "caption"]
+        fields = ["name", "latitude", "longitude", "caption", "is_departed"]
         widgets = {
             "name": forms.TextInput(attrs=_attrs(placeholder="Ism Familiya")),
             # UI da bitta maydon orqali kiritiladi, shu sababli hidden qilib qo'yamiz
             "latitude": forms.HiddenInput(),
             "longitude": forms.HiddenInput(),
             "caption": forms.Textarea(attrs=_attrs(placeholder="Qo'shimcha ma'lumotlar")),
+            "is_departed": forms.CheckboxInput(attrs={"class": "h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"}),
         }
 
     def __init__(self, *args, **kwargs):
