@@ -10,9 +10,19 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveIndex(
-            model_name='order',
-            name='order_status_payment_idx',
+        migrations.SeparateDatabaseAndState(
+            database_operations=[
+                migrations.RunSQL(
+                    sql='DROP INDEX IF EXISTS order_status_payment_idx;',
+                    reverse_sql=migrations.RunSQL.noop,
+                ),
+            ],
+            state_operations=[
+                migrations.RemoveIndex(
+                    model_name='order',
+                    name='order_status_payment_idx',
+                ),
+            ],
         ),
         migrations.AddField(
             model_name='order',
