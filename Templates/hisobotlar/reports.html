@@ -15,7 +15,7 @@
   .metric-label {
     @apply text-sm text-gray-600 dark:text-gray-400;
   }
-  #password-overlay {
+	  #password-overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -26,9 +26,19 @@
     z-index: 9999;
     display: flex;
     align-items: center;
-    justify-content: center;
-  }
-</style>
+	    justify-content: center;
+	  }
+	  input[type="date"] {
+	    color-scheme: light;
+	  }
+	  .dark input[type="date"] {
+	    color-scheme: dark;
+	  }
+	  .dark input[type="date"]::-webkit-calendar-picker-indicator {
+	    filter: invert(1) brightness(1.4);
+	    opacity: .9;
+	  }
+	</style>
 {% endblock %}
 
 {% block content %}
@@ -348,8 +358,8 @@
     {% if clients_page.has_other_pages %}
     <div class="mt-4 flex items-center justify-center gap-2">
       {% if clients_page.has_previous %}
-        <a href="?{% query_transform page=1 %}" class="px-3 py-1.5 rounded bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition text-sm">« Birinchi</a>
-        <a href="?{% query_transform page=clients_page.previous_page_number %}" class="px-3 py-1.5 rounded bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition text-sm">‹ Oldingi</a>
+	        <a href="?{% query_transform page=1 %}" class="px-3 py-1.5 rounded bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600 transition text-sm">« Birinchi</a>
+	        <a href="?{% query_transform page=clients_page.previous_page_number %}" class="px-3 py-1.5 rounded bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600 transition text-sm">‹ Oldingi</a>
       {% endif %}
 
       <span class="px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300">
@@ -357,8 +367,8 @@
       </span>
 
       {% if clients_page.has_next %}
-        <a href="?{% query_transform page=clients_page.next_page_number %}" class="px-3 py-1.5 rounded bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition text-sm">Keyingi ›</a>
-        <a href="?{% query_transform page=clients_page.paginator.num_pages %}" class="px-3 py-1.5 rounded bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition text-sm">Oxirgi »</a>
+	        <a href="?{% query_transform page=clients_page.next_page_number %}" class="px-3 py-1.5 rounded bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600 transition text-sm">Keyingi ›</a>
+	        <a href="?{% query_transform page=clients_page.paginator.num_pages %}" class="px-3 py-1.5 rounded bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600 transition text-sm">Oxirgi »</a>
       {% endif %}
     </div>
     {% endif %}

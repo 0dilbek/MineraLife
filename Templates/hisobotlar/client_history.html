@@ -2,6 +2,21 @@
 {% load querystring humanize %}
 {% block title %}{{ client.name }} tarixi{% endblock %}
 
+{% block extra_head %}
+<style>
+  input[type="date"] {
+    color-scheme: light;
+  }
+  .dark input[type="date"] {
+    color-scheme: dark;
+  }
+  .dark input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) brightness(1.4);
+    opacity: .9;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="mx-auto max-w-7xl space-y-4 px-4 py-6">
   <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -11,8 +26,8 @@
       <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ start_date|date:"d.m.Y" }} — {{ end_date|date:"d.m.Y" }}</p>
     </div>
     <form method="get" class="grid gap-2 sm:grid-cols-[1fr_1fr_1fr_auto]">
-      <input type="date" name="start" value="{{ start_date|date:'Y-m-d' }}" class="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
-      <input type="date" name="end" value="{{ end_date|date:'Y-m-d' }}" class="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
+      <input type="date" name="start" value="{{ start_date|date:'Y-m-d' }}" class="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
+      <input type="date" name="end" value="{{ end_date|date:'Y-m-d' }}" class="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
       <select name="payment" class="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
         <option value="all" {% if payment == 'all' %}selected{% endif %}>Hammasi</option>
         <option value="cash" {% if payment == 'cash' %}selected{% endif %}>Naqd</option>
@@ -111,11 +126,11 @@
       {% if orders_page.has_other_pages %}
       <div class="flex items-center justify-center gap-2 border-t border-gray-100 p-3 text-sm dark:border-gray-700">
         {% if orders_page.has_previous %}
-        <a href="?{% query_transform page=orders_page.previous_page_number %}" class="rounded bg-gray-100 px-3 py-1.5 dark:bg-gray-700">Oldingi</a>
+        <a href="?{% query_transform page=orders_page.previous_page_number %}" class="rounded bg-gray-100 px-3 py-1.5 text-gray-800 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600">Oldingi</a>
         {% endif %}
         <span class="text-gray-600 dark:text-gray-300">{{ orders_page.number }} / {{ orders_page.paginator.num_pages }}</span>
         {% if orders_page.has_next %}
-        <a href="?{% query_transform page=orders_page.next_page_number %}" class="rounded bg-gray-100 px-3 py-1.5 dark:bg-gray-700">Keyingi</a>
+        <a href="?{% query_transform page=orders_page.next_page_number %}" class="rounded bg-gray-100 px-3 py-1.5 text-gray-800 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600">Keyingi</a>
         {% endif %}
       </div>
       {% endif %}
