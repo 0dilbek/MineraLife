@@ -164,7 +164,7 @@
             </div>
 	                <div class="mt-3 grid grid-cols-2 gap-2">
 	                {% if order.client.latitude and order.client.longitude %}
-	                <a href="https://www.google.com/maps/search/?api=1&query={{ order.client.latitude }},{{ order.client.longitude }}" target="_blank" rel="noopener" title="Manzil" aria-label="Manzilni ochish" class="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-white/70 bg-white/64 px-3 py-2.5 text-sm font-bold text-gray-800 shadow-sm backdrop-blur transition hover:bg-white/84 active:scale-[.99] dark:border-white/10 dark:bg-white/10 dark:text-gray-100 dark:hover:bg-white/15 sm:min-h-14">
+	                <a href="https://yandex.com/maps/?rtext=~{{ order.client.latitude }},{{ order.client.longitude }}&rtt=auto" target="_blank" rel="noopener" title="Manzil" aria-label="Manzilni ochish" class="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-white/70 bg-white/64 px-3 py-2.5 text-sm font-bold text-gray-800 shadow-sm backdrop-blur transition hover:bg-white/84 active:scale-[.99] dark:border-white/10 dark:bg-white/10 dark:text-gray-100 dark:hover:bg-white/15 sm:min-h-14">
 	                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
 	                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21s7-4.35 7-11a7 7 0 10-14 0c0 6.65 7 11 7 11z"/>
 	                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10h.01"/>
