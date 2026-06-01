@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}MineraLife{% endblock %}</title>
+    <title>{% block title %}Ocean{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         // Dark mode toggle uchun
@@ -46,7 +46,7 @@
         <!-- Chap: Logo + Desktop menyu -->
         <div class="flex items-center gap-6">
             <a href="/" class="flex items-center text-xl font-bold text-blue-600 dark:text-blue-400">
-            MineraLife
+            Ocean
             </a>
 
             {% if user.is_authenticated and user.is_superuser %}
@@ -189,7 +189,7 @@
     <!-- Footer -->
     <footer class="bg-white dark:bg-gray-800 shadow mt-auto">
         <div class="max-w-7xl mx-auto py-4 px-4 text-center text-gray-600 dark:text-gray-400">
-            &copy; {{ now|date:"Y" }} MineraLife. Barcha huquqlar himoyalangan.
+            &copy; {{ now|date:"Y" }} Ocean. Barcha huquqlar himoyalangan.
         </div>
     </footer>
 
