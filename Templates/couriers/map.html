@@ -109,43 +109,61 @@
       </div>
     </div>
 
-    <div id="map-sheet" class="absolute inset-x-2 bottom-2 z-20 hidden rounded-lg border border-gray-300 bg-white p-3 shadow-2xl shadow-gray-900/25 dark:border-gray-600 dark:bg-gray-900 dark:shadow-black/50 sm:inset-x-auto sm:right-3 sm:w-80">
-      <div class="flex items-start justify-between gap-2">
+  </section>
+
+  <div id="order-modal" class="fixed inset-0 z-50 hidden items-end justify-center bg-gray-950/55 p-3 backdrop-blur-sm sm:items-center" role="dialog" aria-modal="true" aria-labelledby="modal-client">
+    <div class="w-full max-w-md overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900">
+      <div class="flex items-start justify-between gap-3 border-b border-gray-200 p-4 dark:border-gray-700">
         <div class="min-w-0">
-          <h2 id="sheet-client" class="truncate text-sm font-bold text-gray-900 dark:text-white"></h2>
-          <p id="sheet-caption" class="mt-0.5 line-clamp-1 text-xs text-gray-700 dark:text-gray-300"></p>
+          <p class="text-xs font-bold uppercase tracking-wide text-blue-600 dark:text-blue-400">Buyurtma ma'lumotlari</p>
+          <h2 id="modal-client" class="mt-1 text-lg font-extrabold leading-tight text-gray-900 dark:text-white"></h2>
+          <p id="modal-caption" class="mt-1 text-sm leading-5 text-gray-700 dark:text-gray-300"></p>
         </div>
-        <button type="button" onclick="closeSheet()" class="rounded-md p-1 text-gray-500 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/10" aria-label="Panelni yopish">
+        <button type="button" onclick="closeSheet()" class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800" aria-label="Modalni yopish">
           <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
           </svg>
         </button>
       </div>
-      <div class="mt-2 grid grid-cols-2 gap-2 text-xs">
-        <div class="rounded-lg bg-gray-100 px-2 py-1.5 dark:bg-gray-800">
-          <span class="text-gray-600 dark:text-gray-300">Oldim</span>
-          <p id="sheet-in" class="text-sm font-bold text-gray-900 dark:text-white"></p>
+
+      <div class="space-y-3 p-4">
+        <div class="grid grid-cols-2 gap-3">
+          <div class="rounded-lg bg-gray-100 p-3 dark:bg-gray-800">
+            <span class="text-sm font-semibold text-gray-600 dark:text-gray-300">Oldim</span>
+            <p id="modal-in" class="mt-1 text-xl font-extrabold text-gray-900 dark:text-white"></p>
+          </div>
+          <div class="rounded-lg bg-gray-100 p-3 dark:bg-gray-800">
+            <span class="text-sm font-semibold text-gray-600 dark:text-gray-300">Berdim</span>
+            <p id="modal-out" class="mt-1 text-xl font-extrabold text-gray-900 dark:text-white"></p>
+          </div>
         </div>
-        <div class="rounded-lg bg-gray-100 px-2 py-1.5 dark:bg-gray-800">
-          <span class="text-gray-600 dark:text-gray-300">Berdim</span>
-          <p id="sheet-out" class="text-sm font-bold text-gray-900 dark:text-white"></p>
+
+        <div id="modal-payment-wrap" class="rounded-lg border border-gray-200 p-3 text-sm text-gray-700 dark:border-gray-700 dark:text-gray-300">
+          <span class="font-semibold text-gray-900 dark:text-white">To'lov:</span>
+          <span id="modal-payment"></span>
         </div>
-      </div>
-      <div class="mt-2 flex gap-2">
-        <a id="sheet-edit" href="#" title="Ko'rish" aria-label="Buyurtmani ko'rish" class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-white hover:bg-blue-700">
-          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.46 12C3.73 7.94 7.52 5 12 5s8.27 2.94 9.54 7c-1.27 4.06-5.06 7-9.54 7s-8.27-2.94-9.54-7z"/>
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-          </svg>
-        </a>
-        <a id="sheet-nav" href="#" target="_blank" rel="noopener" title="Navigatsiya" aria-label="Navigatsiyani ochish" class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-900 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700">
-          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 11l18-8-8 18-2-8-8-2z"/>
-          </svg>
-        </a>
+
+        <div class="grid gap-2">
+          <a id="modal-edit" href="#" class="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3 text-base font-extrabold text-white shadow-sm hover:bg-blue-700">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.46 12C3.73 7.94 7.52 5 12 5s8.27 2.94 9.54 7c-1.27 4.06-5.06 7-9.54 7s-8.27-2.94-9.54-7z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            Buyurtmani ochish
+          </a>
+          <a id="modal-nav" href="#" target="_blank" rel="noopener" class="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-3 text-base font-extrabold text-gray-900 shadow-sm hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 11l18-8-8 18-2-8-8-2z"/>
+            </svg>
+            Navigatsiyani ochish
+          </a>
+          <button type="button" onclick="closeSheet()" class="inline-flex min-h-12 items-center justify-center rounded-lg bg-gray-100 px-4 py-3 text-base font-extrabold text-gray-800 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700">
+            Yopish
+          </button>
+        </div>
       </div>
     </div>
-  </section>
+  </div>
 </div>
 
 <script>
@@ -237,6 +255,12 @@
     });
 
     map.events.add('click', closeSheet);
+    document.getElementById('order-modal').addEventListener('click', (event) => {
+      if (event.target.id === 'order-modal') closeSheet();
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') closeSheet();
+    });
 
     applyMapFilter('all');
     setTimeout(recenter, 100);
@@ -266,19 +290,26 @@
   }
 
   function openSheet(point) {
-    const sheet = document.getElementById('map-sheet');
-    document.getElementById('sheet-client').textContent = point.client || '';
-    document.getElementById('sheet-caption').textContent = point.caption || point.payment || '';
-    document.getElementById('sheet-in').textContent = `${point.inquantity || 0} dona`;
-    document.getElementById('sheet-out').textContent = `${point.outquantity || 0} dona`;
-    document.getElementById('sheet-edit').href = `/couriers/order/${point.id}/update/`;
-    document.getElementById('sheet-nav').href = `https://yandex.com/maps/?rtext=~${point.lat},${point.lon}&rtt=auto`;
+    const modal = document.getElementById('order-modal');
+    const caption = point.caption || point.phone || '';
+    const payment = point.payment || '';
 
-    sheet.classList.remove('hidden');
+    document.getElementById('modal-client').textContent = point.client || '';
+    document.getElementById('modal-caption').textContent = caption;
+    document.getElementById('modal-in').textContent = `${point.inquantity || 0} dona`;
+    document.getElementById('modal-out').textContent = `${point.outquantity || 0} dona`;
+    document.getElementById('modal-payment').textContent = payment || 'Ko\'rsatilmagan';
+    document.getElementById('modal-edit').href = `/couriers/order/${point.id}/update/`;
+    document.getElementById('modal-nav').href = `https://yandex.com/maps/?rtext=~${point.lat},${point.lon}&rtt=auto`;
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
   }
 
   function closeSheet() {
-    document.getElementById('map-sheet').classList.add('hidden');
+    const modal = document.getElementById('order-modal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
   }
 
   function recenter() {

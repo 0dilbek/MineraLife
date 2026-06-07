@@ -373,6 +373,54 @@ def assign_courier_to_order(request, order_id):
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
+@require_POST
+@user_passes_test(lambda u: u.is_superuser)
+def bulk_assign_courier_to_orders(request):
+    """Admin xaritada tanlangan buyurtmalarni bitta kuryerga biriktiradi."""
+    try:
+        data = json.loads(request.body)
+        raw_order_ids = data.get("order_ids", [])
+        courier_id = data.get("courier_id")
+
+        if not isinstance(raw_order_ids, list):
+            return JsonResponse({"success": False, "error": "Buyurtmalar ro'yxati noto'g'ri"}, status=400)
+
+        order_ids = []
+        for raw_id in raw_order_ids:
+            try:
+                order_ids.append(int(raw_id))
+            except (TypeError, ValueError):
+                return JsonResponse({"success": False, "error": "Buyurtma ID noto'g'ri"}, status=400)
+
+        order_ids = list(dict.fromkeys(order_ids))
+        if not order_ids:
+            return JsonResponse({"success": False, "error": "Kamida bitta buyurtma tanlang"}, status=400)
+
+        courier = None
+        if courier_id:
+            try:
+                courier = User.objects.get(id=int(courier_id), is_active=True)
+            except (TypeError, ValueError, User.DoesNotExist):
+                return JsonResponse({"success": False, "error": "Kuryer topilmadi"}, status=404)
+
+            courier_group = Group.objects.filter(name="couriers").first()
+            if courier_group and not courier.groups.filter(id=courier_group.id).exists():
+                return JsonResponse({"success": False, "error": "Tanlangan foydalanuvchi kuryer emas"}, status=400)
+
+        updated_count = Order.objects.filter(id__in=order_ids).update(courier=courier)
+
+        return JsonResponse({
+            "success": True,
+            "message": "Buyurtmalar muvaffaqiyatli yangilandi",
+            "updated_count": updated_count,
+            "courier": courier.username if courier else None,
+        })
+    except json.JSONDecodeError:
+        return JsonResponse({"success": False, "error": "JSON ma'lumot noto'g'ri"}, status=400)
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)}, status=500)
+
+
 # Kuryer marshrutini saqlash/o'chirish API
 @require_POST
 @user_passes_test(lambda u: u.is_superuser)
