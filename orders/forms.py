@@ -4,6 +4,7 @@ from django.utils import timezone
 from .models import Order
 from clients.models import Client
 from django.contrib.auth.models import User
+from common.widgets import EmptyZeroNumberInput
 
 
 def _attrs(**kw):
@@ -29,15 +30,15 @@ class OrderForm(forms.ModelForm):
         widgets = {
             "client": forms.Select(attrs=_attrs()),
             "courier": forms.Select(attrs=_attrs()),
-            "inquantity": forms.NumberInput(attrs=_attrs(min=0, placeholder="oldim")),
-            "outquantity": forms.NumberInput(attrs=_attrs(min=0, placeholder="berdim")),
+            "inquantity": EmptyZeroNumberInput(attrs=_attrs(min=0, placeholder="oldim")),
+            "outquantity": EmptyZeroNumberInput(attrs=_attrs(min=0, placeholder="berdim")),
             "price": forms.NumberInput(attrs=_attrs(step="1", min=0, placeholder="18000")),
             "status": forms.Select(attrs=_attrs()),
             "effective_date": forms.DateInput(attrs=_attrs(type="date")),
-            "cash_amount": forms.NumberInput(attrs=_attrs(step="1", min=0, placeholder="0")),
-            "card_amount": forms.NumberInput(attrs=_attrs(step="1", min=0, placeholder="0")),
-            "perechesleniya_amount": forms.NumberInput(attrs=_attrs(step="1", min=0, placeholder="0")),
-            "debt_amount": forms.NumberInput(attrs=_attrs(step="1", min=0, placeholder="0")),
+            "cash_amount": EmptyZeroNumberInput(attrs=_attrs(step="1", min=0, placeholder="0")),
+            "card_amount": EmptyZeroNumberInput(attrs=_attrs(step="1", min=0, placeholder="0")),
+            "perechesleniya_amount": EmptyZeroNumberInput(attrs=_attrs(step="1", min=0, placeholder="0")),
+            "debt_amount": EmptyZeroNumberInput(attrs=_attrs(step="1", min=0, placeholder="0")),
             "notes": forms.Textarea(attrs=_attrs(rows=3, placeholder="Qo'shimcha izohlar...")),
         }
 
@@ -53,8 +54,12 @@ class OrderForm(forms.ModelForm):
         ).order_by('username')
 
         if not self.instance.pk:
-            self.fields['effective_date'].initial = timezone.localdate()
+            if "effective_date" not in self.initial:
+                self.fields['effective_date'].initial = timezone.localdate()
             self.fields['price'].initial = 18000
+
+        for field_name in ("inquantity", "outquantity", "cash_amount", "card_amount", "perechesleniya_amount", "debt_amount"):
+            self.fields[field_name].required = False
 
         self.fields['effective_date'].help_text = "Buyurtma bajarilish sanasi"
         self.fields['inquantity'].help_text = "oldim miqdori"
@@ -84,6 +89,9 @@ class OrderForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
+        for field_name in ("inquantity", "outquantity", "cash_amount", "card_amount", "perechesleniya_amount", "debt_amount"):
+            if cleaned_data.get(field_name) in (None, ""):
+                cleaned_data[field_name] = 0
         inquantity = cleaned_data.get('inquantity', 0) or 0
         outquantity = cleaned_data.get('outquantity', 0) or 0
         if inquantity < 0:
@@ -106,13 +114,13 @@ class SimpleOrderForm(forms.ModelForm):
         widgets = {
             "client": forms.Select(attrs=_attrs()),
             "courier": forms.Select(attrs=_attrs()),
-            "price": forms.NumberInput(attrs=_attrs(step="1", min=0)),
+            "price": EmptyZeroNumberInput(attrs=_attrs(step="1", min=0)),
             "status": forms.Select(attrs=_attrs()),
             "effective_date": forms.DateInput(attrs=_attrs(type="date")),
-            "cash_amount": forms.NumberInput(attrs=_attrs(step="1", min=0, placeholder="0")),
-            "card_amount": forms.NumberInput(attrs=_attrs(step="1", min=0, placeholder="0")),
-            "perechesleniya_amount": forms.NumberInput(attrs=_attrs(step="1", min=0, placeholder="0")),
-            "debt_amount": forms.NumberInput(attrs=_attrs(step="1", min=0, placeholder="0")),
+            "cash_amount": EmptyZeroNumberInput(attrs=_attrs(step="1", min=0, placeholder="0")),
+            "card_amount": EmptyZeroNumberInput(attrs=_attrs(step="1", min=0, placeholder="0")),
+            "perechesleniya_amount": EmptyZeroNumberInput(attrs=_attrs(step="1", min=0, placeholder="0")),
+            "debt_amount": EmptyZeroNumberInput(attrs=_attrs(step="1", min=0, placeholder="0")),
             "notes": forms.Textarea(attrs=_attrs(rows=3)),
         }
 
@@ -127,5 +135,15 @@ class SimpleOrderForm(forms.ModelForm):
             groups__name='couriers'
         ).order_by('username')
 
-        if not self.instance.pk:
+        if not self.instance.pk and "effective_date" not in self.initial:
             self.fields['effective_date'].initial = timezone.localdate()
+
+        for field_name in ("cash_amount", "card_amount", "perechesleniya_amount", "debt_amount"):
+            self.fields[field_name].required = False
+
+    def clean(self):
+        cleaned_data = super().clean()
+        for field_name in ("cash_amount", "card_amount", "perechesleniya_amount", "debt_amount"):
+            if cleaned_data.get(field_name) in (None, ""):
+                cleaned_data[field_name] = 0
+        return cleaned_data

@@ -1,10 +1,13 @@
 import json
+from datetime import timedelta
 
 from django.contrib.auth.models import Group, User
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from clients.models import Client
+from orders.forms import OrderForm
 from orders.models import Order
 
 
@@ -61,3 +64,45 @@ class BulkAssignCourierToOrdersTests(TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertFalse(response.json()["success"])
+
+
+class OrderWorkingDateTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_superuser(
+            username="date-admin",
+            email="date-admin@example.com",
+            password="password",
+        )
+        self.client.force_login(self.admin)
+
+    def test_order_list_preset_is_reused_by_create_form(self):
+        tomorrow = timezone.localdate() + timedelta(days=1)
+
+        self.client.get(reverse("orders:list"), {"preset": "tomorrow"})
+        response = self.client.get(reverse("orders:create"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["form"].initial["effective_date"], tomorrow)
+
+    def test_order_list_without_query_uses_session_working_date(self):
+        yesterday = timezone.localdate() - timedelta(days=1)
+        session = self.client.session
+        session["orders_working_date"] = yesterday.isoformat()
+        session.save()
+
+        response = self.client.get(reverse("orders:list"))
+
+        self.assertEqual(response.context["start_date"], yesterday)
+        self.assertEqual(response.context["end_date"], yesterday)
+
+
+class EmptyZeroInputTests(TestCase):
+    def test_order_form_renders_zero_values_as_empty_inputs(self):
+        client_obj = Client.objects.create(name="Zero Client")
+        order = Order.objects.create(client=client_obj, inquantity=0, outquantity=0)
+
+        form = OrderForm(instance=order)
+
+        self.assertIn('name="inquantity" value=""', str(form["inquantity"]))
+        self.assertIn('name="outquantity" value=""', str(form["outquantity"]))
+        self.assertIn('name="cash_amount" value=""', str(form["cash_amount"]))

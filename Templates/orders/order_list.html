@@ -54,7 +54,7 @@
 	        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3v18m-5-8v8m10-13v13m5-5v5"/></svg>
 	        <span>Statistika</span>
 	      </button>
-	      <a href="{% url 'orders:create' %}{% if end_date %}?date={{ end_date|date:'Y-m-d' }}{% endif %}" class="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700 active:scale-[.99] sm:min-h-14">
+	      <a href="{% url 'orders:create' %}{% if start_date %}?date={{ start_date|date:'Y-m-d' }}{% endif %}" class="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700 active:scale-[.99] sm:min-h-14">
 	        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14m-7-7h14"/></svg>
 	        <span>Buyurtma</span>
 	      </a>

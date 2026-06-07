@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth.models import User, Group
 from django.core.exceptions import ValidationError
 from orders.models import Order
+from common.widgets import EmptyZeroNumberInput
 
 COURIER_GROUP_NAME = "couriers"
 
@@ -23,8 +24,8 @@ class CourierQuickCompleteForm(forms.ModelForm):
         model = Order
         fields = ["inquantity", "outquantity", "notes"]
         widgets = {
-            "inquantity": forms.NumberInput(attrs=_tw(min=0, placeholder="oldim")),
-            "outquantity": forms.NumberInput(attrs=_tw(min=0, placeholder="berdim", **{"data-price": "true"})),
+            "inquantity": EmptyZeroNumberInput(attrs=_tw(min=0, placeholder="oldim")),
+            "outquantity": EmptyZeroNumberInput(attrs=_tw(min=0, placeholder="berdim", **{"data-price": "true"})),
             "notes": forms.Textarea(attrs=_tw(rows=2, placeholder="Qo'shimcha izohlar (ixtiyoriy)...")),
         }
 
@@ -37,10 +38,14 @@ class CourierQuickCompleteForm(forms.ModelForm):
 
         self.fields['inquantity'].help_text = "Mijozga yetkazilgan mahsulot miqdori"
         self.fields['outquantity'].help_text = "Mijozdan olingan mahsulot miqdori"
-        self.fields['outquantity'].required = True
+        self.fields['inquantity'].required = False
+        self.fields['outquantity'].required = False
 
     def clean(self):
         cleaned_data = super().clean()
+        for field_name in ("inquantity", "outquantity"):
+            if cleaned_data.get(field_name) in (None, ""):
+                cleaned_data[field_name] = 0
         inquantity = cleaned_data.get('inquantity', 0) or 0
         outquantity = cleaned_data.get('outquantity', 0) or 0
 
@@ -66,13 +71,13 @@ class CourierOrderUpdateForm(forms.ModelForm):
             "notes"
         ]
         widgets = {
-            "inquantity": forms.NumberInput(attrs=_tw(min=0, placeholder="oldim")),
-            "outquantity": forms.NumberInput(attrs=_tw(min=0, placeholder="berdim")),
+            "inquantity": EmptyZeroNumberInput(attrs=_tw(min=0, placeholder="oldim")),
+            "outquantity": EmptyZeroNumberInput(attrs=_tw(min=0, placeholder="berdim")),
             "status": forms.Select(attrs=_tw()),
-            "cash_amount": forms.NumberInput(attrs=_tw(step="1", min=0, placeholder="0")),
-            "card_amount": forms.NumberInput(attrs=_tw(step="1", min=0, placeholder="0")),
-            "perechesleniya_amount": forms.NumberInput(attrs=_tw(step="1", min=0, placeholder="0")),
-            "debt_amount": forms.NumberInput(attrs=_tw(step="1", min=0, placeholder="0")),
+            "cash_amount": EmptyZeroNumberInput(attrs=_tw(step="1", min=0, placeholder="0")),
+            "card_amount": EmptyZeroNumberInput(attrs=_tw(step="1", min=0, placeholder="0")),
+            "perechesleniya_amount": EmptyZeroNumberInput(attrs=_tw(step="1", min=0, placeholder="0")),
+            "debt_amount": EmptyZeroNumberInput(attrs=_tw(step="1", min=0, placeholder="0")),
             "notes": forms.Textarea(attrs=_tw(rows=3, placeholder="Qo'shimcha izohlar...")),
         }
 
@@ -94,8 +99,14 @@ class CourierOrderUpdateForm(forms.ModelForm):
         self.fields['debt_amount'].label = "Qarz (so'm)"
         self.fields['notes'].label = "Izohlar"
 
+        for field_name in ("inquantity", "outquantity", "cash_amount", "card_amount", "perechesleniya_amount", "debt_amount"):
+            self.fields[field_name].required = False
+
     def clean(self):
         cleaned_data = super().clean()
+        for field_name in ("inquantity", "outquantity", "cash_amount", "card_amount", "perechesleniya_amount", "debt_amount"):
+            if cleaned_data.get(field_name) in (None, ""):
+                cleaned_data[field_name] = 0
         inquantity = cleaned_data.get('inquantity', 0)
         outquantity = cleaned_data.get('outquantity', 0)
 
