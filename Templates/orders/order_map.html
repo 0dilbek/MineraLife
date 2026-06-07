@@ -196,6 +196,82 @@
       box-shadow: 0 12px 28px rgba(15,23,42,.20);
     }
 
+    .map-search-panel{
+      position:absolute;
+      right:.75rem;
+      top:3.75rem;
+      z-index:12;
+      width:min(22rem, calc(100% - 1.5rem));
+      transform-origin:top right;
+      transition:transform .18s ease, opacity .18s ease;
+    }
+    .map-search-panel.is-collapsed{
+      opacity:0;
+      transform:scale(.96);
+      pointer-events:none;
+    }
+    .map-search-box{
+      display:flex;
+      gap:.5rem;
+      border:1px solid rgba(209,213,219,.95);
+      border-radius:.75rem;
+      background:rgba(255,255,255,.96);
+      padding:.5rem;
+      box-shadow:0 16px 38px rgba(15,23,42,.22);
+      backdrop-filter:blur(10px);
+    }
+    .dark .map-search-box{
+      border-color:rgba(75,85,99,.95);
+      background:rgba(17,24,39,.96);
+    }
+    .map-search-input{
+      min-height:2.5rem;
+      min-width:0;
+      flex:1;
+      border:1px solid rgba(107,114,128,.45);
+      border-radius:.6rem;
+      background:#fff;
+      padding:.55rem .7rem;
+      font-size:.9rem;
+      font-weight:600;
+      color:#111827;
+      outline:none;
+    }
+    .map-search-input:focus{
+      border-color:#2563eb;
+      box-shadow:0 0 0 3px rgba(37,99,235,.15);
+    }
+    .dark .map-search-input{
+      border-color:rgba(75,85,99,.95);
+      background:#111827;
+      color:#f9fafb;
+    }
+    .map-search-submit{
+      display:inline-flex;
+      min-height:2.5rem;
+      align-items:center;
+      justify-content:center;
+      border-radius:.6rem;
+      border:1px solid #2563eb;
+      background:#2563eb;
+      padding:.55rem .8rem;
+      font-size:.82rem;
+      font-weight:800;
+      color:#fff;
+    }
+    .map-search-submit:hover{ background:#1d4ed8; }
+    .map-search-status{
+      margin-top:.4rem;
+      border-radius:.55rem;
+      background:rgba(17,24,39,.86);
+      padding:.45rem .6rem;
+      font-size:.75rem;
+      font-weight:700;
+      color:#fff;
+      box-shadow:0 10px 22px rgba(15,23,42,.16);
+    }
+    .map-search-status:empty{ display:none; }
+
     /* Mobil: panel kengligini cheklash, gridni 1 ustun */
     @media (max-width: 768px){
       .ml-control{ max-width: 92vw }
@@ -206,6 +282,7 @@
       .selection-panel{ align-items:flex-start; flex-direction:column; }
       .selection-actions{ width:100%; justify-content:stretch; }
       .selection-btn{ flex:1; }
+      .map-search-panel{ top:3.55rem; }
     }
 
     /* Kattaroq ekranlarda panel eni */
@@ -213,7 +290,6 @@
       .ml-control{ max-width: 420px }
     }
 
-    /* (Removed) Custom global search bar styles */
   </style>
 {% endblock %}
 
@@ -293,6 +369,11 @@
   </button>
 
   <div class="absolute right-3 top-3 flex gap-2">
+    <button id="map-search-toggle" type="button" class="icon-btn" title="Qidiruv" aria-label="Joy qidirish" aria-controls="map-search-panel" aria-expanded="false">
+      <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 110-15 7.5 7.5 0 010 15z"/>
+      </svg>
+    </button>
     <button id="map-recenter" type="button" class="icon-btn" title="Moslashtirish" aria-label="Xaritani moslashtirish">
       <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4h4M4 4l5 5m11-1V4h-4m4 0l-5 5M4 16v4h4m-4 0l5-5m11 5l-5-5m5 5v-4h-4"/>
@@ -306,6 +387,14 @@
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
       </svg>
     </button>
+  </div>
+
+  <div id="map-search-panel" class="map-search-panel is-collapsed">
+    <form id="map-search-form" class="map-search-box">
+      <input id="map-search-input" class="map-search-input" type="search" autocomplete="off" placeholder="Manzil yoki joy nomi">
+      <button type="submit" class="map-search-submit">Qidirish</button>
+    </form>
+    <div id="map-search-status" class="map-search-status" aria-live="polite"></div>
   </div>
 
   <div id="selection-panel" class="selection-panel" aria-live="polite">
@@ -612,6 +701,7 @@
   let placemarkByOrderId = new Map();
   let selectedOrderIds = new Set();
   let selectionMode = false;
+  let searchPlacemark = null;
   let routeMode = false; // Marshrut chizish rejimi
   let currentRoute = null; // Hozirgi chizilayotgan marshrut
   let currentRouteCoords = []; // Chizilgan koordinatalar
@@ -636,19 +726,7 @@
 
     renderMarkers();
 
-    // Yandex SearchControl (joy nomlari bo'yicha qidiruv)
-    const searchControl = new ymaps.control.SearchControl({
-      options: {
-        provider: 'yandex#search',
-        useMapBounds: true,
-        noPlacemark: false,
-        size: 'large',
-        position: { right: 12, top: 112 },
-      }
-    });
-    map.controls.add(searchControl);
-
-    // (Removed) custom Recenter and Fullscreen buttons
+    setupCompactSearch();
 
     // Preset chip’lari
     document.querySelectorAll('#filter-panel [data-preset]').forEach(btn=>{
@@ -1132,7 +1210,78 @@
     });
   }
 
-  // (Removed) Custom search/highlight/filter functions — using Yandex SearchControl instead
+  function setupCompactSearch(){
+    const panel = document.getElementById('map-search-panel');
+    const toggle = document.getElementById('map-search-toggle');
+    const form = document.getElementById('map-search-form');
+    const input = document.getElementById('map-search-input');
+    const status = document.getElementById('map-search-status');
+
+    function setOpen(isOpen){
+      panel.classList.toggle('is-collapsed', !isOpen);
+      toggle.setAttribute('aria-expanded', String(isOpen));
+      if (isOpen) setTimeout(() => input.focus(), 80);
+    }
+
+    toggle?.addEventListener('click', (event) => {
+      event.stopPropagation();
+      setOpen(panel.classList.contains('is-collapsed'));
+    });
+
+    panel?.addEventListener('click', (event) => event.stopPropagation());
+
+    document.addEventListener('click', () => {
+      if (!panel.classList.contains('is-collapsed')) setOpen(false);
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') setOpen(false);
+    });
+
+    form?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const query = input.value.trim();
+      if (!query) {
+        status.textContent = 'Qidirish uchun manzil kiriting';
+        return;
+      }
+
+      status.textContent = 'Qidirilmoqda...';
+
+      try {
+        const result = await ymaps.geocode(query, {
+          boundedBy: map.getBounds(),
+          strictBounds: false,
+          results: 1
+        });
+        const first = result.geoObjects.get(0);
+
+        if (!first) {
+          status.textContent = 'Natija topilmadi';
+          return;
+        }
+
+        const coords = first.geometry.getCoordinates();
+        const name = first.properties.get('name') || query;
+        const description = first.properties.get('description') || '';
+
+        if (searchPlacemark) map.geoObjects.remove(searchPlacemark);
+        searchPlacemark = new ymaps.Placemark(coords, {
+          iconContent: 'Qidiruv',
+          balloonContent: `<strong>${esc(name)}</strong>${description ? `<br>${esc(description)}` : ''}`
+        }, {
+          preset: 'islands#violetStretchyIcon',
+          iconMaxWidth: 180
+        });
+        map.geoObjects.add(searchPlacemark);
+        map.setCenter(coords, Math.max(map.getZoom(), 15), { duration: 250 });
+        searchPlacemark.balloon.open();
+        status.textContent = name;
+      } catch (error) {
+        status.textContent = 'Qidiruvda xatolik yuz berdi';
+      }
+    });
+  }
 
   // === Filtr panelini toggling (har doim tugma bilan, default: yopiq) ===
   function setupFilterToggle(mapInstance){
