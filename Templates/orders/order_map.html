@@ -830,7 +830,8 @@
         `
       }, {
         preset,
-        iconMaxWidth: 240
+        iconMaxWidth: 240,
+        openBalloonOnClick: !selectionMode
       });
 
       // Qidiruv uchun saqlash
@@ -922,6 +923,10 @@
       toggleBtn.title = toggleLabel;
       toggleBtn.setAttribute('aria-label', toggleLabel);
     }
+    placemarkByOrderId.forEach(({ placemark }) => {
+      placemark.options.set('openBalloonOnClick', !selectionMode);
+      if (selectionMode) placemark.balloon.close();
+    });
     if (clearBtn) clearBtn.disabled = selectedCount === 0;
     if (assignBtn) assignBtn.disabled = selectedCount === 0;
     if (help) {
