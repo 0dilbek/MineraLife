@@ -73,14 +73,19 @@
             <div class="p-3 sm:p-5">
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                        <p class="text-xs font-medium text-blue-600 dark:text-blue-400 sm:text-sm">{{ today }}</p>
-                        <h1 class="mt-1 text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">Bugungi yo'nalish</h1>
+                        <p class="text-xs font-medium text-blue-600 dark:text-blue-400 sm:text-sm">{{ selected_date }}</p>
+                        <h1 class="mt-1 text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">Yo'nalish</h1>
                         <p class="mt-1 text-xs text-gray-600 dark:text-gray-300 sm:text-sm">
                             {{ orders|length }} ta buyurtma ichida {{ pending_count }} tasi kutilmoqda.
                         </p>
+                        {% if not can_edit_orders %}
+                        <p class="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800 ring-1 ring-amber-200 dark:bg-amber-900/30 dark:text-amber-100 dark:ring-amber-800">
+                            Bu sana faqat ko'rish uchun. O'zgartirish faqat bugungi buyurtmalarda mumkin.
+                        </p>
+                        {% endif %}
                     </div>
 	                    <div class="grid w-full grid-cols-2 gap-2 sm:w-auto">
-	                        <a href="{% url 'couriers:map' %}" class="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3 text-sm font-bold text-white shadow-sm shadow-blue-900/10 transition hover:bg-blue-700 active:scale-[.99] sm:min-h-14 sm:px-5">
+	                        <a href="{% url 'couriers:map' %}?preset={{ selected_preset|default:'today' }}" class="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3 text-sm font-bold text-white shadow-sm shadow-blue-900/10 transition hover:bg-blue-700 active:scale-[.99] sm:min-h-14 sm:px-5">
 	                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
 	                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5-2.5V5l5 2.5M9 20l6-3m-6 3V7.5m6 9.5l5 2.5V7l-5-2.5m0 12.5V4.5M9 7.5l6-3"/>
 	                            </svg>
@@ -112,6 +117,20 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </section>
+
+    <section class="rounded-lg border border-white/70 bg-white/62 p-2 shadow-sm shadow-sky-900/5 backdrop-blur-xl dark:border-white/10 dark:bg-gray-900/52 sm:p-3">
+        <div class="grid grid-cols-3 gap-2">
+            <a href="?preset=yesterday" class="inline-flex min-h-12 items-center justify-center rounded-lg px-3 py-2.5 text-sm font-bold transition {% if selected_preset == 'yesterday' %}bg-blue-600 text-white{% else %}bg-white/70 text-gray-800 hover:bg-white dark:bg-white/10 dark:text-gray-100 dark:hover:bg-white/15{% endif %}">
+                Kecha
+            </a>
+            <a href="?preset=today" class="inline-flex min-h-12 items-center justify-center rounded-lg px-3 py-2.5 text-sm font-bold transition {% if selected_preset == 'today' %}bg-blue-600 text-white{% else %}bg-white/70 text-gray-800 hover:bg-white dark:bg-white/10 dark:text-gray-100 dark:hover:bg-white/15{% endif %}">
+                Bugun
+            </a>
+            <a href="?preset=tomorrow" class="inline-flex min-h-12 items-center justify-center rounded-lg px-3 py-2.5 text-sm font-bold transition {% if selected_preset == 'tomorrow' %}bg-blue-600 text-white{% else %}bg-white/70 text-gray-800 hover:bg-white dark:bg-white/10 dark:text-gray-100 dark:hover:bg-white/15{% endif %}">
+                Ertaga
+            </a>
         </div>
     </section>
 
@@ -172,12 +191,12 @@
 	                    <span>Manzil</span>
 	                </a>
 	                {% endif %}
-	                <a href="{% url 'couriers:order_update' order.pk %}" title="Ko'rish" aria-label="Buyurtmani ko'rish" class="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 py-2.5 text-sm font-bold text-white shadow-sm shadow-blue-900/10 transition hover:bg-blue-700 active:scale-[.99] sm:min-h-14 {% if not order.client.latitude or not order.client.longitude %}col-span-2{% endif %}">
+	                <a href="{% url 'couriers:order_update' order.pk %}" title="{% if can_edit_orders %}Ko'rish va tahrirlash{% else %}Faqat ko'rish{% endif %}" aria-label="Buyurtmani ko'rish" class="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-bold shadow-sm transition active:scale-[.99] sm:min-h-14 {% if can_edit_orders %}bg-blue-600 text-white shadow-blue-900/10 hover:bg-blue-700{% else %}border border-white/70 bg-white/64 text-gray-800 backdrop-blur hover:bg-white/84 dark:border-white/10 dark:bg-white/10 dark:text-gray-100 dark:hover:bg-white/15{% endif %} {% if not order.client.latitude or not order.client.longitude %}col-span-2{% endif %}">
 	                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
 	                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.46 12C3.73 7.94 7.52 5 12 5s8.27 2.94 9.54 7c-1.27 4.06-5.06 7-9.54 7s-8.27-2.94-9.54-7z"/>
 	                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
 	                    </svg>
-	                    <span>Ko'rish</span>
+	                    <span>{% if can_edit_orders %}Ko'rish{% else %}Faqat ko'rish{% endif %}</span>
 	                </a>
 	                </div>
         </article>
@@ -185,7 +204,7 @@
     </section>
     {% else %}
     <section class="rounded-lg border border-dashed border-white/70 bg-white/68 p-10 text-center shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-gray-900/58">
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Bugun buyurtma yo'q</h2>
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Bu sanada buyurtma yo'q</h2>
         <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Yangi buyurtmalar shu yerda ko'rinadi.</p>
     </section>
     {% endif %}

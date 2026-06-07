@@ -9,6 +9,11 @@
             <a href="{% url 'couriers:dashboard' %}" class="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400">Dashboardga qaytish</a>
             <h1 class="mt-2 text-2xl font-bold text-gray-900 dark:text-white">{{ order.client.name }}</h1>
             <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Buyurtma #{{ order.id }} · {{ order.effective_date|date:"d.m.Y" }}</p>
+            {% if readonly %}
+            <p class="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-sm font-bold text-amber-800 ring-1 ring-amber-200 dark:bg-amber-900/30 dark:text-amber-100 dark:ring-amber-800">
+                Bu buyurtma faqat ko'rish uchun. O'zgartirish faqat bugungi buyurtmalarda mumkin.
+            </p>
+            {% endif %}
         </div>
         <span class="inline-flex w-fit rounded-full px-3 py-1 text-sm font-semibold
             {% if order.status == 'pending' %}bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100
@@ -83,6 +88,7 @@
                 </div>
                 {% endif %}
 
+                <fieldset {% if readonly %}disabled{% endif %} class="space-y-5 disabled:opacity-70">
                 <div class="grid gap-4 sm:grid-cols-2">
                     <div>
                         <label for="{{ form.inquantity.id_for_label }}" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">Oldim</label>
@@ -162,14 +168,21 @@
                     {{ form.notes }}
                     {% for error in form.notes.errors %}<p class="mt-1 text-sm text-rose-600">{{ error }}</p>{% endfor %}
                 </div>
+                </fieldset>
 
                 <div class="grid gap-3 border-t border-gray-200 pt-5 dark:border-gray-700 sm:grid-cols-2">
-                    <a href="{% url 'couriers:dashboard' %}" class="inline-flex min-h-11 items-center justify-center rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-800 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-100 dark:hover:bg-gray-700">
+                    <a href="{% url 'couriers:dashboard' %}?date={{ order.effective_date|date:'Y-m-d' }}" class="inline-flex min-h-11 items-center justify-center rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-800 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-100 dark:hover:bg-gray-700">
                         Bekor qilish
                     </a>
+                    {% if not readonly %}
                     <button type="submit" class="inline-flex min-h-11 items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
                         Saqlash
                     </button>
+                    {% else %}
+                    <a href="{% url 'couriers:dashboard' %}?date={{ order.effective_date|date:'Y-m-d' }}" class="inline-flex min-h-11 items-center justify-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100">
+                        Ro'yxatga qaytish
+                    </a>
+                    {% endif %}
                 </div>
             </form>
         </section>

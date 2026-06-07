@@ -22,6 +22,7 @@ from django.db.models import Sum
 from django.shortcuts import render
 from django.utils import timezone
 from datetime import datetime
+from datetime import timedelta
 
 from orders.models import Order
 from couriers.models import CourierRoute
@@ -35,15 +36,37 @@ def _safe_parse_date(s: str):
     except ValueError:
         return None
 
+
+def _courier_selected_date(request):
+    today = localdate()
+    preset = (request.GET.get("preset") or "today").lower()
+
+    if preset == "yesterday":
+        return today - timedelta(days=1), "yesterday"
+    if preset == "tomorrow":
+        return today + timedelta(days=1), "tomorrow"
+
+    requested_date = _safe_parse_date(request.GET.get("date"))
+    if requested_date:
+        if requested_date == today - timedelta(days=1):
+            return requested_date, "yesterday"
+        if requested_date == today + timedelta(days=1):
+            return requested_date, "tomorrow"
+        return requested_date, ""
+
+    return today, "today"
+
 @login_required
 def courier_dashboard(request):
     today = localdate()
+    selected_date, selected_preset = _courier_selected_date(request)
+    can_edit_orders = selected_date == today
     qs = (Order.objects
           .select_related("client", "courier")
           .prefetch_related("client__phone_numbers")
           .filter(
               courier=request.user,
-              effective_date=today
+              effective_date=selected_date
           )
           .order_by("-created_at"))
 
@@ -82,20 +105,29 @@ def courier_dashboard(request):
         "completed_count": completed_count,
         "cancelled_count": cancelled_count,
         "today": today,
+        "selected_date": selected_date,
+        "selected_preset": selected_preset,
+        "can_edit_orders": can_edit_orders,
     })
 
 @login_required
 def courier_order_update(request, pk):
     """Kurer buyurtma holatini va to'lov usulini tahrirlay oladi"""
+    today = localdate()
     order = get_object_or_404(
         Order.objects.select_related("client").prefetch_related("client__phone_numbers"), 
         pk=pk, courier=request.user
     )
+    readonly = order.effective_date != today
 
     # Formani har doim yaratish
     form = CourierOrderUpdateForm(instance=order)
 
     if request.method == "POST":
+        if readonly:
+            messages.error(request, "Bu sanadagi buyurtmani faqat ko'rish mumkin. O'zgartirish faqat bugungi buyurtmalar uchun.")
+            return redirect("couriers:order_update", pk=order.pk)
+
         # Quick action - modal orqali tez bajarish
         if 'quick_action' in request.POST:
             status = request.POST.get('status')
@@ -133,18 +165,21 @@ def courier_order_update(request, pk):
 
     return render(request, "couriers/order_update.html", {
         "order": order,
-        "form": form
+        "form": form,
+        "readonly": readonly,
     })
 
 @login_required
 def courier_map(request):
     today = localdate()
+    selected_date, selected_preset = _courier_selected_date(request)
+    can_edit_orders = selected_date == today
     qs = (Order.objects
           .select_related("client", "courier")
           .prefetch_related("client__phone_numbers")
           .filter(
               courier=request.user,
-              effective_date=today,
+              effective_date=selected_date,
               client__latitude__isnull=False,
               client__longitude__isnull=False
           )
@@ -177,7 +212,7 @@ def courier_map(request):
     # Kuryerning bugungi marshrutini olish
     route = None
     try:
-        courier_route = CourierRoute.objects.get(courier=request.user, date=today)
+        courier_route = CourierRoute.objects.get(courier=request.user, date=selected_date)
         route = {
             'route_data': courier_route.route_data,
             'color': courier_route.color
@@ -190,6 +225,9 @@ def courier_map(request):
         "route": json.dumps(route) if route else 'null',
         "stats": stats,
         "today": today,
+        "selected_date": selected_date,
+        "selected_preset": selected_preset,
+        "can_edit_orders": can_edit_orders,
     })
 
 
