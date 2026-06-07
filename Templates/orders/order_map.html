@@ -113,15 +113,16 @@
       bottom:1rem;
       z-index:10;
       display:flex;
-      width:min(42rem, calc(100% - 1.5rem));
+      width:auto;
+      max-width:calc(100% - 1.5rem);
       transform:translateX(-50%);
       align-items:center;
-      justify-content:space-between;
-      gap:.75rem;
+      justify-content:center;
+      gap:.45rem;
       border:1px solid rgba(209,213,219,.95);
-      border-radius:.75rem;
+      border-radius:999px;
       background:rgba(255,255,255,.96);
-      padding:.75rem;
+      padding:.35rem;
       box-shadow:0 18px 45px rgba(15,23,42,.24);
       backdrop-filter:blur(10px);
     }
@@ -136,42 +137,42 @@
     .selection-actions{
       display:flex;
       align-items:center;
-      gap:.5rem;
-      flex-wrap:wrap;
-      justify-content:flex-end;
+      gap:.35rem;
+      flex-wrap:nowrap;
+      justify-content:center;
     }
     .selection-count{
       display:inline-flex;
       align-items:center;
       justify-content:center;
-      min-width:2rem;
-      height:2rem;
+      min-width:2.35rem;
+      height:2.35rem;
       border-radius:999px;
       background:#111827;
       color:#fff;
       font-weight:800;
-      font-size:.85rem;
+      font-size:.9rem;
     }
     .dark .selection-count{ background:#f9fafb; color:#111827; }
     .selection-btn{
       display:inline-flex;
-      min-height:2.5rem;
+      width:2.6rem;
+      height:2.6rem;
       align-items:center;
       justify-content:center;
-      gap:.4rem;
-      border-radius:.6rem;
+      border-radius:999px;
       border:1px solid rgba(107,114,128,.45);
-      padding:.55rem .75rem;
-      font-size:.82rem;
-      font-weight:800;
+      padding:0;
       color:#111827;
       background:#fff;
       transition:background .15s ease, transform .15s ease, border-color .15s ease;
     }
+    .selection-btn svg{ width:1.15rem; height:1.15rem; }
     .selection-btn:hover{ background:#f9fafb; }
     .selection-btn:active{ transform:scale(.98); }
     .selection-btn.primary{ background:#2563eb; border-color:#2563eb; color:#fff; }
     .selection-btn.primary:hover{ background:#1d4ed8; }
+    .selection-btn.is-on{ background:#111827; border-color:#111827; color:#fff; }
     .selection-btn:disabled{ cursor:not-allowed; opacity:.55; transform:none; }
     .dark .selection-btn{
       background:#1f2937;
@@ -179,6 +180,7 @@
       color:#f9fafb;
     }
     .dark .selection-btn:hover{ background:#374151; }
+    .dark .selection-btn.is-on{ background:#f9fafb; border-color:#f9fafb; color:#111827; }
 
     /* Panel ochib-yopish animatsiyasi */
     #filter-panel {
@@ -279,9 +281,7 @@
       .admin-map-page{ margin:-1.5rem -1rem; padding:.75rem; }
       #orders-full-map{ height:calc(100vh - 180px); min-height:520px; }
       .map-topbar{ margin-bottom:.5rem; }
-      .selection-panel{ align-items:flex-start; flex-direction:column; }
-      .selection-actions{ width:100%; justify-content:stretch; }
-      .selection-btn{ flex:1; }
+      .selection-panel{ bottom:.75rem; }
       .map-search-panel{ top:3.55rem; }
     }
 
@@ -398,24 +398,24 @@
   </div>
 
   <div id="selection-panel" class="selection-panel" aria-live="polite">
-    <div class="flex min-w-0 items-center gap-3">
-      <span id="selected-count" class="selection-count">0</span>
-      <div class="min-w-0">
-        <div class="text-sm font-extrabold text-gray-900 dark:text-white">Buyurtmalarni tanlash</div>
-        <div id="selection-help" class="text-xs font-semibold text-gray-500 dark:text-gray-400">
-          Tanlash rejimini yoqing va xaritadagi markerlarni belgilang
-        </div>
-      </div>
-    </div>
+    <span id="selected-count" class="selection-count" title="Tanlangan buyurtmalar">0</span>
+    <span id="selection-help" class="sr-only">Tanlash rejimini yoqing va xaritadagi markerlarni belgilang</span>
     <div class="selection-actions">
-      <button id="selection-mode-toggle" type="button" class="selection-btn">
-        Tanlashni yoqish
+      <button id="selection-mode-toggle" type="button" class="selection-btn" title="Tanlash rejimini yoqish" aria-label="Tanlash rejimini yoqish">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-5M4 4h16v16H4z"/>
+        </svg>
       </button>
-      <button id="selection-clear" type="button" class="selection-btn" disabled>
-        Tozalash
+      <button id="selection-clear" type="button" class="selection-btn" title="Tanlovni tozalash" aria-label="Tanlovni tozalash" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
       </button>
-      <button id="bulk-assign-open" type="button" class="selection-btn primary" disabled>
-        Kuryerga biriktirish
+      <button id="bulk-assign-open" type="button" class="selection-btn primary" title="Tanlanganlarni kuryerga biriktirish" aria-label="Tanlanganlarni kuryerga biriktirish" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11a4 4 0 10-8 0v1H5l7 7 7-7h-3v-1z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 4h.01M20.5 6.5h.01"/>
+        </svg>
       </button>
     </div>
   </div>
@@ -916,7 +916,12 @@
 
     panel?.classList.toggle('is-active', selectionMode || selectedCount > 0);
     if (count) count.textContent = selectedCount;
-    if (toggleBtn) toggleBtn.textContent = selectionMode ? 'Tanlashni o‘chirish' : 'Tanlashni yoqish';
+    if (toggleBtn) {
+      const toggleLabel = selectionMode ? 'Tanlash rejimini o‘chirish' : 'Tanlash rejimini yoqish';
+      toggleBtn.classList.toggle('is-on', selectionMode);
+      toggleBtn.title = toggleLabel;
+      toggleBtn.setAttribute('aria-label', toggleLabel);
+    }
     if (clearBtn) clearBtn.disabled = selectedCount === 0;
     if (assignBtn) assignBtn.disabled = selectedCount === 0;
     if (help) {
