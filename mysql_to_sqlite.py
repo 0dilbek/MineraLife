@@ -2,7 +2,7 @@ import re
 import sqlite3
 import os
 
-INPUT_SQL = "db-backup.sql"
+INPUT_SQL = "db-backup-june.sql"
 OUTPUT_DB = "zahira.db"
 
 def convert_mysql_to_sqlite(sql):
