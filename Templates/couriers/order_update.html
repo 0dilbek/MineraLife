@@ -103,32 +103,58 @@
                 </div>
 
                 <div class="rounded-lg bg-gray-50 p-4 dark:bg-gray-900">
-                    <div class="flex items-center justify-between gap-3">
-                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">To'lov</h3>
+                    <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-900 dark:text-white">To'lov</h3>
+                            <p class="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                Buyurtma: <span id="courier-order-total">0 so'm</span>
+                            </p>
+                        </div>
                         <span id="courier-total-paid" class="text-sm font-bold text-blue-700 dark:text-blue-300">0 so'm</span>
                     </div>
-                    <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                    <div class="mt-3 grid gap-3 sm:grid-cols-2" id="payment-calculator">
                         <div>
                             <label class="mb-1 block text-sm text-gray-600 dark:text-gray-300">{{ form.cash_amount.label }}</label>
-                            {{ form.cash_amount }}
+                            <div class="flex gap-2">
+                                {{ form.cash_amount }}
+                                <button type="button" data-payment-toggle="cash" class="payment-toggle inline-flex min-h-12 min-w-16 items-center justify-center rounded-lg border-2 border-emerald-200 bg-white px-3 text-sm font-extrabold text-emerald-700 shadow-sm hover:bg-emerald-50 active:scale-[.98] dark:border-emerald-800 dark:bg-gray-800 dark:text-emerald-200 dark:hover:bg-emerald-900/30">
+                                    Naqd
+                                </button>
+                            </div>
                             {% for error in form.cash_amount.errors %}<p class="mt-1 text-sm text-rose-600">{{ error }}</p>{% endfor %}
                         </div>
                         <div>
                             <label class="mb-1 block text-sm text-gray-600 dark:text-gray-300">{{ form.card_amount.label }}</label>
-                            {{ form.card_amount }}
+                            <div class="flex gap-2">
+                                {{ form.card_amount }}
+                                <button type="button" data-payment-toggle="card" class="payment-toggle inline-flex min-h-12 min-w-16 items-center justify-center rounded-lg border-2 border-blue-200 bg-white px-3 text-sm font-extrabold text-blue-700 shadow-sm hover:bg-blue-50 active:scale-[.98] dark:border-blue-800 dark:bg-gray-800 dark:text-blue-200 dark:hover:bg-blue-900/30">
+                                    Karta
+                                </button>
+                            </div>
                             {% for error in form.card_amount.errors %}<p class="mt-1 text-sm text-rose-600">{{ error }}</p>{% endfor %}
                         </div>
                         <div>
                             <label class="mb-1 block text-sm text-gray-600 dark:text-gray-300">{{ form.perechesleniya_amount.label }}</label>
-                            {{ form.perechesleniya_amount }}
+                            <div class="flex gap-2">
+                                {{ form.perechesleniya_amount }}
+                                <button type="button" data-payment-toggle="perechesleniya" class="payment-toggle inline-flex min-h-12 min-w-16 items-center justify-center rounded-lg border-2 border-violet-200 bg-white px-3 text-sm font-extrabold text-violet-700 shadow-sm hover:bg-violet-50 active:scale-[.98] dark:border-violet-800 dark:bg-gray-800 dark:text-violet-200 dark:hover:bg-violet-900/30">
+                                    Perech
+                                </button>
+                            </div>
                             {% for error in form.perechesleniya_amount.errors %}<p class="mt-1 text-sm text-rose-600">{{ error }}</p>{% endfor %}
                         </div>
                         <div>
                             <label class="mb-1 block text-sm text-gray-600 dark:text-gray-300">{{ form.debt_amount.label }}</label>
-                            {{ form.debt_amount }}
+                            <div class="flex gap-2">
+                                {{ form.debt_amount }}
+                                <button type="button" data-payment-toggle="debt" class="payment-toggle inline-flex min-h-12 min-w-16 items-center justify-center rounded-lg border-2 border-orange-200 bg-white px-3 text-sm font-extrabold text-orange-700 shadow-sm hover:bg-orange-50 active:scale-[.98] dark:border-orange-800 dark:bg-gray-800 dark:text-orange-200 dark:hover:bg-orange-900/30">
+                                    Qarz
+                                </button>
+                            </div>
                             {% for error in form.debt_amount.errors %}<p class="mt-1 text-sm text-rose-600">{{ error }}</p>{% endfor %}
                         </div>
                     </div>
+                    <p id="payment-balance-hint" class="mt-3 hidden rounded-lg px-3 py-2 text-xs font-bold"></p>
                 </div>
 
                 <div>
@@ -152,26 +178,131 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const ids = [
-        '{{ form.cash_amount.id_for_label }}',
-        '{{ form.card_amount.id_for_label }}',
-        '{{ form.perechesleniya_amount.id_for_label }}',
-        '{{ form.debt_amount.id_for_label }}'
+    const unitPrice = Number('{{ order.price }}') || 0;
+    const outquantityInput = document.getElementById('{{ form.outquantity.id_for_label }}');
+    const payments = [
+        { key: 'cash', id: '{{ form.cash_amount.id_for_label }}' },
+        { key: 'card', id: '{{ form.card_amount.id_for_label }}' },
+        { key: 'perechesleniya', id: '{{ form.perechesleniya_amount.id_for_label }}' },
+        { key: 'debt', id: '{{ form.debt_amount.id_for_label }}' }
     ];
 
-    function updateTotalPaid() {
-        const total = ids.reduce((sum, id) => {
-            const input = document.getElementById(id);
-            return sum + (Number(input?.value) || 0);
-        }, 0);
-        const totalEl = document.getElementById('courier-total-paid');
-        if (totalEl) totalEl.textContent = `${total.toLocaleString()} so'm`;
+    const selectedPayments = new Set(
+        payments
+            .filter((payment) => Number(document.getElementById(payment.id)?.value) > 0)
+            .map((payment) => payment.key)
+    );
+
+    function formatMoney(value) {
+        return `${Math.round(value || 0).toLocaleString()} so'm`;
     }
 
-    ids.forEach((id) => {
-        const input = document.getElementById(id);
+    function getOrderTotal() {
+        return (Number(outquantityInput?.value) || 0) * unitPrice;
+    }
+
+    function updateTotalPaid() {
+        const total = payments.reduce((sum, payment) => {
+            const input = document.getElementById(payment.id);
+            return sum + (Number(input?.value) || 0);
+        }, 0);
+        const orderTotal = getOrderTotal();
+        const totalEl = document.getElementById('courier-total-paid');
+        const orderTotalEl = document.getElementById('courier-order-total');
+        const hint = document.getElementById('payment-balance-hint');
+
+        if (totalEl) totalEl.textContent = `Kiritildi: ${formatMoney(total)}`;
+        if (orderTotalEl) orderTotalEl.textContent = formatMoney(orderTotal);
+
+        if (!hint) return;
+
+        const diff = Math.round(total - orderTotal);
+        hint.classList.remove(
+            'hidden', 'bg-emerald-50', 'text-emerald-700', 'dark:bg-emerald-900/30', 'dark:text-emerald-100',
+            'bg-amber-50', 'text-amber-700', 'dark:bg-amber-900/30', 'dark:text-amber-100'
+        );
+
+        if (orderTotal <= 0 || total <= 0) {
+            hint.classList.add('hidden');
+        } else if (Math.abs(diff) <= 1) {
+            hint.textContent = 'To‘lov summasi buyurtmaga teng';
+            hint.classList.add('bg-emerald-50', 'text-emerald-700', 'dark:bg-emerald-900/30', 'dark:text-emerald-100');
+        } else {
+            hint.textContent = diff > 0
+                ? `${formatMoney(diff)} ortiqcha kiritildi`
+                : `${formatMoney(Math.abs(diff))} kam kiritildi`;
+            hint.classList.add('bg-amber-50', 'text-amber-700', 'dark:bg-amber-900/30', 'dark:text-amber-100');
+        }
+    }
+
+    function setButtonState(button, isActive) {
+        button.dataset.active = String(isActive);
+        button.classList.toggle('ring-4', isActive);
+        button.classList.toggle('ring-blue-200', isActive);
+        button.classList.toggle('dark:ring-blue-900/50', isActive);
+        button.classList.toggle('bg-gray-900', isActive);
+        button.classList.toggle('text-white', isActive);
+        button.classList.toggle('dark:bg-white', isActive);
+        button.classList.toggle('dark:text-gray-900', isActive);
+    }
+
+    function refreshPaymentButtons() {
+        document.querySelectorAll('[data-payment-toggle]').forEach((button) => {
+            setButtonState(button, selectedPayments.has(button.dataset.paymentToggle));
+        });
+    }
+
+    function distributePayment() {
+        const selected = payments.filter((payment) => selectedPayments.has(payment.key));
+        const total = Math.round(getOrderTotal());
+
+        payments.forEach((payment) => {
+            const input = document.getElementById(payment.id);
+            if (input && !selectedPayments.has(payment.key)) input.value = 0;
+        });
+
+        if (selected.length === 0) {
+            updateTotalPaid();
+            return;
+        }
+
+        const base = Math.floor(total / selected.length);
+        let remainder = total - (base * selected.length);
+
+        selected.forEach((payment) => {
+            const input = document.getElementById(payment.id);
+            if (!input) return;
+            const value = base + (remainder > 0 ? 1 : 0);
+            input.value = value;
+            if (remainder > 0) remainder -= 1;
+        });
+
+        updateTotalPaid();
+    }
+
+    payments.forEach((payment) => {
+        const input = document.getElementById(payment.id);
         if (input) input.addEventListener('input', updateTotalPaid);
     });
+
+    document.querySelectorAll('[data-payment-toggle]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const key = button.dataset.paymentToggle;
+            if (selectedPayments.has(key)) selectedPayments.delete(key);
+            else selectedPayments.add(key);
+            refreshPaymentButtons();
+            distributePayment();
+        });
+    });
+
+    if (outquantityInput) {
+        outquantityInput.addEventListener('input', () => {
+            if (selectedPayments.size > 0) distributePayment();
+            else updateTotalPaid();
+        });
+    }
+
+    refreshPaymentButtons();
     updateTotalPaid();
 });
 </script>
