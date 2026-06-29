@@ -806,7 +806,7 @@
             <div>Status: <strong>${esc(p.status)}</strong></div>
             <div>Narx: <strong>${Number(p.price).toLocaleString()} so'm</strong></div>
             <div>Oldim: <strong>${p.inquantity}</strong> · Berdim: <strong>${p.outquantity}</strong></div>
-            ${p.notes ? `<div style="margin-top:4px; color:#4b5563;">${esc(p.notes)}</div>` : ''}
+            ${p.notes ? `<div style="margin-top:4px; color:#4b5563; white-space:pre-line;">${displayMultilineHtml(p.notes, esc)}</div>` : ''}
             <div style="margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap;">
               <button onclick="toggleOrderSelectionFromBalloon(${p.id})"
                       style="padding: 6px 10px; background: #111827; color: white; border: none; border-radius: 6px; cursor: pointer; flex: 1; font-size: 12px;">

@@ -95,7 +95,8 @@
       <div class="text-sm text-gray-500 dark:text-gray-400">Qo'shimcha ma'lumotlar</div>
       <div class="text-gray-900 dark:text-gray-100">
         {% if client.caption %}
-          {{ client.caption|linebreaksbr }}
+          {% load text_filters %}
+          {{ client.caption|display_text_br }}
         {% else %}
           —
         {% endif %}

@@ -125,7 +125,7 @@
         <div class="min-w-0">
           <p class="text-xs font-bold uppercase tracking-wide text-blue-600 dark:text-blue-400">Buyurtma ma'lumotlari</p>
           <h2 id="modal-client" class="mt-1 text-lg font-extrabold leading-tight text-gray-900 dark:text-white"></h2>
-          <p id="modal-caption" class="mt-1 text-sm leading-5 text-gray-700 dark:text-gray-300"></p>
+          <p id="modal-caption" class="mt-1 whitespace-pre-line text-sm leading-5 text-gray-700 dark:text-gray-300"></p>
         </div>
         <button type="button" onclick="closeSheet()" class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800" aria-label="Modalni yopish">
           <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -299,7 +299,7 @@
 
   function openSheet(point) {
     const modal = document.getElementById('order-modal');
-    const caption = point.caption || point.phone || '';
+    const caption = window.normalizeDisplayText(point.caption || point.phone || '');
     const payment = point.payment || '';
 
     document.getElementById('modal-client').textContent = point.client || '';

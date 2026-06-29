@@ -16,6 +16,7 @@ import json
 from django.conf import settings
 from .date_context import order_date_query, resolve_order_date_range, resolve_order_working_date
 
+
 class OrderListView(SuperuserRequiredMixin, ListView):
     model = Order
     template_name = "orders/order_list.html"
@@ -120,7 +121,7 @@ class OrderListView(SuperuserRequiredMixin, ListView):
                 "lon": o.client.longitude,
                 "status": o.get_status_display(),
                 "price": float(o.get_total_price()),
-                "notes": o.notes or "",
+                "notes": o.get_notes_display_text(),
             }
             for o in map_qs
         ]
@@ -189,8 +190,8 @@ class OrdersMapView(SuperuserRequiredMixin, TemplateView):
                 "courier_id": o.courier_id,
                 "inquantity": o.inquantity,
                 "outquantity": o.outquantity,
-                "notes": o.notes or "",
-                "address": o.client.caption or "",
+                "notes": o.get_notes_display_text(),
+                "address": o.client.get_caption_display_text(),
             }
             for o in qs
         ]

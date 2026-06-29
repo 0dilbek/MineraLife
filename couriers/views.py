@@ -27,6 +27,7 @@ from datetime import timedelta
 from orders.models import Order
 from couriers.models import CourierRoute
 
+
 def _safe_parse_date(s: str):
     """YYYY-MM-DD ni date ga parse qiladi; xato bo‘lsa None qaytaradi."""
     if not s:
@@ -82,7 +83,12 @@ def courier_dashboard(request):
     )
     quantity_totals = qs.aggregate(
         inquantity_total=Sum("inquantity"),
-        outquantity_total=Sum("outquantity"),
+    )
+    plan_totals = qs.exclude(status="cancelled").aggregate(
+        outquantity_plan_total=Sum("outquantity"),
+    )
+    delivered_totals = completed_qs.aggregate(
+        outquantity_delivered_total=Sum("outquantity"),
     )
     cash_total = totals["cash_total"] or 0
     card_total = totals["card_total"] or 0
@@ -90,7 +96,8 @@ def courier_dashboard(request):
     debt_total = totals["debt_total"] or 0
     daily_total = cash_total + card_total + perechesleniya_total
     inquantity_total = quantity_totals["inquantity_total"] or 0
-    outquantity_total = quantity_totals["outquantity_total"] or 0
+    outquantity_delivered_total = delivered_totals["outquantity_delivered_total"] or 0
+    outquantity_plan_total = plan_totals["outquantity_plan_total"] or 0
 
     return render(request, "couriers/dashboard.html", {
         "orders": qs,
@@ -100,7 +107,8 @@ def courier_dashboard(request):
         "debt_total": debt_total,
         "daily_total": daily_total,
         "inquantity_total": inquantity_total,
-        "outquantity_total": outquantity_total,
+        "outquantity_delivered_total": outquantity_delivered_total,
+        "outquantity_plan_total": outquantity_plan_total,
         "pending_count": pending_count,
         "completed_count": completed_count,
         "cancelled_count": cancelled_count,
@@ -189,7 +197,7 @@ def courier_map(request):
         "id": o.id,
         "client": o.client.name,
         "phone": o.client.get_phone_numbers_display() or "",
-        "caption": o.client.caption or "",
+        "caption": o.client.get_caption_display_text(),
         "lat": o.client.latitude,
         "lon": o.client.longitude,
         "status": o.get_status_display(),

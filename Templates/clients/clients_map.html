@@ -383,7 +383,7 @@
             ` : ''}
             ${p.caption ? `
               <div style="margin-bottom: 4px; font-size: 13px; color: #666;">
-                📍 ${esc(p.caption)}
+                📍 ${displayMultilineHtml(p.caption, esc)}
               </div>
             ` : ''}
 	            ${p.is_departed ? `

@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from clients.models import Client, ClientPhoneNumber
+
 from orders.models import Order
 
 
@@ -11,7 +12,8 @@ class ClientPhoneNumberSerializer(serializers.ModelSerializer):
 
 class ClientSerializer(serializers.ModelSerializer):
     phone_numbers = ClientPhoneNumberSerializer(many=True, read_only=True)
-    
+    caption = serializers.SerializerMethodField()
+
     class Meta:
         model = Client
         fields = [
@@ -23,8 +25,12 @@ class ClientSerializer(serializers.ModelSerializer):
             'longitude'
         ]
 
+    def get_caption(self, obj):
+        return obj.get_caption_display_text()
+
 
 class OrderSerializer(serializers.ModelSerializer):
+    notes = serializers.SerializerMethodField()
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     payment_summary = serializers.CharField(source='get_payment_summary', read_only=True)
     total_price = serializers.DecimalField(
@@ -40,6 +46,9 @@ class OrderSerializer(serializers.ModelSerializer):
         read_only=True
     )
     courier_name = serializers.CharField(source='courier.username', read_only=True, allow_null=True)
+
+    def get_notes(self, obj):
+        return obj.get_notes_display_text()
 
     class Meta:
         model = Order

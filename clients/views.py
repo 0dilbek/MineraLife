@@ -219,7 +219,7 @@ def clients_map(request):
         "id": c.id,
         "name": c.name,
         "phone": c.get_phone_numbers_display(),
-        "caption": c.caption or "",
+        "caption": c.get_caption_display_text() or "",
         "lat": c.latitude,
         "lon": c.longitude,
         "is_departed": c.is_departed,

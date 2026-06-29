@@ -2,6 +2,8 @@ from django.db import models
 from django.core.validators import RegexValidator
 from django.utils import timezone
 
+from common.text_utils import normalize_multiline_text
+
 
 class Order(models.Model):
     client = models.ForeignKey('clients.Client', on_delete=models.CASCADE, related_name='orders')
@@ -54,6 +56,9 @@ class Order(models.Model):
             return f"{self.get_total_price():,.0f} so'm ({self.outquantity} x {self.price:,.0f})"
         return f"{self.price:,.0f} so'm"
 
+    def get_notes_display_text(self):
+        return normalize_multiline_text(self.notes) or ""
+
     def get_payment_summary(self):
         """To'lov turlari bo'yicha qisqa matn"""
         parts = []
@@ -68,6 +73,8 @@ class Order(models.Model):
         return " | ".join(parts) if parts else "—"
 
     def save(self, *args, **kwargs):
+        if self.notes:
+            self.notes = normalize_multiline_text(self.notes)
         super().save(*args, **kwargs)
     
 

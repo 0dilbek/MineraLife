@@ -30,6 +30,43 @@ class CourierDateFilterTests(TestCase):
         self.assertEqual(list(response.context["orders"]), [order])
         self.assertFalse(response.context["can_edit_orders"])
 
+    def test_dashboard_berdim_shows_delivered_over_plan(self):
+        today = localdate()
+        Order.objects.create(
+            client=self.client_obj,
+            courier=self.courier,
+            effective_date=today,
+            status="completed",
+            outquantity=30,
+        )
+        Order.objects.create(
+            client=self.client_obj,
+            courier=self.courier,
+            effective_date=today,
+            status="pending",
+            outquantity=40,
+        )
+        Order.objects.create(
+            client=self.client_obj,
+            courier=self.courier,
+            effective_date=today,
+            status="pending",
+            outquantity=13,
+        )
+        Order.objects.create(
+            client=self.client_obj,
+            courier=self.courier,
+            effective_date=today,
+            status="cancelled",
+            outquantity=99,
+        )
+
+        response = self.client.get(reverse("couriers:dashboard"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["outquantity_delivered_total"], 30)
+        self.assertEqual(response.context["outquantity_plan_total"], 83)
+
     def test_non_today_order_cannot_be_updated_by_post(self):
         yesterday = localdate() - timedelta(days=1)
         order = Order.objects.create(
