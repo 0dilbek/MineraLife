@@ -104,6 +104,9 @@
 
     function esc(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&gt;','>':'&lt;','"':'&quot;',"'":'&#39;'}[m])); }
 
+    // Damas (kuryer mikroavtobusi) siluetidagi ikonka
+    const DAMAS_VAN_SVG = `<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 16V9.5a1 1 0 0 1 1-1h9.7l4.3 4v3.5"/><path d="M2.5 16h1.3M13 16H8.7M21.5 16h-1"/><circle cx="6.5" cy="16.6" r="1.6"/><circle cx="16.8" cy="16.6" r="1.6"/><path d="M13.2 8.5V12h4.3"/></svg>`;
+
     function getCourierColor(courierId) {
       if (!courierId) return '#1f2937';
       const hue = (courierId * 137.508) % 360;
@@ -184,7 +187,7 @@
 
     function courierIconLayout(color, username, isFresh){
       return ymaps.templateLayoutFactory.createClass(
-        `<div class="courier-live-icon" style="background:${color}; opacity:${isFresh ? 1 : .55};" title="${esc(username)}">🛵</div>`
+        `<div class="courier-live-icon" style="background:${color}; opacity:${isFresh ? 1 : .55};" title="${esc(username)}">${DAMAS_VAN_SVG}</div>`
       );
     }
 

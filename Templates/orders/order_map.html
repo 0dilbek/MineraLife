@@ -274,6 +274,19 @@
     }
     .map-search-status:empty{ display:none; }
 
+    .courier-live-icon{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      width:32px;
+      height:32px;
+      border-radius:999px;
+      border:3px solid #fff;
+      box-shadow:0 3px 10px rgba(15,23,42,.35);
+      color:#fff;
+      font-size:14px;
+    }
+
     /* Mobil: panel kengligini cheklash, gridni 1 ustun */
     @media (max-width: 768px){
       .ml-control{ max-width: 92vw }
@@ -301,6 +314,9 @@
     <h1 class="mt-1 text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">Buyurtmalar xaritasi</h1>
   </div>
   <div class="flex items-center gap-2">
+    <span id="live-courier-indicator" class="hidden items-center gap-1 rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-700 dark:bg-green-900 dark:text-green-200">
+      <span class="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></span> Kuryerlar jonli
+    </span>
     <span class="hidden rounded-lg bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-gray-200 dark:bg-gray-800 dark:text-gray-100 dark:ring-gray-700 sm:inline-flex">
       {{ start_date|date:"Y-m-d" }} — {{ end_date|date:"Y-m-d" }}
     </span>
@@ -696,6 +712,9 @@
   }
   function esc(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&gt;','>':'&lt;','"':'&quot;',"'":'&#39;'}[m])); }
 
+  // Damas (kuryer mikroavtobusi) siluetidagi ikonka
+  const DAMAS_VAN_SVG = `<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 16V9.5a1 1 0 0 1 1-1h9.7l4.3 4v3.5"/><path d="M2.5 16h1.3M13 16H8.7M21.5 16h-1"/><circle cx="6.5" cy="16.6" r="1.6"/><circle cx="16.8" cy="16.6" r="1.6"/><path d="M13.2 8.5V12h4.3"/></svg>`;
+
   let map;
   let allPlacemarks = []; // Barcha markerlarni saqlash
   let placemarkByOrderId = new Map();
@@ -707,6 +726,10 @@
   let currentRouteCoords = []; // Chizilgan koordinatalar
   let selectedCourier = null; // Tanlangan kuryer
   let savedRoutes = {}; // Saqlangan marshrutlar (courier_id: polyline)
+  let courierCollection; // Kuryerlarning jonli joylashuvi markerlari
+  const courierPlacemarks = new Map(); // courier_id -> placemark
+  const LIVE_LOCATIONS_URL = "{% url 'couriers:live_locations' %}";
+  const LOCATIONS_POLL_MS = 10000;
 
   ymaps.ready(init);
   function init(){
@@ -720,11 +743,17 @@
 
     // Kuryerlar ranglarini legend'ga to'ldirish
     initializeCourierLegend();
-    
+
     // Kuryer statistikasini ko'rsatish
     renderCourierStats();
 
     renderMarkers();
+
+    // Kuryerlarning jonli joylashuvi
+    courierCollection = new ymaps.GeoObjectCollection();
+    map.geoObjects.add(courierCollection);
+    refreshCourierLocations();
+    setInterval(refreshCourierLocations, LOCATIONS_POLL_MS);
 
     setupCompactSearch();
 
@@ -859,6 +888,65 @@
     
     recenter();
     refreshSelectionUi();
+  }
+
+  function courierIconLayout(color, username, isFresh){
+    return ymaps.templateLayoutFactory.createClass(
+      `<div class="courier-live-icon" style="background:${color}; opacity:${isFresh ? 1 : .55};" title="${esc(username)}">${DAMAS_VAN_SVG}</div>`
+    );
+  }
+
+  function courierBalloon(loc){
+    const mins = Math.floor(loc.seconds_ago / 60);
+    const agoText = mins < 1 ? 'hozirgina' : `${mins} daqiqa oldin`;
+    return `
+      <div style="font-family: Arial, sans-serif;">
+        <div style="font-weight:700;">🛵 ${esc(loc.courier)}</div>
+        <div style="color:#6b7280; font-size:12px;">Yangilangan: ${agoText}</div>
+      </div>
+    `;
+  }
+
+  async function refreshCourierLocations(){
+    const indicator = document.getElementById('live-courier-indicator');
+    try {
+      const res = await fetch(LIVE_LOCATIONS_URL, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+      if (!res.ok) throw new Error('bad response');
+      const data = await res.json();
+      indicator?.classList.remove('hidden');
+      indicator?.classList.add('inline-flex');
+
+      const seenIds = new Set();
+      (data.locations || []).forEach(loc => {
+        seenIds.add(loc.courier_id);
+        const isFresh = loc.seconds_ago <= 90;
+        const color = getCourierColor(loc.courier_id);
+        const existing = courierPlacemarks.get(loc.courier_id);
+        if (existing) {
+          existing.geometry.setCoordinates([loc.lat, loc.lon]);
+          existing.properties.set('balloonContent', courierBalloon(loc));
+          existing.options.set('iconLayout', courierIconLayout(color, loc.courier, isFresh));
+        } else {
+          const placemark = new ymaps.Placemark([loc.lat, loc.lon], {
+            balloonContent: courierBalloon(loc),
+          }, {
+            iconLayout: courierIconLayout(color, loc.courier, isFresh),
+            iconShape: { type: 'Circle', coordinates: [16, 16], radius: 16 },
+          });
+          courierCollection.add(placemark);
+          courierPlacemarks.set(loc.courier_id, placemark);
+        }
+      });
+
+      for (const [courierId, placemark] of courierPlacemarks.entries()) {
+        if (!seenIds.has(courierId)) {
+          courierCollection.remove(placemark);
+          courierPlacemarks.delete(courierId);
+        }
+      }
+    } catch (e) {
+      indicator?.classList.add('hidden');
+    }
   }
 
   function setupSelectionControls() {

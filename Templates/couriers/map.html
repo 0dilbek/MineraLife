@@ -39,6 +39,32 @@
         min-height: 460px;
       }
     }
+
+    .own-location-icon{
+      position: relative;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      width:34px;
+      height:34px;
+      border-radius:999px;
+      background:#2563eb;
+      border:3px solid #fff;
+      box-shadow:0 3px 10px rgba(15,23,42,.4);
+      color:#fff;
+    }
+    .own-location-icon::after{
+      content:"";
+      position:absolute;
+      inset:-8px;
+      border-radius:999px;
+      border:2px solid rgba(37,99,235,.55);
+      animation: own-location-pulse 1.8s ease-out infinite;
+    }
+    @keyframes own-location-pulse{
+      0% { transform: scale(.7); opacity:.9; }
+      100% { transform: scale(1.6); opacity:0; }
+    }
   </style>
 {% endblock %}
 
@@ -101,6 +127,12 @@
       </div>
 
       <div class="flex gap-1.5 rounded-lg border border-white/70 bg-white/82 p-1 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-gray-900/78">
+        <button id="ml-my-location" type="button" title="Mening joylashuvim" aria-label="Mening joylashuvimni ko'rsatish" class="inline-flex h-9 w-9 items-center justify-center rounded-md text-blue-700 hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-900/40">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8a4 4 0 100 8 4 4 0 000-8z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2v3m0 14v3M2 12h3m14 0h3"/>
+          </svg>
+        </button>
         <button id="ml-fit" type="button" title="Moslashtirish" aria-label="Xaritani moslashtirish" class="inline-flex h-9 w-9 items-center justify-center rounded-md text-gray-700 hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-white/10">
           <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4h4M4 4l5 5m11-1V4h-4m4 0l-5 5M4 16v4h4m-4 0l5-5m11 5l-5-5m5 5v-4h-4"/>
@@ -201,10 +233,14 @@
     }[match]));
   }
 
+  // Damas (kuryer mikroavtobusi) siluetidagi ikonka - o'z joylashuvi uchun
+  const DAMAS_VAN_SVG = `<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 16V9.5a1 1 0 0 1 1-1h9.7l4.3 4v3.5"/><path d="M2.5 16h1.3M13 16H8.7M21.5 16h-1"/><circle cx="6.5" cy="16.6" r="1.6"/><circle cx="16.8" cy="16.6" r="1.6"/><path d="M13.2 8.5V12h4.3"/></svg>`;
+
   ymaps.ready(init);
   let map;
   let activeFilter = 'all';
   const markerItems = [];
+  let ownPlacemark = null;
 
   function init() {
     map = new ymaps.Map("courier-map", {
@@ -256,6 +292,7 @@
 
     document.getElementById('ml-fit').addEventListener('click', recenter);
     document.getElementById('ml-fs').addEventListener('click', toggleFullscreen);
+    document.getElementById('ml-my-location').addEventListener('click', centerOnOwnLocation);
 
     document.addEventListener('fullscreenchange', () => {
       updateFullscreenIcon();
@@ -272,6 +309,42 @@
 
     applyMapFilter('all');
     setTimeout(recenter, 100);
+
+    startOwnLocationWatch();
+  }
+
+  // Kuryerning o'z joylashuvini xaritada ko'rsatish (brauzer GPS orqali, jonli)
+  function startOwnLocationWatch() {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.watchPosition(
+      (pos) => updateOwnLocation(pos.coords.latitude, pos.coords.longitude),
+      () => {},
+      { enableHighAccuracy: true, maximumAge: 15000, timeout: 10000 }
+    );
+  }
+
+  function updateOwnLocation(lat, lon) {
+    if (ownPlacemark) {
+      ownPlacemark.geometry.setCoordinates([lat, lon]);
+    } else {
+      ownPlacemark = new ymaps.Placemark([lat, lon], {
+        balloonContent: 'Siz shu yerdasiz'
+      }, {
+        iconLayout: ymaps.templateLayoutFactory.createClass(
+          `<div class="own-location-icon" title="Siz shu yerdasiz">${DAMAS_VAN_SVG}</div>`
+        ),
+        iconShape: { type: 'Circle', coordinates: [17, 17], radius: 17 },
+        zIndex: 1000
+      });
+      map.geoObjects.add(ownPlacemark);
+    }
+  }
+
+  function centerOnOwnLocation() {
+    if (ownPlacemark) {
+      map.setCenter(ownPlacemark.geometry.getCoordinates(), Math.max(map.getZoom(), 15), { duration: 250 });
+      ownPlacemark.balloon.open();
+    }
   }
 
   function applyMapFilter(status) {
