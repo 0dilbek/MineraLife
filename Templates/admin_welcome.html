@@ -1,29 +1,263 @@
 {% extends "base.html" %}
 
-{% block title %}Xush kelibsiz - MineraLife{% endblock %}
+{% block title %}Boshqaruv paneli - MineraLife{% endblock %}
+
+{% block extra_head %}
+  {% if yandex_maps_api_key %}
+    <script src="https://api-maps.yandex.ru/2.1/?apikey={{ yandex_maps_api_key }}&lang=ru_RU" type="text/javascript"></script>
+  {% endif %}
+  <style>
+    #admin-dashboard-map{
+      height: 560px;
+      min-height: 420px;
+      border-radius: .75rem;
+      overflow: hidden;
+    }
+    .courier-live-icon{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      width:34px;
+      height:34px;
+      border-radius:999px;
+      border:3px solid #fff;
+      box-shadow:0 3px 10px rgba(15,23,42,.35);
+      color:#fff;
+      font-size:15px;
+    }
+  </style>
+{% endblock %}
 
 {% block content %}
-<div class="flex flex-col items-center justify-center text-center py-20">
-    <div class="bg-blue-100 dark:bg-blue-900 p-6 rounded-full mb-6 shadow-lg">
-        <svg class="w-16 h-16 text-blue-600 dark:text-blue-300" fill="none" stroke="currentColor" stroke-width="2"
-            viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round"
-                d="M3 12l2-2m0 0l7-7 7 7m-9 2v8m4-8v8m5-6h4m-4 4h4M4 16h4m-4 4h4" />
-        </svg>
-    </div>
-
-
-    <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-        Xush kelibsiz, {{ user.username }}!
-    </h1>
-
-    <p class="text-lg text-gray-600 dark:text-gray-300 max-w-xl mb-8">
-        MineraLife boshqaruv paneliga xush kelibsiz. Bu yerda siz buyurtmalar, mijozlar, mahsulotlar va kuryerlarni samarali boshqarishingiz mumkin.
-    </p>
-
-    <a href="{% url 'orders:list' %}"
-       class="px-8 py-3 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition transform hover:scale-105">
-        Buyurtmalarga o‘tish
-    </a>
+<div class="mb-6">
+  <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+    Xush kelibsiz, {{ user.username }}!
+  </h1>
+  <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">
+    Bugungi ({{ today|date:"d.m.Y" }}) buyurtmalar holati va kuryerlarning jonli joylashuvi.
+  </p>
 </div>
+
+<!-- Bugungi statistika -->
+<div class="grid grid-cols-2 gap-3 mb-4 sm:grid-cols-4">
+  <div class="rounded-lg border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+    <div class="text-xs font-semibold text-gray-500 dark:text-gray-400">Jami buyurtma</div>
+    <div id="stat-total" class="text-2xl font-bold text-gray-900 dark:text-white">{{ order_counts.total }}</div>
+  </div>
+  <div class="rounded-lg border border-blue-200 bg-blue-50 p-3 shadow-sm dark:border-blue-800 dark:bg-blue-950">
+    <div class="text-xs font-semibold text-blue-600 dark:text-blue-300">Kutilmoqda</div>
+    <div id="stat-pending" class="text-2xl font-bold text-blue-700 dark:text-blue-200">{{ order_counts.pending }}</div>
+  </div>
+  <div class="rounded-lg border border-green-200 bg-green-50 p-3 shadow-sm dark:border-green-800 dark:bg-green-950">
+    <div class="text-xs font-semibold text-green-600 dark:text-green-300">Bajarilgan</div>
+    <div id="stat-completed" class="text-2xl font-bold text-green-700 dark:text-green-200">{{ order_counts.completed }}</div>
+  </div>
+  <div class="rounded-lg border border-red-200 bg-red-50 p-3 shadow-sm dark:border-red-800 dark:bg-red-950">
+    <div class="text-xs font-semibold text-red-600 dark:text-red-300">Bekor qilingan</div>
+    <div id="stat-cancelled" class="text-2xl font-bold text-red-700 dark:text-red-200">{{ order_counts.cancelled }}</div>
+  </div>
+</div>
+
+<!-- Katta xarita -->
+<div class="rounded-xl border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+  <div class="mb-2 flex items-center justify-between gap-2">
+    <div class="flex items-center gap-2">
+      <h2 class="text-base font-semibold text-gray-900 dark:text-white">Bugungi buyurtmalar va kuryerlar xaritasi</h2>
+      <span id="live-indicator" class="hidden items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700 dark:bg-green-900 dark:text-green-200">
+        <span class="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></span> Jonli
+      </span>
+    </div>
+    <a href="{% url 'orders:map' %}" class="text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400">
+      Batafsil xarita &rarr;
+    </a>
+  </div>
+
+  <div id="admin-dashboard-map" class="relative bg-gray-200 dark:bg-gray-700">
+    {% if not yandex_maps_api_key %}
+    <div class="absolute inset-0 grid place-items-center p-6">
+      <div class="max-w-md w-full rounded-xl bg-white/90 dark:bg-gray-800/90 shadow-xl border border-gray-200 dark:border-gray-700 p-5 text-center">
+        <div class="text-lg font-semibold mb-2">Yandex Maps API kaliti kerak</div>
+        <div class="text-sm opacity-80">ENV: YANDEX_MAPS_API_KEY ni sozlang.</div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div id="courier-live-legend" class="mt-3 flex flex-wrap gap-2"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const YM_API_KEY = '{{ yandex_maps_api_key|default:"" }}';
+  if (YM_API_KEY) {
+    const TODAY_MAP_DATA_URL = "{% url 'admin_today_map_data' %}";
+    const LIVE_LOCATIONS_URL = "{% url 'couriers:live_locations' %}";
+    const ORDERS_POLL_MS = 30000;
+    const LOCATIONS_POLL_MS = 10000;
+    const center = [41.311081, 69.240562]; // Toshkent
+
+    let points = JSON.parse('{{ points|escapejs }}');
+    let map;
+    let orderCollection, courierCollection;
+    const courierPlacemarks = new Map(); // courier_id -> placemark
+
+    function esc(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&gt;','>':'&lt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+    function getCourierColor(courierId) {
+      if (!courierId) return '#1f2937';
+      const hue = (courierId * 137.508) % 360;
+      return hslToHex(hue, 70, 45);
+    }
+    function hslToHex(h, s, l) {
+      s /= 100; l /= 100;
+      const c = (1 - Math.abs(2 * l - 1)) * s;
+      const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+      const m = l - c / 2;
+      let r = 0, g = 0, b = 0;
+      if (0 <= h && h < 60) { r = c; g = x; b = 0; }
+      else if (60 <= h && h < 120) { r = x; g = c; b = 0; }
+      else if (120 <= h && h < 180) { r = 0; g = c; b = x; }
+      else if (180 <= h && h < 240) { r = 0; g = x; b = c; }
+      else if (240 <= h && h < 300) { r = x; g = 0; b = c; }
+      else { r = c; g = 0; b = x; }
+      r = Math.round((r + m) * 255); g = Math.round((g + m) * 255); b = Math.round((b + m) * 255);
+      return "#" + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('');
+    }
+
+    function presetForStatus(p){
+      if (!p.courier_id) return 'islands#blackStretchyIcon';
+      const raw = (p.status_raw || '').toLowerCase();
+      if (raw.includes('completed')) return 'islands#greenStretchyIcon';
+      if (raw.includes('cancelled')) return 'islands#redStretchyIcon';
+      return 'islands#blueStretchyIcon';
+    }
+
+    ymaps.ready(init);
+
+    function init(){
+      map = new ymaps.Map("admin-dashboard-map", { center, zoom: 11, controls: ['zoomControl'] });
+      orderCollection = new ymaps.GeoObjectCollection();
+      courierCollection = new ymaps.GeoObjectCollection();
+      map.geoObjects.add(orderCollection);
+      map.geoObjects.add(courierCollection);
+
+      renderOrderPoints(points);
+      refreshCourierLocations();
+      setInterval(refreshOrders, ORDERS_POLL_MS);
+      setInterval(refreshCourierLocations, LOCATIONS_POLL_MS);
+    }
+
+    function renderOrderPoints(pts){
+      orderCollection.removeAll();
+      pts.forEach(p => {
+        const placemark = new ymaps.Placemark([p.lat, p.lon], {
+          iconContent: esc(p.client),
+          balloonContent: `
+            <div style="max-width:260px; font-family: Arial, sans-serif;">
+              <div style="font-weight:700; margin-bottom:6px;">${esc(p.client)}</div>
+              ${p.courier ? `<div>Kuryer: <strong>${esc(p.courier)}</strong></div>` : '<div style="color:#dc2626; font-weight:700;">Kuryer biriktirilmagan</div>'}
+              <div>Status: <strong>${esc(p.status)}</strong></div>
+              <div style="margin-top:8px;">
+                <a href="/orders/${p.id}/" style="padding:6px 10px; background:#6b7280; color:#fff; border-radius:6px; text-decoration:none; font-size:12px;">Ko'rish</a>
+              </div>
+            </div>
+          `
+        }, { preset: presetForStatus(p), iconMaxWidth: 220 });
+        orderCollection.add(placemark);
+      });
+    }
+
+    async function refreshOrders(){
+      try {
+        const res = await fetch(TODAY_MAP_DATA_URL, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        if (!res.ok) return;
+        const data = await res.json();
+        points = data.points;
+        renderOrderPoints(points);
+        document.getElementById('stat-total').textContent = data.counts.total;
+        document.getElementById('stat-pending').textContent = data.counts.pending;
+        document.getElementById('stat-completed').textContent = data.counts.completed;
+        document.getElementById('stat-cancelled').textContent = data.counts.cancelled;
+      } catch (e) { /* jim tur */ }
+    }
+
+    function courierIconLayout(color, username, isFresh){
+      return ymaps.templateLayoutFactory.createClass(
+        `<div class="courier-live-icon" style="background:${color}; opacity:${isFresh ? 1 : .55};" title="${esc(username)}">🛵</div>`
+      );
+    }
+
+    async function refreshCourierLocations(){
+      const indicator = document.getElementById('live-indicator');
+      try {
+        const res = await fetch(LIVE_LOCATIONS_URL, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        if (!res.ok) throw new Error('bad response');
+        const data = await res.json();
+        indicator.classList.remove('hidden');
+        indicator.classList.add('inline-flex');
+
+        const seenIds = new Set();
+        (data.locations || []).forEach(loc => {
+          seenIds.add(loc.courier_id);
+          const isFresh = loc.seconds_ago <= 90;
+          const color = getCourierColor(loc.courier_id);
+          const existing = courierPlacemarks.get(loc.courier_id);
+          if (existing) {
+            existing.geometry.setCoordinates([loc.lat, loc.lon]);
+            existing.properties.set('balloonContent', courierBalloon(loc));
+            existing.options.set('iconLayout', courierIconLayout(color, loc.courier, isFresh));
+          } else {
+            const placemark = new ymaps.Placemark([loc.lat, loc.lon], {
+              balloonContent: courierBalloon(loc),
+            }, {
+              iconLayout: courierIconLayout(color, loc.courier, isFresh),
+              iconShape: { type: 'Circle', coordinates: [17, 17], radius: 17 },
+            });
+            courierCollection.add(placemark);
+            courierPlacemarks.set(loc.courier_id, placemark);
+          }
+        });
+
+        // Uzoq vaqt joylashuv yubormagan kuryerlarni xaritadan olib tashlash
+        for (const [courierId, placemark] of courierPlacemarks.entries()) {
+          if (!seenIds.has(courierId)) {
+            courierCollection.remove(placemark);
+            courierPlacemarks.delete(courierId);
+          }
+        }
+
+        renderCourierLegend(data.locations || []);
+      } catch (e) {
+        indicator.classList.add('hidden');
+      }
+    }
+
+    function courierBalloon(loc){
+      const mins = Math.floor(loc.seconds_ago / 60);
+      const agoText = mins < 1 ? 'hozirgina' : `${mins} daqiqa oldin`;
+      return `
+        <div style="font-family: Arial, sans-serif;">
+          <div style="font-weight:700;">🛵 ${esc(loc.courier)}</div>
+          <div style="color:#6b7280; font-size:12px;">Yangilangan: ${agoText}</div>
+        </div>
+      `;
+    }
+
+    function renderCourierLegend(locations){
+      const box = document.getElementById('courier-live-legend');
+      if (!locations.length) {
+        box.innerHTML = '<span class="text-xs text-gray-500 dark:text-gray-400">Hozircha hech bir kuryer jonli joylashuvni yubormagan.</span>';
+        return;
+      }
+      box.innerHTML = locations.map(loc => {
+        const color = getCourierColor(loc.courier_id);
+        const fresh = loc.seconds_ago <= 90;
+        return `<span style="display:inline-flex; align-items:center; gap:6px; padding:.25rem .6rem; border-radius:999px; border:1px solid ${color}; font-size:12px; font-weight:600; opacity:${fresh ? 1 : .6};">
+          <span style="width:8px; height:8px; border-radius:999px; background:${color};"></span>${esc(loc.courier)}
+        </span>`;
+      }).join('');
+    }
+  }
+</script>
 {% endblock %}

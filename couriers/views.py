@@ -6,7 +6,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from .forms import CourierUserCreateForm, CourierUserUpdateForm, CourierUserPasswordForm, CourierOrderUpdateForm, CourierQuickCompleteForm, COURIER_GROUP_NAME
 from admin_panel.mixins import SuperuserRequiredMixin
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render
 from django.utils.timezone import now
 from django.contrib.auth.decorators import login_required
@@ -23,9 +23,14 @@ from django.shortcuts import render
 from django.utils import timezone
 from datetime import datetime
 from datetime import timedelta
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
 
 from orders.models import Order
-from couriers.models import CourierRoute
+from couriers.models import CourierRoute, CourierLocation
+
+# Kuryer joylashuvi "onlayn" hisoblanadigan muddat
+COURIER_LOCATION_ONLINE_WINDOW = timedelta(minutes=10)
 
 
 def _safe_parse_date(s: str):
@@ -237,6 +242,53 @@ def courier_map(request):
         "selected_preset": selected_preset,
         "can_edit_orders": can_edit_orders,
     })
+
+
+@login_required
+@require_POST
+def courier_update_location(request):
+    """Kuryer brauzeridan davriy ravishda kelayotgan joylashuvni saqlaydi"""
+    try:
+        data = json.loads(request.body)
+        lat = float(data.get("lat"))
+        lon = float(data.get("lon"))
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return JsonResponse({"success": False, "error": "Noto'g'ri joylashuv ma'lumoti"}, status=400)
+
+    accuracy = data.get("accuracy")
+    try:
+        accuracy = float(accuracy) if accuracy is not None else None
+    except (TypeError, ValueError):
+        accuracy = None
+
+    CourierLocation.objects.update_or_create(
+        courier=request.user,
+        defaults={"latitude": lat, "longitude": lon, "accuracy": accuracy},
+    )
+    return JsonResponse({"success": True})
+
+
+@user_passes_test(lambda u: u.is_superuser)
+def courier_live_locations(request):
+    """Admin xaritasi uchun barcha kuryerlarning so'nggi (onlayn) joylashuvi"""
+    cutoff = timezone.now() - COURIER_LOCATION_ONLINE_WINDOW
+    locations = (CourierLocation.objects
+                 .select_related("courier")
+                 .filter(updated_at__gte=cutoff)
+                 .order_by("courier__username"))
+
+    now_ts = timezone.now()
+    data = [{
+        "courier_id": loc.courier_id,
+        "courier": loc.courier.username,
+        "lat": loc.latitude,
+        "lon": loc.longitude,
+        "accuracy": loc.accuracy,
+        "updated_at": loc.updated_at.isoformat(),
+        "seconds_ago": int((now_ts - loc.updated_at).total_seconds()),
+    } for loc in locations]
+
+    return JsonResponse({"locations": data})
 
 
 class StaffOnly(LoginRequiredMixin, UserPassesTestMixin):

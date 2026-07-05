@@ -1,12 +1,67 @@
-from django.contrib.auth.decorators import user_passes_test
-from django.shortcuts import render
+import json
+
+from django.conf import settings
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.http import JsonResponse
+from django.shortcuts import redirect, render
+from django.utils.timezone import localdate
+
+from orders.models import Order
+
+
+def _today_order_points():
+    today = localdate()
+    qs = (Order.objects
+          .select_related("client", "courier")
+          .filter(
+              effective_date=today,
+              client__latitude__isnull=False,
+              client__longitude__isnull=False,
+          )
+          .order_by("-created_at"))
+
+    points = [{
+        "id": o.id,
+        "client": o.client.name,
+        "lat": o.client.latitude,
+        "lon": o.client.longitude,
+        "status": o.get_status_display(),
+        "status_raw": o.status,
+        "courier": (o.courier.username if o.courier_id else None),
+        "courier_id": o.courier_id,
+        "outquantity": o.outquantity,
+    } for o in qs]
+
+    counts = {
+        "total": qs.count(),
+        "pending": qs.filter(status="pending").count(),
+        "completed": qs.filter(status="completed").count(),
+        "cancelled": qs.filter(status="cancelled").count(),
+    }
+    return today, points, counts
+
 
 @user_passes_test(lambda u: u.is_superuser)
 def admin_welcome(request):
-    return render(request, "admin_welcome.html")
+    today, points, counts = _today_order_points()
+    return render(request, "admin_welcome.html", {
+        "today": today,
+        "points": json.dumps(points),
+        "order_counts": counts,
+        "yandex_maps_api_key": settings.YANDEX_MAPS_API_KEY,
+    })
 
-from django.shortcuts import redirect
-from django.contrib.auth.decorators import login_required
+
+@user_passes_test(lambda u: u.is_superuser)
+def admin_today_map_data(request):
+    """Admin dashboard xaritasini davriy yangilash uchun JSON"""
+    today, points, counts = _today_order_points()
+    return JsonResponse({
+        "date": today.isoformat(),
+        "points": points,
+        "counts": counts,
+    })
+
 
 @login_required
 def dashboard_redirect(request):

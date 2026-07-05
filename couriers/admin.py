@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django import forms
-from .models import CourierRoute
+from .models import CourierRoute, CourierLocation
 
 
 # Rang tanlovlari
@@ -87,3 +87,11 @@ class CourierRouteAdmin(admin.ModelAdmin):
             return f'{len(obj.route_data)} nuqta'
         return '—'
     route_points_count.short_description = 'Nuqtalar'
+
+
+@admin.register(CourierLocation)
+class CourierLocationAdmin(admin.ModelAdmin):
+    list_display = ('courier', 'latitude', 'longitude', 'accuracy', 'updated_at')
+    list_filter = ('courier',)
+    search_fields = ('courier__username',)
+    readonly_fields = ('updated_at',)
