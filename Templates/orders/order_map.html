@@ -275,11 +275,24 @@
     .map-search-status:empty{ display:none; }
 
     .courier-live-icon{
-      width:14px;
-      height:14px;
+      position: relative;
+      width:20px;
+      height:20px;
       border-radius:999px;
       border:2px solid #fff;
-      box-shadow:0 2px 6px rgba(15,23,42,.45);
+      box-shadow:0 3px 10px rgba(15,23,42,.55);
+    }
+    .courier-live-icon::after{
+      content:"";
+      position:absolute;
+      inset:-9px;
+      border-radius:999px;
+      border:2px solid var(--dot-color, #2563eb);
+      animation: courier-dot-pulse 1.8s ease-out infinite;
+    }
+    @keyframes courier-dot-pulse{
+      0% { transform: scale(.6); opacity:.85; }
+      100% { transform: scale(1.9); opacity:0; }
     }
 
     /* Mobil: panel kengligini cheklash, gridni 1 ustun */
@@ -884,7 +897,7 @@
 
   function courierIconLayout(color, username, isFresh){
     return ymaps.templateLayoutFactory.createClass(
-      `<div class="courier-live-icon" style="background:${color}; opacity:${isFresh ? 1 : .55};" title="${esc(username)}"></div>`
+      `<div class="courier-live-icon" style="background:${color}; --dot-color:${color}; opacity:${isFresh ? 1 : .55};" title="${esc(username)}"></div>`
     );
   }
 
@@ -923,7 +936,7 @@
             balloonContent: courierBalloon(loc),
           }, {
             iconLayout: courierIconLayout(color, loc.courier, isFresh),
-            iconShape: { type: 'Circle', coordinates: [8, 8], radius: 8 },
+            iconShape: { type: 'Circle', coordinates: [14, 14], radius: 14 },
           });
           courierCollection.add(placemark);
           courierPlacemarks.set(loc.courier_id, placemark);

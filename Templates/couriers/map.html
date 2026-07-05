@@ -42,19 +42,19 @@
 
     .own-location-icon{
       position: relative;
-      width:16px;
-      height:16px;
+      width:20px;
+      height:20px;
       border-radius:999px;
       background:#2563eb;
       border:2px solid #fff;
-      box-shadow:0 2px 8px rgba(15,23,42,.45);
+      box-shadow:0 3px 10px rgba(15,23,42,.55);
     }
     .own-location-icon::after{
       content:"";
       position:absolute;
-      inset:-6px;
+      inset:-9px;
       border-radius:999px;
-      border:2px solid rgba(37,99,235,.55);
+      border:2px solid rgba(37,99,235,.6);
       animation: own-location-pulse 1.8s ease-out infinite;
     }
     @keyframes own-location-pulse{
@@ -326,7 +326,7 @@
         iconLayout: ymaps.templateLayoutFactory.createClass(
           `<div class="own-location-icon" title="Siz shu yerdasiz"></div>`
         ),
-        iconShape: { type: 'Circle', coordinates: [8, 8], radius: 8 },
+        iconShape: { type: 'Circle', coordinates: [14, 14], radius: 14 },
         zIndex: 1000
       });
       map.geoObjects.add(ownPlacemark);
