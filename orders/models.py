@@ -75,6 +75,22 @@ class Order(models.Model):
     def save(self, *args, **kwargs):
         if self.notes:
             self.notes = normalize_multiline_text(self.notes)
+
+        just_cancelled = False
+        if self.pk and self.status == 'cancelled':
+            previous_status = Order.objects.filter(pk=self.pk).values_list('status', flat=True).first()
+            just_cancelled = previous_status != 'cancelled'
+
         super().save(*args, **kwargs)
+
+        if just_cancelled:
+            Order.objects.create(
+                client=self.client,
+                courier=self.courier,
+                price=self.price,
+                status='pending',
+                effective_date=self.effective_date + timezone.timedelta(days=1),
+                notes=self.notes,
+            )
     
 
