@@ -99,6 +99,7 @@
       {% endif %}
     </div>
 
+    {% if order %}
     <div>
       <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Kurer</label>
       {{ form.courier }}
@@ -129,6 +130,17 @@
         {% endif %}
       </div>
     </div>
+    {% else %}
+    <div>
+      <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Berdim miqdor</label>
+      {{ form.outquantity }}
+      {% if form.outquantity.errors %}
+        {% for error in form.outquantity.errors %}
+          <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+        {% endfor %}
+      {% endif %}
+    </div>
+    {% endif %}
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <div>
@@ -151,6 +163,7 @@
       </div>
     </div>
 
+    {% if order %}
     <div>
       <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Holat</label>
       {{ form.status }}
@@ -197,6 +210,7 @@
         ⚠️ Jami to'lov buyurtma narxiga teng emas
       </p>
     </div>
+    {% endif %}
 
     <div>
       <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Izohlar</label>

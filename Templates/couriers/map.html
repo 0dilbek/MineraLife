@@ -179,6 +179,11 @@
           <span id="modal-payment"></span>
         </div>
 
+        <div id="modal-notes-wrap" class="hidden rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-100">
+          <span class="font-semibold">Izoh:</span>
+          <span id="modal-notes" class="whitespace-pre-line"></span>
+        </div>
+
         <div class="grid gap-2">
           <a id="modal-edit" href="#" class="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3 text-base font-extrabold text-white shadow-sm hover:bg-blue-700">
             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -373,6 +378,16 @@
     document.getElementById('modal-in').textContent = `${point.inquantity || 0} dona`;
     document.getElementById('modal-out').textContent = `${point.outquantity || 0} dona`;
     document.getElementById('modal-payment').textContent = payment || 'Ko\'rsatilmagan';
+
+    const notes = window.normalizeDisplayText(point.notes || '');
+    const notesWrap = document.getElementById('modal-notes-wrap');
+    if (notes) {
+      document.getElementById('modal-notes').textContent = notes;
+      notesWrap.classList.remove('hidden');
+    } else {
+      notesWrap.classList.add('hidden');
+    }
+
     document.getElementById('modal-edit').href = `/couriers/order/${point.id}/update/`;
     document.getElementById('modal-nav').href = `https://yandex.com/maps/?rtext=~${point.lat},${point.lon}&rtt=auto`;
 

@@ -3,7 +3,7 @@ from django.urls import reverse_lazy
 from django.urls import reverse
 from django.db.models import Sum
 from .models import Order
-from .forms import OrderForm
+from .forms import OrderForm, OrderCreateForm
 from django.utils import timezone
 from datetime import datetime, timedelta
 from couriers.models import CourierRoute
@@ -380,7 +380,7 @@ def delete_courier_route(request):
 
 class OrderCreateView(SuperuserRequiredMixin, CreateView):
     model = Order
-    form_class = OrderForm
+    form_class = OrderCreateForm
     template_name = "orders/order_form.html"
     def get_success_url(self):
         return f"{reverse('orders:list')}?{order_date_query(resolve_order_working_date(self.request))}"

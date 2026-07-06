@@ -212,6 +212,7 @@ def courier_map(request):
         "price": float(o.get_total_price()),
         "date": o.effective_date.isoformat(),
         "payment": o.get_payment_summary(),
+        "notes": o.get_notes_display_text(),
     } for o in qs]
 
     map_totals = qs.filter(status="completed").aggregate(

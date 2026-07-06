@@ -1,137 +1,236 @@
 {% extends "base.html" %}
+{% load text_filters %}
 {% block title %}Buyurtma #{{ order.id }}{% endblock %}
 
+{% block extra_head %}
+<style>
+  .receipt-wrap { max-width: 26rem; margin: 0 auto; }
+
+  .receipt-paper {
+    background: #fff;
+    box-shadow: 0 12px 30px rgba(15,23,42,.12), 0 2px 6px rgba(15,23,42,.06);
+    border-radius: .75rem .75rem 0 0;
+    font-variant-numeric: tabular-nums;
+  }
+  .dark .receipt-paper { background: #1f2937; }
+
+  .receipt-edge {
+    height: 14px;
+    background:
+      linear-gradient(-45deg, transparent 7px, #fff 0),
+      linear-gradient(45deg, transparent 7px, #fff 0);
+    background-size: 14px 14px;
+    background-repeat: repeat-x;
+    filter: drop-shadow(0 6px 6px rgba(15,23,42,.08));
+  }
+  .dark .receipt-edge {
+    background:
+      linear-gradient(-45deg, transparent 7px, #1f2937 0),
+      linear-gradient(45deg, transparent 7px, #1f2937 0);
+    background-size: 14px 14px;
+    background-repeat: repeat-x;
+  }
+
+  .receipt-row {
+    display: flex;
+    align-items: baseline;
+    gap: .5rem;
+  }
+  .receipt-row .r-label {
+    flex-shrink: 0;
+    font-size: .78rem;
+    color: #6b7280;
+    letter-spacing: .01em;
+  }
+  .dark .receipt-row .r-label { color: #9ca3af; }
+  .receipt-row .r-fill {
+    flex: 1 1 auto;
+    border-bottom: 1px dotted #cbd5e1;
+    margin-bottom: .2rem;
+  }
+  .dark .receipt-row .r-fill { border-bottom-color: #4b5563; }
+  .receipt-row .r-value {
+    flex-shrink: 0;
+    font-weight: 600;
+    color: #111827;
+    font-size: .9rem;
+  }
+  .dark .receipt-row .r-value { color: #f3f4f6; }
+
+  .receipt-section {
+    border-top: 1px dashed #d1d5db;
+    padding-top: .85rem;
+    margin-top: .85rem;
+  }
+  .dark .receipt-section { border-top-color: #4b5563; }
+  .receipt-section-title {
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: #9ca3af;
+    margin-bottom: .55rem;
+  }
+
+  @media print {
+    .no-print { display: none !important; }
+    nav, footer { display: none !important; }
+    body { background: #fff !important; }
+    .receipt-wrap { max-width: 100%; }
+    .receipt-paper { box-shadow: none; }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="max-w-3xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow p-6 space-y-4">
-  <div class="flex items-center justify-between">
-    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Buyurtma #{{ order.id }}</h1>
-    <span class="px-2 py-1 rounded text-xs
-                 {% if order.status == 'pending' %}bg-blue-100 text-blue-800
-                 {% elif order.status == 'completed' %}bg-green-100 text-green-800
-                 {% else %}bg-red-100 text-red-800{% endif %}">
-      {{ order.get_status_display }}
-    </span>
-  </div>
+<div class="receipt-wrap">
 
-  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-    <div>
-      <div class="text-sm text-gray-500 dark:text-gray-400">Mijoz</div>
-      <div class="font-medium text-gray-900 dark:text-gray-100">{{ order.client.name }}</div>
+  <div class="receipt-paper px-6 pt-6 pb-5">
+    <!-- Sarlavha -->
+    <div class="text-center">
+      <p class="text-[.7rem] font-bold uppercase tracking-[.2em] text-blue-600 dark:text-blue-400">MineraLife</p>
+      <h1 class="mt-1 text-xl font-extrabold text-gray-900 dark:text-white">Buyurtma cheki</h1>
+      <p class="mt-0.5 font-mono text-sm text-gray-500 dark:text-gray-400">№ {{ order.id }}</p>
+      <span class="mt-2 inline-flex rounded-full px-3 py-1 text-xs font-bold
+                   {% if order.status == 'pending' %}bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200
+                   {% elif order.status == 'completed' %}bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200
+                   {% else %}bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200{% endif %}">
+        {{ order.get_status_display }}
+      </span>
     </div>
-    <div>
-      <div class="text-sm text-gray-500 dark:text-gray-400">Kurer</div>
-      <div class="font-medium text-gray-900 dark:text-gray-100">
-        {{ order.courier.username|default:"—" }}
+
+    <!-- Mijoz / kurer / sana -->
+    <div class="receipt-section space-y-2">
+      <div class="receipt-row">
+        <span class="r-label">Mijoz</span>
+        <span class="r-fill"></span>
+        <span class="r-value">{{ order.client.name }}</span>
       </div>
-    </div>
-    <div>
-      <div class="text-sm text-gray-500 dark:text-gray-400">Sana</div>
-      <div class="font-medium text-gray-900 dark:text-gray-100">{{ order.effective_date|date:"Y-m-d" }}</div>
-    </div>
-    <div>
-      <div class="text-sm text-gray-500 dark:text-gray-400">Oldim miqdor</div>
-      <div class="font-medium text-gray-900 dark:text-gray-100">{{ order.inquantity }}</div>
-    </div>
-    <div>
-      <div class="text-sm text-gray-500 dark:text-gray-400">Berdim miqdor</div>
-      <div class="font-medium text-gray-900 dark:text-gray-100">{{ order.outquantity }}</div>
-    </div>
-    <div>
-      <div class="text-sm text-gray-500 dark:text-gray-400">Narx</div>
-      <div class="font-medium text-gray-900 dark:text-gray-100">{{ order.get_price_display }}</div>
-    </div>
-    <div>
-      <div class="text-sm text-gray-500 dark:text-gray-400">Qo'shimcha ma'lumotlar</div>
-      {% load text_filters %}
-      <div class="whitespace-pre-line font-medium text-gray-900 dark:text-gray-100">{{ order.client.caption|display_text }}</div>
-    </div>
-    <div class="sm:col-span-2">
-      <div class="text-sm text-gray-500 dark:text-gray-400 mb-2">To’lov tafsiloti</div>
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        {% if order.cash_amount %}
-        <div class="p-2 bg-green-50 dark:bg-green-900 rounded-lg text-center">
-          <div class="text-xs text-gray-500 dark:text-gray-400">💵 Naqd</div>
-          <div class="font-semibold text-green-700 dark:text-green-300">{{ order.cash_amount|floatformat:0 }} so’m</div>
-        </div>
-        {% endif %}
-        {% if order.card_amount %}
-        <div class="p-2 bg-blue-50 dark:bg-blue-900 rounded-lg text-center">
-          <div class="text-xs text-gray-500 dark:text-gray-400">💳 Karta</div>
-          <div class="font-semibold text-blue-700 dark:text-blue-300">{{ order.card_amount|floatformat:0 }} so’m</div>
-        </div>
-        {% endif %}
-        {% if order.perechesleniya_amount %}
-        <div class="p-2 bg-purple-50 dark:bg-purple-900 rounded-lg text-center">
-          <div class="text-xs text-gray-500 dark:text-gray-400">🏦 Perechisleniya</div>
-          <div class="font-semibold text-purple-700 dark:text-purple-300">{{ order.perechesleniya_amount|floatformat:0 }} so’m</div>
-        </div>
-        {% endif %}
-        {% if order.debt_amount %}
-        <div class="p-2 bg-orange-50 dark:bg-orange-900 rounded-lg text-center">
-          <div class="text-xs text-gray-500 dark:text-gray-400">📝 Qarz</div>
-          <div class="font-semibold text-orange-700 dark:text-orange-300">{{ order.debt_amount|floatformat:0 }} so’m</div>
-        </div>
-        {% endif %}
-        {% if not order.cash_amount and not order.card_amount and not order.perechesleniya_amount and not order.debt_amount %}
-        <div class="col-span-2 text-gray-400 dark:text-gray-500 text-sm">—</div>
-        {% endif %}
+      <div class="receipt-row">
+        <span class="r-label">Kurer</span>
+        <span class="r-fill"></span>
+        <span class="r-value">{{ order.courier.username|default:"—" }}</span>
       </div>
-    </div>
-  </div>
-
-  {% if order.notes %}
-  <div>
-    <div class="text-sm text-gray-500 dark:text-gray-400">Izoh</div>
-    <p class="whitespace-pre-line text-gray-800 dark:text-gray-200">{{ order.notes|display_text }}</p>
-  </div>
-  {% endif %}
-
-  <!-- Telefon raqamlar bo'limi -->
-  {% if order.client.phone_numbers.all %}
-  <div class="border-t pt-4">
-    <div class="text-sm text-gray-500 dark:text-gray-400 mb-2">Mijoz Telefon Raqamlari</div>
-    <div class="space-y-2">
+      <div class="receipt-row">
+        <span class="r-label">Sana</span>
+        <span class="r-fill"></span>
+        <span class="r-value font-mono">{{ order.effective_date|date:"Y-m-d" }}</span>
+      </div>
+      {% if order.client.phone_numbers.all %}
       {% for phone in order.client.phone_numbers.all %}
-        <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-          <div class="flex items-center space-x-3">
-            <span class="font-mono text-gray-900 dark:text-gray-100">{{ phone.phone_number }}</span>
-            {% if phone.is_primary %}
-              <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">Asosiy</span>
-            {% endif %}
-            {% if phone.description %}
-              <span class="text-sm text-gray-600 dark:text-gray-400">- {{ phone.description }}</span>
-            {% endif %}
-          </div>
-          <a href="tel:{{ phone.phone_number }}" 
-             class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition text-sm">
-            Qo'ng'iroq
-          </a>
-        </div>
+      <div class="receipt-row">
+        <span class="r-label">{% if phone.is_primary %}Telefon{% else %}Tel. qo'shimcha{% endif %}</span>
+        <span class="r-fill"></span>
+        <a href="tel:{{ phone.phone_number }}" class="r-value font-mono text-blue-600 dark:text-blue-400">{{ phone.phone_number }}</a>
+      </div>
       {% endfor %}
+      {% else %}
+      <div class="receipt-row">
+        <span class="r-label">Telefon</span>
+        <span class="r-fill"></span>
+        <span class="r-value text-gray-400">kiritilmagan</span>
+      </div>
+      {% endif %}
     </div>
-  {% else %}
-  <div class="border-t pt-4">
-    <div class="text-sm text-gray-500 dark:text-gray-400 mb-2">Mijoz Telefoni</div>
-    <div class="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg text-center text-gray-500">
-      Telefon raqam kiritilmagan
-    </div>
-  </div>
-  {% endif %}
-  <div class="pt-2 text-right">
-    <a href="{% url 'orders:list' %}" class="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-gray-600 transition">
-      ← Ro‘yxatga qaytish
-    </a>
-  </div>
 
-  <div class="mt-3 flex gap-2 justify-end">
-    <a href="{% url 'orders:update' order.pk %}"
-       class="px-3 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 text-sm">
-      Tahrirlash
+    <!-- Miqdor / narx -->
+    <div class="receipt-section">
+      <p class="receipt-section-title">Buyurtma</p>
+      <div class="space-y-2">
+        <div class="receipt-row">
+          <span class="r-label">Oldim miqdor</span>
+          <span class="r-fill"></span>
+          <span class="r-value font-mono">{{ order.inquantity }} dona</span>
+        </div>
+        <div class="receipt-row">
+          <span class="r-label">Berdim miqdor</span>
+          <span class="r-fill"></span>
+          <span class="r-value font-mono">{{ order.outquantity }} dona</span>
+        </div>
+        <div class="receipt-row">
+          <span class="r-label">Birlik narxi</span>
+          <span class="r-fill"></span>
+          <span class="r-value font-mono">{{ order.price|floatformat:0 }} so'm</span>
+        </div>
+      </div>
+      <div class="mt-3 flex items-center justify-between border-t-2 border-gray-900 pt-2 dark:border-white">
+        <span class="text-sm font-extrabold uppercase tracking-wide text-gray-900 dark:text-white">Jami</span>
+        <span class="font-mono text-lg font-extrabold text-gray-900 dark:text-white">{{ order.get_total_price|floatformat:0 }} so'm</span>
+      </div>
+    </div>
+
+    <!-- To'lov tafsiloti -->
+    <div class="receipt-section">
+      <p class="receipt-section-title">To'lov tafsiloti</p>
+      <div class="space-y-2">
+        <div class="receipt-row">
+          <span class="r-label">💵 Naqd</span>
+          <span class="r-fill"></span>
+          <span class="r-value font-mono">{{ order.cash_amount|floatformat:0 }} so'm</span>
+        </div>
+        <div class="receipt-row">
+          <span class="r-label">💳 Karta</span>
+          <span class="r-fill"></span>
+          <span class="r-value font-mono">{{ order.card_amount|floatformat:0 }} so'm</span>
+        </div>
+        <div class="receipt-row">
+          <span class="r-label">🏦 Perechisleniya</span>
+          <span class="r-fill"></span>
+          <span class="r-value font-mono">{{ order.perechesleniya_amount|floatformat:0 }} so'm</span>
+        </div>
+        <div class="receipt-row">
+          <span class="r-label">📝 Qarz</span>
+          <span class="r-fill"></span>
+          <span class="r-value font-mono">{{ order.debt_amount|floatformat:0 }} so'm</span>
+        </div>
+      </div>
+      <div class="mt-3 flex items-center justify-between border-t border-dashed border-gray-300 pt-2 dark:border-gray-600">
+        <span class="text-sm font-bold text-gray-700 dark:text-gray-200">Jami to'langan</span>
+        <span class="font-mono text-base font-bold text-indigo-600 dark:text-indigo-400">{{ order.get_total_paid|floatformat:0 }} so'm</span>
+      </div>
+    </div>
+
+    <!-- Manzil / qo'shimcha ma'lumot -->
+    {% if order.client.caption %}
+    <div class="receipt-section">
+      <p class="receipt-section-title">Manzil / ma'lumot</p>
+      <p class="whitespace-pre-line text-sm text-gray-800 dark:text-gray-200">{{ order.client.caption|display_text }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Izoh -->
+    {% if order.notes %}
+    <div class="receipt-section">
+      <p class="receipt-section-title">Izoh</p>
+      <p class="whitespace-pre-line rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900 ring-1 ring-amber-200 dark:bg-amber-900/20 dark:text-amber-100 dark:ring-amber-800">{{ order.notes|display_text }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Pastki izoh -->
+    <div class="mt-5 text-center font-mono text-[.7rem] text-gray-400 dark:text-gray-500">
+      *** buyurtma №{{ order.id }} · {{ order.created_at|date:"Y-m-d H:i" }} ***
+    </div>
+  </div>
+  <div class="receipt-edge"></div>
+
+  <!-- Amallar -->
+  <div class="no-print mt-6 flex flex-wrap items-center justify-between gap-2">
+    <a href="{% url 'orders:list' %}" class="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-gray-600 transition text-sm font-semibold">
+      ← Ro'yxatga qaytish
     </a>
-    <a href="{% url 'orders:delete' order.pk %}"
-       class="px-3 py-2 rounded-md bg-red-600 text-white hover:bg-red-700 text-sm">
-      O‘chirish
-    </a>
+    <div class="flex gap-2">
+      <button type="button" onclick="window.print()" class="px-3 py-2 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-600 text-sm font-semibold">
+        Chop etish
+      </button>
+      <a href="{% url 'orders:update' order.pk %}"
+         class="px-3 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 text-sm font-semibold">
+        Tahrirlash
+      </a>
+      <a href="{% url 'orders:delete' order.pk %}"
+         class="px-3 py-2 rounded-md bg-red-600 text-white hover:bg-red-700 text-sm font-semibold">
+        O'chirish
+      </a>
+    </div>
   </div>
 </div>
 {% endblock %}

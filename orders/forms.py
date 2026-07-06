@@ -101,6 +101,66 @@ class OrderForm(forms.ModelForm):
         return cleaned_data
 
 
+class OrderCreateForm(forms.ModelForm):
+    """Buyurtma yaratish uchun soddalashtirilgan forma.
+
+    Kurer, holat, oldim miqdori va to'lov tafsiloti buyurtma yaratilgandan
+    keyin, uni bajarish jarayonida to'ldiriladi - shuning uchun bu yerda
+    so'ralmaydi.
+    """
+
+    class Meta:
+        model = Order
+        fields = ["client", "outquantity", "price", "effective_date", "notes"]
+        widgets = {
+            "client": forms.Select(attrs=_attrs()),
+            "outquantity": EmptyZeroNumberInput(attrs=_attrs(min=0, placeholder="berdim")),
+            "price": forms.NumberInput(attrs=_attrs(step="1", min=0, placeholder="18000")),
+            "effective_date": forms.DateInput(attrs=_attrs(type="date")),
+            "notes": forms.Textarea(attrs=_attrs(rows=3, placeholder="Qo'shimcha izohlar...")),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['client'].queryset = Client.objects.filter(
+            phone_numbers__isnull=False
+        ).distinct().order_by('name')
+
+        if "effective_date" not in self.initial:
+            self.fields['effective_date'].initial = timezone.localdate()
+        self.fields['price'].initial = 18000
+
+        self.fields['outquantity'].required = False
+        self.fields['effective_date'].help_text = "Buyurtma bajarilish sanasi"
+        self.fields['outquantity'].help_text = "berdim miqdori"
+
+    def clean_effective_date(self):
+        date = self.cleaned_data.get('effective_date')
+        if date:
+            today = timezone.localdate()
+            if date < today - timezone.timedelta(days=30):
+                raise ValidationError("Sana juda eski (30 kundan ortiq)")
+            if date > today + timezone.timedelta(days=365):
+                raise ValidationError("Sana juda uzoq (1 yildan ortiq)")
+        return date
+
+    def clean_price(self):
+        price = self.cleaned_data.get('price')
+        if price and price <= 0:
+            raise ValidationError("Narx 0 dan katta bo'lishi kerak")
+        if price and price > 10000000:
+            raise ValidationError("Narx juda katta (10 million so'mdan ko'p)")
+        return price
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if cleaned_data.get('outquantity') in (None, ""):
+            cleaned_data['outquantity'] = 0
+        if (cleaned_data.get('outquantity') or 0) < 0:
+            raise ValidationError('"berdim" manfiy bo\'lmasligi kerak')
+        return cleaned_data
+
+
 class SimpleOrderForm(forms.ModelForm):
     """Sodda buyurtma formasi - asosiy maydonlar bilan"""
 
