@@ -372,10 +372,16 @@
     setTimeout(recenter, 80);
   }
 
+  function normalizeText(value) {
+    const fn = window.normalizeDisplayText;
+    if (typeof fn === 'function') return fn(value);
+    return String(value || '').replace(/\\n/g, '\n').trim();
+  }
+
   function openSheet(point) {
     sheetOpenedAt = Date.now();
     const modal = document.getElementById('order-modal');
-    const caption = window.normalizeDisplayText(point.caption || point.phone || '');
+    const caption = normalizeText(point.caption || point.phone || '');
     const payment = point.payment || '';
 
     document.getElementById('modal-client').textContent = point.client || '';
@@ -384,7 +390,7 @@
     document.getElementById('modal-out').textContent = `${point.outquantity || 0} dona`;
     document.getElementById('modal-payment').textContent = payment || 'Ko\'rsatilmagan';
 
-    const notes = window.normalizeDisplayText(point.notes || '');
+    const notes = normalizeText(point.notes || '');
     const notesWrap = document.getElementById('modal-notes-wrap');
     if (notes) {
       document.getElementById('modal-notes').textContent = notes;
