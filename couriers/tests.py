@@ -67,13 +67,14 @@ class CourierDateFilterTests(TestCase):
         self.assertEqual(response.context["outquantity_delivered_total"], 30)
         self.assertEqual(response.context["outquantity_plan_total"], 83)
 
-    def test_courier_dashboard_includes_location_permission_gate(self):
+    def test_courier_dashboard_includes_location_permission_banner(self):
         response = self.client.get(reverse("couriers:dashboard"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "courier-location-gate")
+        self.assertContains(response, "courier-location-banner")
         self.assertContains(response, "Ruxsat berish")
-        self.assertContains(response, "Joylashuv ruxsati talab qilinadi")
+        self.assertContains(response, "Joylashuvni ulashish kerak")
+        self.assertNotContains(response, "courier-location-gate")
 
     def test_non_today_order_cannot_be_updated_by_post(self):
         yesterday = localdate() - timedelta(days=1)
