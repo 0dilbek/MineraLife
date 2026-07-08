@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load querystring humanize %}
+{% load querystring humanize ui_icons %}
 {% block title %}Hisobotlar{% endblock %}
 
 {% block extra_head %}
@@ -52,7 +52,7 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
         </svg>
       </div>
-      <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">📊 Hisobotlar</h2>
+      <h2 class="mb-2 flex items-center justify-center gap-2 text-2xl font-bold text-gray-900 dark:text-white">{% icon "chart" "h-7 w-7" %} Hisobotlar</h2>
       <p class="text-gray-600 dark:text-gray-400">Davom etish uchun parolni kiriting</p>
     </div>
     
@@ -71,7 +71,7 @@
       </div>
       
       <div id="error-message" class="hidden p-3 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm">
-        ❌ Noto'g'ri parol!
+        <span class="inline-flex items-center gap-1.5">{% icon "x-circle" "h-4 w-4" %} Noto'g'ri parol!</span>
       </div>
       
       <button 
@@ -79,7 +79,7 @@
         class="w-full px-4 py-3 rounded-lg bg-blue-600 text-white font-medium
                hover:bg-blue-700 active:bg-blue-800 transition shadow-sm"
       >
-        🔓 Kirish
+        <span class="inline-flex items-center justify-center gap-2">{% icon "lock-open" "h-4 w-4" %} Kirish</span>
       </button>
     </form>
     
@@ -95,7 +95,7 @@
 
   <!-- Title -->
   <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-    <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">📊 Hisobotlar</h1>
+    <h1 class="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white sm:text-3xl">{% icon "chart" "h-7 w-7" %} Hisobotlar</h1>
     <div class="flex items-center gap-3">
       {% if excel_available %}
       <a href="{% url 'hisobotlar:export_excel' %}?{% query_transform %}" 
@@ -142,7 +142,7 @@
       </div>
 
       <button type="submit" class="w-full sm:w-auto px-5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition shadow-sm font-medium text-sm">
-        🔍 Qo'llash
+        <span class="inline-flex items-center gap-1.5">{% icon "search" "h-4 w-4" %} Qo'llash</span>
       </button>
 
       <!-- Quick buttons -->
@@ -198,7 +198,7 @@
   <!-- Chiziqli diagramma - Kunlik savdo -->
   <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5">
     <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
-      <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">📈 Kunlik savdo dinamikasi</h2>
+      <h2 class="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-gray-100">{% icon "chart-line" "h-5 w-5" %} Kunlik savdo dinamikasi</h2>
       <div class="flex gap-2 text-xs">
         <button onclick="switchChart('revenue')" id="btn-revenue" class="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-medium transition hover:bg-blue-700">Daromad</button>
         <button onclick="switchChart('orders')" id="btn-orders" class="px-3 py-1.5 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium transition hover:bg-gray-300 dark:hover:bg-gray-600">Buyurtmalar</button>
@@ -212,7 +212,7 @@
 
   <!-- To'lov usullari -->
   <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5">
-    <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">💰 To'lov usullari bo'yicha</h2>
+    <h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-gray-100">{% icon "wallet" "h-5 w-5" %} To'lov usullari bo'yicha</h2>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
       {% for p in payment_mix %}
@@ -224,7 +224,7 @@
                 {% else %}bg-orange-50 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-200 dark:border-orange-800{% endif %}
                 {% if payment == p.key %}ring-2 ring-blue-500{% endif %}">
         <div class="flex items-center justify-between gap-3">
-          <span class="text-sm font-semibold">{{ p.label }}</span>
+          <span class="inline-flex items-center gap-1.5 text-sm font-semibold">{% payment_icon p.key "h-4 w-4" %} {{ p.label }}</span>
           <span class="font-bold">{{ p.amount|floatformat:0|intcomma }}</span>
         </div>
         <div class="mt-2 grid grid-cols-3 gap-2 text-xs opacity-80">
@@ -239,7 +239,7 @@
 
   <!-- Kuryerlar statistikasi -->
   <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5">
-    <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">👥 Kuryerlar bo'yicha statistika</h2>
+    <h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-gray-100">{% icon "users" "h-5 w-5" %} Kuryerlar bo'yicha statistika</h2>
 
     <div class="overflow-x-auto">
       <table class="min-w-full text-sm">
@@ -283,7 +283,7 @@
 
   <!-- Top 10 mijozlar -->
   <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5">
-    <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">🏆 Top 10 mijozlar</h2>
+    <h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-gray-100">{% icon "trophy" "h-5 w-5" %} Top 10 mijozlar</h2>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
       {% for c in top_clients %}
@@ -307,7 +307,7 @@
 
   <!-- Barcha mijozlar (pagination bilan) -->
   <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5">
-    <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">👥 Barcha mijozlar</h2>
+    <h2 class="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-gray-100">{% icon "users" "h-5 w-5" %} Barcha mijozlar</h2>
     
     <div class="overflow-x-auto">
       <table class="min-w-full text-sm">

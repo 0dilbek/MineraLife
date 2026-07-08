@@ -2,6 +2,8 @@ from django.db import models
 from django.core.validators import RegexValidator
 from django.utils import timezone
 
+from common.text_utils import normalize_multiline_text
+
 
 class Order(models.Model):
     client = models.ForeignKey('clients.Client', on_delete=models.CASCADE, related_name='orders')
@@ -54,20 +56,77 @@ class Order(models.Model):
             return f"{self.get_total_price():,.0f} so'm ({self.outquantity} x {self.price:,.0f})"
         return f"{self.price:,.0f} so'm"
 
+    def get_notes_display_text(self):
+        return normalize_multiline_text(self.notes) or ""
+
+    def get_payment_breakdown(self):
+        """Faqat 0 dan katta to'lov summalari."""
+        mapping = (
+            ("cash", "Naqd", self.cash_amount),
+            ("card", "Karta", self.card_amount),
+            ("perechesleniya", "Perechisleniya", self.perechesleniya_amount),
+            ("debt", "Qarz", self.debt_amount),
+        )
+        return [
+            {"key": key, "label": label, "amount": amount}
+            for key, label, amount in mapping
+            if amount
+        ]
+
     def get_payment_summary(self):
         """To'lov turlari bo'yicha qisqa matn"""
-        parts = []
-        if self.cash_amount:
-            parts.append(f"💵 {self.cash_amount:,.0f}")
-        if self.card_amount:
-            parts.append(f"💳 {self.card_amount:,.0f}")
-        if self.perechesleniya_amount:
-            parts.append(f"🏦 {self.perechesleniya_amount:,.0f}")
-        if self.debt_amount:
-            parts.append(f"📝 {self.debt_amount:,.0f}")
-        return " | ".join(parts) if parts else "—"
+        parts = [
+            f"{item['label']}: {item['amount']:,.0f}"
+            for item in self.get_payment_breakdown()
+        ]
+        return " · ".join(parts) if parts else "—"
+
+    def _schedule_pending_copy_for_next_day(self):
+        """Bekor qilingan buyurtmani ertaga yangi 'kutilmoqda' buyurtma sifatida qo'shadi."""
+        next_date = self.effective_date + timezone.timedelta(days=1)
+        clean_fields = {
+            "courier": self.courier,
+            "price": self.price,
+            "inquantity": self.inquantity,
+            "outquantity": self.outquantity,
+            "cash_amount": 0,
+            "card_amount": 0,
+            "perechesleniya_amount": 0,
+            "debt_amount": 0,
+            "notes": self.notes or "",
+        }
+
+        existing = Order.objects.filter(
+            client=self.client,
+            effective_date=next_date,
+            status="pending",
+        ).order_by("pk").first()
+
+        if existing:
+            for field, value in clean_fields.items():
+                setattr(existing, field, value)
+            existing.save(update_fields=[*clean_fields.keys(), "updated_at"])
+            return existing
+
+        return Order.objects.create(
+            client=self.client,
+            status="pending",
+            effective_date=next_date,
+            **clean_fields,
+        )
 
     def save(self, *args, **kwargs):
+        if self.notes:
+            self.notes = normalize_multiline_text(self.notes)
+
+        just_cancelled = False
+        if self.pk and self.status == 'cancelled':
+            previous_status = Order.objects.filter(pk=self.pk).values_list('status', flat=True).first()
+            just_cancelled = previous_status != 'cancelled'
+
         super().save(*args, **kwargs)
+
+        if just_cancelled:
+            self._schedule_pending_copy_for_next_day()
     
 

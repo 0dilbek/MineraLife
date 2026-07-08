@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load ui_icons %}
 {% block title %}Buyurtmalar xaritasi{% endblock %}
 
 {% block extra_head %}
@@ -274,6 +275,27 @@
     }
     .map-search-status:empty{ display:none; }
 
+    .courier-live-icon{
+      position: relative;
+      width:20px;
+      height:20px;
+      border-radius:999px;
+      border:2px solid #fff;
+      box-shadow:0 3px 10px rgba(15,23,42,.55);
+    }
+    .courier-live-icon::after{
+      content:"";
+      position:absolute;
+      inset:-9px;
+      border-radius:999px;
+      border:2px solid var(--dot-color, #2563eb);
+      animation: courier-dot-pulse 1.8s ease-out infinite;
+    }
+    @keyframes courier-dot-pulse{
+      0% { transform: scale(.6); opacity:.85; }
+      100% { transform: scale(1.9); opacity:0; }
+    }
+
     /* Mobil: panel kengligini cheklash, gridni 1 ustun */
     @media (max-width: 768px){
       .ml-control{ max-width: 92vw }
@@ -301,6 +323,9 @@
     <h1 class="mt-1 text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">Buyurtmalar xaritasi</h1>
   </div>
   <div class="flex items-center gap-2">
+    <span id="live-courier-indicator" class="hidden items-center gap-1 rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-700 dark:bg-green-900 dark:text-green-200">
+      <span class="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></span> Kuryerlar jonli
+    </span>
     <span class="hidden rounded-lg bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-gray-200 dark:bg-gray-800 dark:text-gray-100 dark:ring-gray-700 sm:inline-flex">
       {{ start_date|date:"Y-m-d" }} — {{ end_date|date:"Y-m-d" }}
     </span>
@@ -347,13 +372,13 @@
       <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex gap-3">
         <button type="button" 
                 onclick="assignCourier()"
-                class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-          💾 Saqlash
+                class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+          {% icon "save" "h-4 w-4" %} Saqlash
         </button>
         <button type="button" 
                 onclick="closeAssignModal()"
-                class="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
-          ❌ Bekor qilish
+                class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+          {% icon "x" "h-4 w-4" %} Bekor qilish
         </button>
       </div>
     </div>
@@ -425,7 +450,7 @@
     <div style="display:flex; align-items:center; justify-content:space-between; gap:.5rem; margin-bottom:.4rem">
       <div style="font-weight:700">Xarita filtrlari</div>
       <!-- Yopish tugmasi -->
-      <button type="button" id="filter-close" class="ml-chip" title="Yopish" style="line-height:1">✕</button>
+      <button type="button" id="filter-close" class="ml-chip inline-flex items-center justify-center" title="Yopish" style="line-height:1">{% icon "x" "h-4 w-4" %}</button>
     </div>
 
     <form id="ml-filter-form" method="get" class="space-y-2">
@@ -486,7 +511,7 @@
     </form>
     <!-- Marshrut chizish bo'limi -->
     <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(107,114,128,.3);">
-      <div style="font-weight: 600; margin-bottom: 8px;">📍 Marshrut chizish</div>
+      <div style="font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">{% icon "route" "h-4 w-4" %} Marshrut chizish</div>
       
       <!-- Kuryerlar ranglar legendasi -->
       <div id="courier-legend" style="margin-bottom: 8px; font-size: 10px; max-height: 100px; overflow-y: auto; padding: 4px; background: rgba(0,0,0,0.02); border-radius: 4px;">
@@ -505,11 +530,11 @@
         {% endfor %}
       </select>
       <div style="display:flex; gap:.5rem;">
-        <button type="button" id="ml-draw-route" class="ml-btn primary" disabled style="flex:1">
-          ✏️ Marshrut chizish
+        <button type="button" id="ml-draw-route" class="ml-btn primary inline-flex items-center justify-center gap-1.5" disabled style="flex:1">
+          {% icon "pencil" "h-4 w-4" %} Marshrut chizish
         </button>
-        <button type="button" id="ml-clear-route" class="ml-btn" style="background: #dc2626; color: white; border-color: #dc2626; flex:1" disabled>
-          🗑️ O'chirish
+        <button type="button" id="ml-clear-route" class="ml-btn inline-flex items-center justify-center gap-1.5" style="background: #dc2626; color: white; border-color: #dc2626; flex:1" disabled>
+          {% icon "trash" "h-4 w-4" %} O'chirish
         </button>
       </div>
       <div id="route-status" style="margin-top: 8px; font-size: 11px; color: #6b7280;"></div>
@@ -707,6 +732,10 @@
   let currentRouteCoords = []; // Chizilgan koordinatalar
   let selectedCourier = null; // Tanlangan kuryer
   let savedRoutes = {}; // Saqlangan marshrutlar (courier_id: polyline)
+  let courierCollection; // Kuryerlarning jonli joylashuvi markerlari
+  const courierPlacemarks = new Map(); // courier_id -> placemark
+  const LIVE_LOCATIONS_URL = "{% url 'couriers:live_locations' %}";
+  const LOCATIONS_POLL_MS = 10000;
 
   ymaps.ready(init);
   function init(){
@@ -720,11 +749,17 @@
 
     // Kuryerlar ranglarini legend'ga to'ldirish
     initializeCourierLegend();
-    
+
     // Kuryer statistikasini ko'rsatish
     renderCourierStats();
 
     renderMarkers();
+
+    // Kuryerlarning jonli joylashuvi
+    courierCollection = new ymaps.GeoObjectCollection();
+    map.geoObjects.add(courierCollection);
+    refreshCourierLocations();
+    setInterval(refreshCourierLocations, LOCATIONS_POLL_MS);
 
     setupCompactSearch();
 
@@ -806,7 +841,7 @@
             <div>Status: <strong>${esc(p.status)}</strong></div>
             <div>Narx: <strong>${Number(p.price).toLocaleString()} so'm</strong></div>
             <div>Oldim: <strong>${p.inquantity}</strong> · Berdim: <strong>${p.outquantity}</strong></div>
-            ${p.notes ? `<div style="margin-top:4px; color:#4b5563;">${esc(p.notes)}</div>` : ''}
+            ${p.notes ? `<div style="margin-top:4px; color:#4b5563; white-space:pre-line;">${displayMultilineHtml(p.notes, esc)}</div>` : ''}
             <div style="margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap;">
               <button onclick="toggleOrderSelectionFromBalloon(${p.id})"
                       style="padding: 6px 10px; background: #111827; color: white; border: none; border-radius: 6px; cursor: pointer; flex: 1; font-size: 12px;">
@@ -859,6 +894,65 @@
     
     recenter();
     refreshSelectionUi();
+  }
+
+  function courierIconLayout(color, username, isFresh){
+    return ymaps.templateLayoutFactory.createClass(
+      `<div class="courier-live-icon" style="background:${color}; --dot-color:${color}; opacity:${isFresh ? 1 : .55};" title="${esc(username)}"></div>`
+    );
+  }
+
+  function courierBalloon(loc){
+    const mins = Math.floor(loc.seconds_ago / 60);
+    const agoText = mins < 1 ? 'hozirgina' : `${mins} daqiqa oldin`;
+    return `
+      <div style="font-family: Arial, sans-serif;">
+        <div style="font-weight:700;display:flex;align-items:center;gap:6px;">${iconSvg('truck', 'h-4 w-4')}${esc(loc.courier)}</div>
+        <div style="color:#6b7280; font-size:12px;">Yangilangan: ${agoText}</div>
+      </div>
+    `;
+  }
+
+  async function refreshCourierLocations(){
+    const indicator = document.getElementById('live-courier-indicator');
+    try {
+      const res = await fetch(LIVE_LOCATIONS_URL, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+      if (!res.ok) throw new Error('bad response');
+      const data = await res.json();
+      indicator?.classList.remove('hidden');
+      indicator?.classList.add('inline-flex');
+
+      const seenIds = new Set();
+      (data.locations || []).forEach(loc => {
+        seenIds.add(loc.courier_id);
+        const isFresh = loc.seconds_ago <= 90;
+        const color = getCourierColor(loc.courier_id);
+        const existing = courierPlacemarks.get(loc.courier_id);
+        if (existing) {
+          existing.geometry.setCoordinates([loc.lat, loc.lon]);
+          existing.properties.set('balloonContent', courierBalloon(loc));
+          existing.options.set('iconLayout', courierIconLayout(color, loc.courier, isFresh));
+        } else {
+          const placemark = new ymaps.Placemark([loc.lat, loc.lon], {
+            balloonContent: courierBalloon(loc),
+          }, {
+            iconLayout: courierIconLayout(color, loc.courier, isFresh),
+            iconShape: { type: 'Circle', coordinates: [14, 14], radius: 14 },
+          });
+          courierCollection.add(placemark);
+          courierPlacemarks.set(loc.courier_id, placemark);
+        }
+      });
+
+      for (const [courierId, placemark] of courierPlacemarks.entries()) {
+        if (!seenIds.has(courierId)) {
+          courierCollection.remove(placemark);
+          courierPlacemarks.delete(courierId);
+        }
+      }
+    } catch (e) {
+      indicator?.classList.add('hidden');
+    }
   }
 
   function setupSelectionControls() {
@@ -1000,7 +1094,7 @@
         
         // Agar bu kuryer uchun marshrut mavjud bo'lsa
         if (savedRoutes[selectedCourier]) {
-          statusDiv.innerHTML += '<div style="margin-top: 4px;">✅ Bu kuryer uchun marshrut mavjud</div>';
+          statusDiv.innerHTML += `<div style="margin-top: 4px;display:flex;align-items:center;gap:6px;">${iconSvg('check-circle', 'h-4 w-4')}<span>Bu kuryer uchun marshrut mavjud</span></div>`;
         }
       } else {
         statusDiv.innerHTML = '';
@@ -1044,7 +1138,7 @@
             map.geoObjects.remove(savedRoutes[selectedCourier]);
             delete savedRoutes[selectedCourier];
           }
-          statusDiv.innerHTML = '✅ Marshrut o\'chirildi';
+          statusDiv.innerHTML = iconLabel('check-circle', 'Marshrut o\'chirildi');
           setTimeout(() => statusDiv.innerHTML = '', 3000);
         } else {
           alert('Xatolik: ' + data.error);
@@ -1063,9 +1157,9 @@
     const drawBtn = document.getElementById('ml-draw-route');
     const statusDiv = document.getElementById('route-status');
     
-    drawBtn.textContent = '💾 Marshrutni saqlash';
+    drawBtn.innerHTML = iconLabel('save', 'Marshrutni saqlash');
     drawBtn.style.background = '#16a34a';
-    statusDiv.innerHTML = '🖱️ Xaritada nuqtalarni bosing';
+    statusDiv.innerHTML = iconLabel('map-pin', 'Xaritada nuqtalarni bosing');
 
     // Eski marshrutni o'chirish
     if (currentRoute) {
@@ -1122,7 +1216,7 @@
     }
     
     const statusDiv = document.getElementById('route-status');
-    statusDiv.innerHTML = `📍 ${currentRouteCoords.length} nuqta tanlandi`;
+    statusDiv.innerHTML = iconLabel('map-pin', `${currentRouteCoords.length} nuqta tanlandi`);
   }
 
   // Marshrutni tugatish va saqlash
@@ -1139,7 +1233,7 @@
     const statusDiv = document.getElementById('route-status');
     
     drawBtn.disabled = true;
-    statusDiv.innerHTML = '⏳ Saqlanmoqda...';
+    statusDiv.innerHTML = iconLabel('clock', 'Saqlanmoqda...');
     
     try {
       const courierColor = getCourierColor(parseInt(selectedCourier));
@@ -1173,12 +1267,12 @@
       const data = await response.json();
       
       if (data.success) {
-        statusDiv.innerHTML = '✅ Marshrut saqlandi';
+        statusDiv.innerHTML = iconLabel('check-circle', 'Marshrut saqlandi');
         savedRoutes[selectedCourier] = currentRoute;
         currentRoute = null;
         
         // Tugmani qayta tiklash
-        drawBtn.textContent = '✏️ Marshrut chizish';
+        drawBtn.innerHTML = iconLabel('pencil', 'Marshrut chizish');
         drawBtn.style.background = '#2563eb';
         drawBtn.disabled = false;
       } else {

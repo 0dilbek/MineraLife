@@ -39,6 +39,28 @@
         min-height: 460px;
       }
     }
+
+    .own-location-icon{
+      position: relative;
+      width:20px;
+      height:20px;
+      border-radius:999px;
+      background:#2563eb;
+      border:2px solid #fff;
+      box-shadow:0 3px 10px rgba(15,23,42,.55);
+    }
+    .own-location-icon::after{
+      content:"";
+      position:absolute;
+      inset:-9px;
+      border-radius:999px;
+      border:2px solid rgba(37,99,235,.6);
+      animation: own-location-pulse 1.8s ease-out infinite;
+    }
+    @keyframes own-location-pulse{
+      0% { transform: scale(.7); opacity:.9; }
+      100% { transform: scale(1.6); opacity:0; }
+    }
   </style>
 {% endblock %}
 
@@ -46,11 +68,11 @@
 <div class="mx-auto max-w-6xl space-y-3">
   <div class="flex items-center justify-between gap-3">
     <div class="min-w-0">
-      <a href="{% url 'couriers:dashboard' %}" class="text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 sm:text-sm">Dashboardga qaytish</a>
+      <a href="{% url 'couriers:dashboard' %}?preset={{ selected_preset|default:'today' }}" class="text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 sm:text-sm">Dashboardga qaytish</a>
       <h1 class="mt-1 text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">Xarita</h1>
     </div>
     <div class="text-right text-xs text-gray-500 dark:text-gray-400 sm:text-sm">
-      {{ today }}
+      {{ selected_date }}
     </div>
   </div>
 
@@ -59,6 +81,14 @@
     Admin bugun uchun marshrut belgilagan. Xaritadagi chiziq bo'ylab harakat qiling.
   </div>
   {% endif %}
+
+  <section class="rounded-lg border border-gray-200 bg-white p-2 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+    <div class="grid grid-cols-3 gap-2">
+      <a href="?preset=yesterday" class="inline-flex min-h-11 items-center justify-center rounded-lg px-3 py-2 text-sm font-bold {% if selected_preset == 'yesterday' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600{% endif %}">Kecha</a>
+      <a href="?preset=today" class="inline-flex min-h-11 items-center justify-center rounded-lg px-3 py-2 text-sm font-bold {% if selected_preset == 'today' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600{% endif %}">Bugun</a>
+      <a href="?preset=tomorrow" class="inline-flex min-h-11 items-center justify-center rounded-lg px-3 py-2 text-sm font-bold {% if selected_preset == 'tomorrow' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600{% endif %}">Ertaga</a>
+    </div>
+  </section>
 
   <section id="map-shell" class="map-shell border border-gray-200 shadow-sm dark:border-gray-700">
     <div id="courier-map"></div>
@@ -93,6 +123,12 @@
       </div>
 
       <div class="flex gap-1.5 rounded-lg border border-white/70 bg-white/82 p-1 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-gray-900/78">
+        <button id="ml-my-location" type="button" title="Mening joylashuvim" aria-label="Mening joylashuvimni ko'rsatish" class="inline-flex h-9 w-9 items-center justify-center rounded-md text-blue-700 hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-900/40">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8a4 4 0 100 8 4 4 0 000-8z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2v3m0 14v3M2 12h3m14 0h3"/>
+          </svg>
+        </button>
         <button id="ml-fit" type="button" title="Moslashtirish" aria-label="Xaritani moslashtirish" class="inline-flex h-9 w-9 items-center justify-center rounded-md text-gray-700 hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-white/10">
           <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4h4M4 4l5 5m11-1V4h-4m4 0l-5 5M4 16v4h4m-4 0l5-5m11 5l-5-5m5 5v-4h-4"/>
@@ -117,7 +153,7 @@
         <div class="min-w-0">
           <p class="text-xs font-bold uppercase tracking-wide text-blue-600 dark:text-blue-400">Buyurtma ma'lumotlari</p>
           <h2 id="modal-client" class="mt-1 text-lg font-extrabold leading-tight text-gray-900 dark:text-white"></h2>
-          <p id="modal-caption" class="mt-1 text-sm leading-5 text-gray-700 dark:text-gray-300"></p>
+          <p id="modal-caption" class="mt-1 whitespace-pre-line text-sm leading-5 text-gray-700 dark:text-gray-300"></p>
         </div>
         <button type="button" onclick="closeSheet()" class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800" aria-label="Modalni yopish">
           <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -141,6 +177,11 @@
         <div id="modal-payment-wrap" class="rounded-lg border border-gray-200 p-3 text-sm text-gray-700 dark:border-gray-700 dark:text-gray-300">
           <span class="font-semibold text-gray-900 dark:text-white">To'lov:</span>
           <span id="modal-payment"></span>
+        </div>
+
+        <div id="modal-notes-wrap" class="hidden rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-100">
+          <span class="font-semibold">Izoh:</span>
+          <span id="modal-notes" class="whitespace-pre-line"></span>
         </div>
 
         <div class="grid gap-2">
@@ -197,6 +238,7 @@
   let map;
   let activeFilter = 'all';
   const markerItems = [];
+  let ownPlacemark = null;
 
   function init() {
     map = new ymaps.Map("courier-map", {
@@ -248,6 +290,7 @@
 
     document.getElementById('ml-fit').addEventListener('click', recenter);
     document.getElementById('ml-fs').addEventListener('click', toggleFullscreen);
+    document.getElementById('ml-my-location').addEventListener('click', centerOnOwnLocation);
 
     document.addEventListener('fullscreenchange', () => {
       updateFullscreenIcon();
@@ -264,6 +307,42 @@
 
     applyMapFilter('all');
     setTimeout(recenter, 100);
+
+    startOwnLocationWatch();
+  }
+
+  // Kuryerning o'z joylashuvini xaritada ko'rsatish (brauzer GPS orqali, jonli)
+  function startOwnLocationWatch() {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.watchPosition(
+      (pos) => updateOwnLocation(pos.coords.latitude, pos.coords.longitude),
+      () => {},
+      { enableHighAccuracy: true, maximumAge: 15000, timeout: 10000 }
+    );
+  }
+
+  function updateOwnLocation(lat, lon) {
+    if (ownPlacemark) {
+      ownPlacemark.geometry.setCoordinates([lat, lon]);
+    } else {
+      ownPlacemark = new ymaps.Placemark([lat, lon], {
+        balloonContent: 'Siz shu yerdasiz'
+      }, {
+        iconLayout: ymaps.templateLayoutFactory.createClass(
+          `<div class="own-location-icon" title="Siz shu yerdasiz"></div>`
+        ),
+        iconShape: { type: 'Circle', coordinates: [14, 14], radius: 14 },
+        zIndex: 1000
+      });
+      map.geoObjects.add(ownPlacemark);
+    }
+  }
+
+  function centerOnOwnLocation() {
+    if (ownPlacemark) {
+      map.setCenter(ownPlacemark.geometry.getCoordinates(), Math.max(map.getZoom(), 15), { duration: 250 });
+      ownPlacemark.balloon.open();
+    }
   }
 
   function applyMapFilter(status) {
@@ -291,7 +370,7 @@
 
   function openSheet(point) {
     const modal = document.getElementById('order-modal');
-    const caption = point.caption || point.phone || '';
+    const caption = window.normalizeDisplayText(point.caption || point.phone || '');
     const payment = point.payment || '';
 
     document.getElementById('modal-client').textContent = point.client || '';
@@ -299,6 +378,16 @@
     document.getElementById('modal-in').textContent = `${point.inquantity || 0} dona`;
     document.getElementById('modal-out').textContent = `${point.outquantity || 0} dona`;
     document.getElementById('modal-payment').textContent = payment || 'Ko\'rsatilmagan';
+
+    const notes = window.normalizeDisplayText(point.notes || '');
+    const notesWrap = document.getElementById('modal-notes-wrap');
+    if (notes) {
+      document.getElementById('modal-notes').textContent = notes;
+      notesWrap.classList.remove('hidden');
+    } else {
+      notesWrap.classList.add('hidden');
+    }
+
     document.getElementById('modal-edit').href = `/couriers/order/${point.id}/update/`;
     document.getElementById('modal-nav').href = `https://yandex.com/maps/?rtext=~${point.lat},${point.lon}&rtt=auto`;
 

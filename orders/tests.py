@@ -1,10 +1,13 @@
 import json
+from datetime import timedelta
 
 from django.contrib.auth.models import Group, User
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from clients.models import Client
+from orders.forms import OrderForm
 from orders.models import Order
 
 
@@ -61,3 +64,110 @@ class BulkAssignCourierToOrdersTests(TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertFalse(response.json()["success"])
+
+
+class OrderWorkingDateTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_superuser(
+            username="date-admin",
+            email="date-admin@example.com",
+            password="password",
+        )
+        self.client.force_login(self.admin)
+
+    def test_order_list_preset_is_reused_by_create_form(self):
+        tomorrow = timezone.localdate() + timedelta(days=1)
+
+        self.client.get(reverse("orders:list"), {"preset": "tomorrow"})
+        response = self.client.get(reverse("orders:create"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["form"].initial["effective_date"], tomorrow)
+
+    def test_order_list_without_query_uses_session_working_date(self):
+        yesterday = timezone.localdate() - timedelta(days=1)
+        session = self.client.session
+        session["orders_working_date"] = yesterday.isoformat()
+        session.save()
+
+        response = self.client.get(reverse("orders:list"))
+
+        self.assertEqual(response.context["start_date"], yesterday)
+        self.assertEqual(response.context["end_date"], yesterday)
+
+
+class CancelledOrderRescheduleTests(TestCase):
+    def setUp(self):
+        self.client_obj = Client.objects.create(name="Mijoz", latitude=41.31, longitude=69.24)
+
+    def test_cancelled_order_carries_quantities_to_next_day_copy(self):
+        today = timezone.localdate()
+        order = Order.objects.create(
+            client=self.client_obj,
+            inquantity=8,
+            outquantity=15,
+            cash_amount=120000,
+            effective_date=today,
+            status="pending",
+            notes="Eski izoh",
+        )
+
+        order.status = "cancelled"
+        order.save()
+
+        tomorrow = today + timedelta(days=1)
+        copies = Order.objects.filter(client=self.client_obj, effective_date=tomorrow, status="pending")
+        self.assertEqual(copies.count(), 1)
+
+        copy = copies.get()
+        self.assertEqual(copy.inquantity, 8)
+        self.assertEqual(copy.outquantity, 15)
+        self.assertEqual(copy.cash_amount, 0)
+        self.assertEqual(copy.card_amount, 0)
+        self.assertEqual(copy.perechesleniya_amount, 0)
+        self.assertEqual(copy.debt_amount, 0)
+        self.assertEqual(copy.notes, "Eski izoh")
+
+        order.refresh_from_db()
+        self.assertEqual(order.inquantity, 8)
+        self.assertEqual(order.outquantity, 15)
+
+    def test_cancelled_order_updates_existing_pending_copy_with_quantities(self):
+        today = timezone.localdate()
+        tomorrow = today + timedelta(days=1)
+        existing = Order.objects.create(
+            client=self.client_obj,
+            effective_date=tomorrow,
+            status="pending",
+            inquantity=4,
+            outquantity=9,
+            cash_amount=50000,
+        )
+        order = Order.objects.create(
+            client=self.client_obj,
+            effective_date=today,
+            status="pending",
+            inquantity=2,
+            outquantity=6,
+        )
+
+        order.status = "cancelled"
+        order.save()
+
+        existing.refresh_from_db()
+        self.assertEqual(Order.objects.filter(client=self.client_obj, effective_date=tomorrow, status="pending").count(), 1)
+        self.assertEqual(existing.inquantity, 2)
+        self.assertEqual(existing.outquantity, 6)
+        self.assertEqual(existing.cash_amount, 0)
+
+
+class EmptyZeroInputTests(TestCase):
+    def test_order_form_renders_zero_values_as_empty_inputs(self):
+        client_obj = Client.objects.create(name="Zero Client")
+        order = Order.objects.create(client=client_obj, inquantity=0, outquantity=0)
+
+        form = OrderForm(instance=order)
+
+        self.assertIn('name="inquantity" value=""', str(form["inquantity"]))
+        self.assertIn('name="outquantity" value=""', str(form["outquantity"]))
+        self.assertIn('name="cash_amount" value=""', str(form["cash_amount"]))

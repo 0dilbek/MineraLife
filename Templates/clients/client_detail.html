@@ -2,116 +2,177 @@
 
 {% block title %}{{ client.name }}{% endblock %}
 
+{% load text_filters %}
 {% block extra_head %}
   <!-- Yandex Maps JS API -->
   <script src="https://api-maps.yandex.ru/2.1/?lang=uz_UZ" type="text/javascript"></script>
   <style>
     #map { height: 360px; border-radius: 0.75rem; overflow: hidden; }
+
+    .receipt-wrap { max-width: 28rem; margin: 0 auto; }
+
+    .receipt-paper {
+      background: #fff;
+      box-shadow: 0 12px 30px rgba(15,23,42,.12), 0 2px 6px rgba(15,23,42,.06);
+      border-radius: .75rem .75rem 0 0;
+      font-variant-numeric: tabular-nums;
+    }
+    .dark .receipt-paper { background: #1f2937; }
+
+    .receipt-edge {
+      height: 14px;
+      background:
+        linear-gradient(-45deg, transparent 7px, #fff 0),
+        linear-gradient(45deg, transparent 7px, #fff 0);
+      background-size: 14px 14px;
+      background-repeat: repeat-x;
+      filter: drop-shadow(0 6px 6px rgba(15,23,42,.08));
+    }
+    .dark .receipt-edge {
+      background:
+        linear-gradient(-45deg, transparent 7px, #1f2937 0),
+        linear-gradient(45deg, transparent 7px, #1f2937 0);
+      background-size: 14px 14px;
+      background-repeat: repeat-x;
+    }
+
+    .receipt-row { display: flex; align-items: baseline; gap: .5rem; }
+    .receipt-row .r-label { flex-shrink: 0; font-size: .78rem; color: #6b7280; }
+    .dark .receipt-row .r-label { color: #9ca3af; }
+    .receipt-row .r-fill { flex: 1 1 auto; border-bottom: 1px dotted #cbd5e1; margin-bottom: .2rem; }
+    .dark .receipt-row .r-fill { border-bottom-color: #4b5563; }
+    .receipt-row .r-value { flex-shrink: 0; font-weight: 600; color: #111827; font-size: .9rem; }
+    .dark .receipt-row .r-value { color: #f3f4f6; }
+
+    .receipt-section { border-top: 1px dashed #d1d5db; padding-top: .85rem; margin-top: .85rem; }
+    .dark .receipt-section { border-top-color: #4b5563; }
+    .receipt-section-title {
+      font-size: .68rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+      color: #9ca3af; margin-bottom: .55rem;
+    }
+
+    @media print {
+      .no-print { display: none !important; }
+      nav, footer { display: none !important; }
+      body { background: #fff !important; }
+      .receipt-wrap { max-width: 100%; }
+      .receipt-paper { box-shadow: none; }
+    }
   </style>
 {% endblock %}
 
 {% block content %}
-<div class="max-w-5xl mx-auto space-y-6">
+<div class="receipt-wrap space-y-6">
 
-  <!-- Header + actions -->
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-    <div>
-      <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ client.name }}</h1>
-      <p class="text-sm text-gray-500 dark:text-gray-400">
-        Yaratilgan: {{ client.created_at|date:"Y-m-d H:i" }} · Yangilangan: {{ client.updated_at|date:"Y-m-d H:i" }}
-      </p>
+  <div class="receipt-paper px-6 pt-6 pb-5">
+    <!-- Sarlavha -->
+    <div class="text-center">
+      <p class="text-[.7rem] font-bold uppercase tracking-[.2em] text-blue-600 dark:text-blue-400">Ocean</p>
+      <h1 class="mt-1 text-xl font-extrabold text-gray-900 dark:text-white">{{ client.name }}</h1>
+      <p class="mt-0.5 font-mono text-sm text-gray-500 dark:text-gray-400">Mijoz kartasi</p>
+      {% if client.is_departed %}
+        <span class="mt-2 inline-flex rounded-full bg-indigo-950 px-3 py-1 text-xs font-bold text-white">Bizdan ketgan</span>
+      {% else %}
+        <span class="mt-2 inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">Faol</span>
+      {% endif %}
     </div>
-    <div class="flex items-center gap-2">
-      <a href="{% url 'clients:list' %}" class="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-gray-600 transition">
-        ← Ro‘yxatga qaytish
-      </a>
-	      <a href="{% url 'clients:update' client.id %}" class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition">
-	        Tahrirlash
-	      </a>
-	      <form method="post" action="{% url 'clients:toggle_departed' client.id %}">
-	        {% csrf_token %}
-	        <button type="submit" class="px-4 py-2 rounded-lg {% if client.is_departed %}bg-emerald-600 hover:bg-emerald-700{% else %}bg-indigo-900 hover:bg-indigo-950{% endif %} text-white transition">
-	          {% if client.is_departed %}Faol qilish{% else %}Bizdan ketgan{% endif %}
-	        </button>
-	      </form>
-	      <a href="{% url 'clients:delete' client.id %}" class="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition">
-	        O‘chirish
-	      </a>
+
+    <!-- Aloqa -->
+    <div class="receipt-section space-y-2">
+      {% if client.phone_numbers.all %}
+        {% for phone in client.phone_numbers.all %}
+        <div class="receipt-row">
+          <span class="r-label">{% if phone.is_primary %}Telefon{% else %}Tel. qo'shimcha{% endif %}</span>
+          <span class="r-fill"></span>
+          <a href="tel:{{ phone.phone_number }}" class="r-value font-mono text-blue-600 dark:text-blue-400">{{ phone.phone_number }}</a>
+        </div>
+        {% if phone.description %}
+        <p class="-mt-1 pl-1 text-xs text-gray-500 dark:text-gray-400">{{ phone.description }}</p>
+        {% endif %}
+        {% endfor %}
+      {% else %}
+        <div class="receipt-row">
+          <span class="r-label">Telefon</span>
+          <span class="r-fill"></span>
+          <span class="r-value text-gray-400">kiritilmagan</span>
+        </div>
+      {% endif %}
+      <div class="receipt-row">
+        <span class="r-label">Ro'yxatdan</span>
+        <span class="r-fill"></span>
+        <span class="r-value font-mono">{{ client.created_at|date:"Y-m-d" }}</span>
+      </div>
+      <div class="receipt-row">
+        <span class="r-label">Yangilangan</span>
+        <span class="r-fill"></span>
+        <span class="r-value font-mono">{{ client.updated_at|date:"Y-m-d" }}</span>
+      </div>
+    </div>
+
+    <!-- Koordinata -->
+    <div class="receipt-section space-y-2">
+      <p class="receipt-section-title">Koordinata</p>
+      <div class="receipt-row">
+        <span class="r-label">Latitude</span>
+        <span class="r-fill"></span>
+        <span id="lat-text" class="r-value font-mono">
+          {% if client.latitude %}{{ client.latitude|floatformat:6 }}{% else %}—{% endif %}
+        </span>
+      </div>
+      <div class="receipt-row">
+        <span class="r-label">Longitude</span>
+        <span class="r-fill"></span>
+        <span id="lon-text" class="r-value font-mono">
+          {% if client.longitude %}{{ client.longitude|floatformat:6 }}{% else %}—{% endif %}
+        </span>
+      </div>
+      <div>
+        <p class="r-label mb-1">Manzil</p>
+        <p id="addr-text" class="text-sm font-medium text-gray-900 dark:text-gray-100">
+          {% if client.latitude and client.longitude %}
+            Aniqlanmoqda…
+          {% else %}
+            Koordinata berilmagan
+          {% endif %}
+        </p>
+      </div>
+    </div>
+
+    <!-- Qo'shimcha ma'lumot -->
+    {% if client.caption %}
+    <div class="receipt-section">
+      <p class="receipt-section-title">Qo'shimcha ma'lumot</p>
+      <div class="whitespace-pre-line text-sm text-gray-800 dark:text-gray-200">{{ client.caption|display_text_br }}</div>
+    </div>
+    {% endif %}
+
+    <div class="mt-5 text-center font-mono text-[.7rem] text-gray-400 dark:text-gray-500">
+      *** mijoz №{{ client.id }} ***
     </div>
   </div>
+  <div class="receipt-edge"></div>
 
-  <!-- Info card -->
-  <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6 space-y-4">
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-	      <div>
-	        <div class="text-sm text-gray-500 dark:text-gray-400">Ism</div>
-	        <div class="flex flex-wrap items-center gap-2 font-medium text-gray-900 dark:text-gray-100">
-	          <span>{{ client.name }}</span>
-	          {% if client.is_departed %}
-	            <span class="rounded-full bg-indigo-950 px-2 py-0.5 text-xs font-semibold text-white">Bizdan ketgan</span>
-	          {% else %}
-	            <span class="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">Faol</span>
-	          {% endif %}
-	        </div>
-	      </div>
-      <div>
-        <div class="text-sm text-gray-500 dark:text-gray-400">Telefon raqamlar</div>
-        <div class="space-y-1">
-          {% if client.phone_numbers.all %}
-            {% for phone in client.phone_numbers.all %}
-              <div>
-                <a href="tel:{{ phone.phone_number }}" class="font-medium text-blue-600 dark:text-blue-400 hover:underline">
-                  {{ phone.phone_number }}
-                </a>
-                {% if phone.is_primary %}
-                  <span class="ml-1 px-1 bg-blue-100 text-blue-800 text-xs rounded">Asosiy</span>
-                {% endif %}
-                {% if phone.description %}
-                  <span class="ml-1 text-sm text-gray-500">- {{ phone.description }}</span>
-                {% endif %}
-              </div>
-            {% endfor %}
-          {% else %}
-            <div class="text-gray-400">—</div>
-          {% endif %}
-        </div>
-      </div>
-      <div>
-        <div class="text-sm text-gray-500 dark:text-gray-400">Latitude</div>
-        <div id="lat-text" class="font-mono text-gray-900 dark:text-gray-100">
-          {% if client.latitude %}{{ client.latitude|floatformat:6 }}{% else %}—{% endif %}
-        </div>
-      </div>
-      <div>
-        <div class="text-sm text-gray-500 dark:text-gray-400">Longitude</div>
-        <div id="lon-text" class="font-mono text-gray-900 dark:text-gray-100">
-          {% if client.longitude %}{{ client.longitude|floatformat:6 }}{% else %}—{% endif %}
-        </div>
-      </div>
-    </div>
-
-   {% comment %} qo'shimcha ma'lumotlar {% endcomment %}
-   <div class="pt-2">
-      <div class="text-sm text-gray-500 dark:text-gray-400">Qo'shimcha ma'lumotlar</div>
-      <div class="text-gray-900 dark:text-gray-100">
-        {% if client.caption %}
-          {{ client.caption|linebreaksbr }}
-        {% else %}
-          —
-        {% endif %}
-      </div>
-    </div>
-
-    <!-- Address line -->
-    <div class="pt-2">
-      <div class="text-sm text-gray-500 dark:text-gray-400">Manzil</div>
-      <div id="addr-text" class="text-gray-900 dark:text-gray-100">
-        {% if client.latitude and client.longitude %}
-          Aniqlanmoqda…
-        {% else %}
-          Koordinata berilmagan
-        {% endif %}
-      </div>
+  <!-- Amallar -->
+  <div class="no-print flex flex-wrap items-center justify-between gap-2">
+    <a href="{% url 'clients:list' %}" class="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-gray-600 transition text-sm font-semibold">
+      ← Ro'yxatga qaytish
+    </a>
+    <div class="flex flex-wrap gap-2">
+      <button type="button" onclick="window.print()" class="px-3 py-2 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-600 text-sm font-semibold">
+        Chop etish
+      </button>
+      <a href="{% url 'clients:update' client.id %}" class="px-3 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition text-sm font-semibold">
+        Tahrirlash
+      </a>
+      <form method="post" action="{% url 'clients:toggle_departed' client.id %}">
+        {% csrf_token %}
+        <button type="submit" class="px-3 py-2 rounded-md {% if client.is_departed %}bg-emerald-600 hover:bg-emerald-700{% else %}bg-indigo-900 hover:bg-indigo-950{% endif %} text-white transition text-sm font-semibold">
+          {% if client.is_departed %}Faol qilish{% else %}Bizdan ketgan{% endif %}
+        </button>
+      </form>
+      <a href="{% url 'clients:delete' client.id %}" class="px-3 py-2 rounded-md bg-red-600 text-white hover:bg-red-700 transition text-sm font-semibold">
+        O'chirish
+      </a>
     </div>
   </div>
 

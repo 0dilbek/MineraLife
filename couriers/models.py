@@ -33,3 +33,24 @@ class CourierRoute(models.Model):
 
     def __str__(self):
         return f"{self.courier.username} - {self.date}"
+
+
+class CourierLocation(models.Model):
+    """Kuryerning eng so'nggi jonli joylashuvi (har doim bitta yozuv, ustidan yoziladi)"""
+    courier = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name='live_location',
+        verbose_name="Kuryer"
+    )
+    latitude = models.FloatField(verbose_name="Kenglik")
+    longitude = models.FloatField(verbose_name="Uzunlik")
+    accuracy = models.FloatField(null=True, blank=True, verbose_name="Aniqlik (metr)")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Yangilangan vaqti")
+
+    class Meta:
+        verbose_name = "Kuryer joylashuvi"
+        verbose_name_plural = "Kuryerlar joylashuvi"
+
+    def __str__(self):
+        return f"{self.courier.username} @ {self.latitude:.5f},{self.longitude:.5f}"

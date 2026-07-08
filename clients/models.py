@@ -1,6 +1,8 @@
 from django.db import models
 from django.core.validators import RegexValidator
 
+from common.text_utils import normalize_multiline_text
+
 
 class ClientPhoneNumber(models.Model):
     """Mijoz telefon raqamlari"""
@@ -49,6 +51,14 @@ class Client(models.Model):
     
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        if self.caption:
+            self.caption = normalize_multiline_text(self.caption)
+        super().save(*args, **kwargs)
+
+    def get_caption_display_text(self):
+        return normalize_multiline_text(self.caption) or ""
 
     def get_all_phone_numbers(self):
         """Barcha telefon raqamlarni olish"""

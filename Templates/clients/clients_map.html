@@ -116,7 +116,7 @@
   <div class="stats-panel p-3 mb-3">
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3">
       <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-        📍 Barcha mijozlar xaritasi
+        <span class="inline-flex items-center gap-1.5">${iconSvg('map-pin', 'h-4 w-4')} Barcha mijozlar xaritasi</span>
       </h2>
       <span class="text-sm text-gray-600 dark:text-gray-400">
         Jami: <strong class="text-blue-600 dark:text-blue-400">{{ total_clients }}</strong> ta mijoz
@@ -373,31 +373,23 @@
         iconContent: esc(shortName),
         balloonContent: `
           <div style="max-width: 280px; padding: 4px;">
-            <div style="font-size: 14px; font-weight: 600; margin-bottom: 8px;">
-              👤 ${esc(p.name)}
+            <div style="font-size: 14px; font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+              ${iconSvg('user', 'h-4 w-4')}${esc(p.name)}
             </div>
-            ${p.phone ? `
-              <div style="margin-bottom: 4px; font-size: 13px;">
-                📞 ${esc(p.phone)}
-              </div>
-            ` : ''}
-            ${p.caption ? `
-              <div style="margin-bottom: 4px; font-size: 13px; color: #666;">
-                📍 ${esc(p.caption)}
-              </div>
-            ` : ''}
+            ${p.phone ? iconRow('phone', esc(p.phone)) : ''}
+            ${p.caption ? `<div style="margin-bottom: 4px; font-size: 13px; color: #666; display: flex; align-items: flex-start; gap: 6px;">${iconSvg('map-pin', 'h-4 w-4')}<span>${displayMultilineHtml(p.caption, esc)}</span></div>` : ''}
 	            ${p.is_departed ? `
 	              <div style="margin-bottom: 4px; font-size: 13px; color: #1e1b4b; font-weight: 700;">
 	                Bizdan ketgan mijoz
 	              </div>
 	            ` : ''}
-	            <div style="margin-bottom: 8px; font-size: 13px; color: ${color === 'darkBlue' ? '#1e1b4b' : color === 'red' ? '#ef4444' : color === 'green' ? '#10b981' : '#6b7280'}; font-weight: 500;">
-	              📅 ${formatLastOrderDate(p.last_order_date)}
+	            <div style="margin-bottom: 8px; font-size: 13px; color: ${color === 'darkBlue' ? '#1e1b4b' : color === 'red' ? '#ef4444' : color === 'green' ? '#10b981' : '#6b7280'}; font-weight: 500; display: flex; align-items: center; gap: 6px;">
+	              ${iconSvg('calendar', 'h-4 w-4')}${formatLastOrderDate(p.last_order_date)}
             </div>
             <div style="margin-top: 10px; border-top: 1px solid #e5e7eb; padding-top: 8px; display: flex; gap: 6px;">
               <button onclick="goToClient(${p.id})"
-                      style="padding: 6px 12px; background: #4F46E5; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; flex: 1;">
-                📋 Batafsil
+                      style="padding: 6px 12px; background: #4F46E5; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+                ${iconSvg('clipboard', 'h-4 w-4')} Batafsil
               </button>
               <a href="https://yandex.com/maps/?rtext=~${p.lat},${p.lon}&rtt=auto" target="_blank"
                  style="padding: 6px 10px; background: #FFD600; color: #000; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700; white-space: nowrap;">

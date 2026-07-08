@@ -18,4 +18,6 @@ urlpatterns = [
     path("dashboard/", views.courier_dashboard, name="dashboard"),
     path("order/<int:pk>/update/", views.courier_order_update, name="order_update"),
     path("map/", views.courier_map, name="map"),  # xarita uchun view keyin yozamiz
+    path("location/update/", views.courier_update_location, name="update_location"),
+    path("live-locations/", views.courier_live_locations, name="live_locations"),
 ]

@@ -1,16 +1,12 @@
 from django.views.generic import ListView, CreateView, DetailView, TemplateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
-from django.db.models import Prefetch, Sum
+from django.urls import reverse
+from django.db.models import Sum
 from .models import Order
-from .forms import OrderForm
+from .forms import OrderForm, OrderCreateForm
 from django.utils import timezone
-from django.utils.dateparse import parse_date
-from datetime import timedelta
 from datetime import datetime, timedelta
-from django.utils import timezone
 from couriers.models import CourierRoute
-from django.utils.dateparse import parse_date
-from django.views.generic import TemplateView
 from django.contrib.auth.models import User, Group
 from admin_panel.mixins import SuperuserRequiredMixin
 from django.http import JsonResponse
@@ -18,6 +14,8 @@ from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import user_passes_test
 import json
 from django.conf import settings
+from .date_context import order_date_query, resolve_order_date_range, resolve_order_working_date
+
 
 class OrderListView(SuperuserRequiredMixin, ListView):
     model = Order
@@ -26,70 +24,8 @@ class OrderListView(SuperuserRequiredMixin, ListView):
     paginate_by = 12
     ordering = "-created_at"
 
-    # --- Sana parsing: bir nechta formatni qo‘llab-quvvatlaydi ---
-    def _parse_date_safe(self, s: str | None):
-        """
-        YYYY-MM-DD (standart), MM/DD/YYYY yoki DD/MM/YYYY ko‘rinishlarini qabul qiladi.
-        Brauzer/locale turlicha yuborganda ham ishlashi uchun.
-        """
-        if not s:
-            return None
-        # 1) standart (YYYY-MM-DD)
-        d = parse_date(s)
-        if d:
-            return d
-        # 2) muqobil formatlar
-        for fmt in ("%m/%d/%Y", "%d/%m/%Y"):
-            try:
-                return datetime.strptime(s, fmt).date()
-            except ValueError:
-                continue
-        return None
-
-    # --- GET dan oraliqni aniqlash + preset ---
     def _get_date_range(self):
-        today = timezone.localdate()
-        preset = (self.request.GET.get("preset") or "").lower()
-
-        # Preset ustun (kecha/bugun/ertaga)
-        if preset in {"yesterday", "today", "tomorrow"}:
-            if preset == "yesterday":
-                start = end = today - timedelta(days=1)
-            elif preset == "tomorrow":
-                start = end = today + timedelta(days=1)
-            else:
-                start = end = today
-            return start, end, preset
-
-        # Qo‘lda kiritilgan start/end
-        start = self._parse_date_safe(self.request.GET.get("start_date"))
-        end   = self._parse_date_safe(self.request.GET.get("end_date"))
-
-        # Default: bugun
-        if not start and not end:
-            start = end = today
-
-        # Bittasi yo‘q bo‘lsa ikkinchisiga teng
-        if start and not end:
-            end = start
-        if end and not start:
-            start = end
-
-        # Noto‘g‘ri tartib bo‘lsa almashtiramiz
-        if start and end and end < start:
-            start, end = end, start
-
-        # Agar aynan bitta kun bo‘lsa, avtomatik preset nomini ham qaytaramiz
-        auto_preset = ""
-        if start and end and start == end:
-            if start == today:
-                auto_preset = "today"
-            elif start == today - timedelta(days=1):
-                auto_preset = "yesterday"
-            elif start == today + timedelta(days=1):
-                auto_preset = "tomorrow"
-
-        return start, end, auto_preset
+        return resolve_order_date_range(self.request)
 
     # --- Asosiy queryset: sana oraliq bo‘yicha filtrlash ---
     def get_queryset(self):
@@ -185,7 +121,7 @@ class OrderListView(SuperuserRequiredMixin, ListView):
                 "lon": o.client.longitude,
                 "status": o.get_status_display(),
                 "price": float(o.get_total_price()),
-                "notes": o.notes or "",
+                "notes": o.get_notes_display_text(),
             }
             for o in map_qs
         ]
@@ -195,55 +131,8 @@ class OrderListView(SuperuserRequiredMixin, ListView):
 class OrdersMapView(SuperuserRequiredMixin, TemplateView):
     template_name = "orders/order_map.html"
 
-    # --- Sana parsing: bir nechta format ---
-    def _parse_date_safe(self, s: str | None):
-        if not s:
-            return None
-        d = parse_date(s)  # YYYY-MM-DD
-        if d:
-            return d
-        for fmt in ("%m/%d/%Y", "%d/%m/%Y"):
-            try:
-                return datetime.strptime(s, fmt).date()
-            except ValueError:
-                pass
-        return None
-
     def _get_date_range(self, request):
-        today = timezone.localdate()
-        preset = (request.GET.get("preset") or "").lower()
-
-        if preset in {"yesterday", "today", "tomorrow"}:
-            if preset == "yesterday":
-                start = end = today - timedelta(days=1)
-            elif preset == "tomorrow":
-                start = end = today + timedelta(days=1)
-            else:
-                start = end = today
-            return start, end, preset
-
-        start = self._parse_date_safe(request.GET.get("start_date"))
-        end   = self._parse_date_safe(request.GET.get("end_date"))
-
-        if not start and not end:
-            start = end = today
-        if start and not end:
-            end = start
-        if end and not start:
-            start = end
-        if start and end and end < start:
-            start, end = end, start
-
-        auto = ""
-        if start == end:
-            if start == today:
-                auto = "today"
-            elif start == today - timedelta(days=1):
-                auto = "yesterday"
-            elif start == today + timedelta(days=1):
-                auto = "tomorrow"
-
-        return start, end, auto or preset
+        return resolve_order_date_range(request)
 
     def _courier_qs(self):
         g = Group.objects.filter(name="couriers").first()
@@ -301,8 +190,8 @@ class OrdersMapView(SuperuserRequiredMixin, TemplateView):
                 "courier_id": o.courier_id,
                 "inquantity": o.inquantity,
                 "outquantity": o.outquantity,
-                "notes": o.notes or "",
-                "address": o.client.caption or "",
+                "notes": o.get_notes_display_text(),
+                "address": o.client.get_caption_display_text(),
             }
             for o in qs
         ]
@@ -491,15 +380,17 @@ def delete_courier_route(request):
 
 class OrderCreateView(SuperuserRequiredMixin, CreateView):
     model = Order
-    form_class = OrderForm
+    form_class = OrderCreateForm
     template_name = "orders/order_form.html"
-    success_url = reverse_lazy("orders:list")
+    def get_success_url(self):
+        return f"{reverse('orders:list')}?{order_date_query(resolve_order_working_date(self.request))}"
 
     def get_initial(self):
         initial = super().get_initial()
         client_id = self.request.GET.get("client")
         if client_id:
             initial["client"] = client_id
+        initial["effective_date"] = resolve_order_working_date(self.request)
         return initial
 
 
@@ -521,7 +412,6 @@ class OrderUpdateView(SuperuserRequiredMixin, UpdateView):
         return Order.objects.select_related("client").prefetch_related("client__phone_numbers")
 
     def get_success_url(self):
-        # Yangilangan buyurtmaning detail sahifasiga qaytamiz
         return reverse_lazy("orders:detail", kwargs={"pk": self.object.pk})
 
 
@@ -529,4 +419,6 @@ class OrderDeleteView(SuperuserRequiredMixin, DeleteView):
     model = Order
     template_name = "orders/order_confirm_delete.html"
     context_object_name = "order"
-    success_url = reverse_lazy("orders:list")
+
+    def get_success_url(self):
+        return f"{reverse('orders:list')}?{order_date_query(resolve_order_working_date(self.request))}"
