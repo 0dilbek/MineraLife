@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load ui_icons %}
 
 {% block title %}{% if client %}Mijozni tahrirlash{% else %}Yangi mijoz qo‘shish{% endif %}{% endblock %}
 
@@ -41,7 +42,7 @@
       {{ form.name }}
       <div id="name-warning" class="mt-2 hidden">
         <p class="text-sm text-yellow-600 dark:text-yellow-500 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded px-3 py-2">
-          ⚠️ Bu nomli mijoz allaqachon mavjud!
+          <span class="inline-flex items-center gap-1.5">{% icon "warning" "h-4 w-4" %} Bu nomli mijoz allaqachon mavjud!</span>
         </p>
       </div>
       {% if form.name.errors %}<p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>{% endif %}
@@ -82,8 +83,8 @@
                 <span class="text-xs text-gray-600 dark:text-gray-400">Asosiy</span>
               </label>
             </div>
-            <button type="button" class="remove-phone text-red-600 hover:text-red-800 px-2 py-1">
-              ✕
+            <button type="button" class="remove-phone text-red-600 hover:text-red-800 px-2 py-1 inline-flex items-center justify-center">
+              {% icon "x" "h-4 w-4" %}
             </button>
           </div>
         {% endfor %}
@@ -311,8 +312,8 @@
           <span class="text-xs text-gray-600 dark:text-gray-400">Asosiy</span>
         </label>
       </div>
-      <button type="button" class="remove-phone text-red-600 hover:text-red-800 px-2 py-1">
-        ✕
+      <button type="button" class="remove-phone text-red-600 hover:text-red-800 px-2 py-1 inline-flex items-center justify-center">
+        ${iconSvg('x', 'h-4 w-4')}
       </button>
     `;
     

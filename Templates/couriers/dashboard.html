@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load ui_icons %}
 {% block title %}Kuryer Dashboard{% endblock %}
 
 {% block extra_head %}
@@ -223,10 +224,10 @@
         <div class="w-full max-w-sm rounded-lg border border-white/70 bg-white/82 p-5 shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-gray-900/82">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Kunlik tushum</h3>
             <div class="mt-4 space-y-2 text-sm">
-                <div class="flex justify-between"><span class="text-gray-500 dark:text-gray-400">Naqd</span><strong class="text-gray-900 dark:text-white">{{ cash_total|floatformat:0 }} so'm</strong></div>
-                <div class="flex justify-between"><span class="text-gray-500 dark:text-gray-400">Karta</span><strong class="text-gray-900 dark:text-white">{{ card_total|floatformat:0 }} so'm</strong></div>
-                <div class="flex justify-between"><span class="text-gray-500 dark:text-gray-400">Perechisleniya</span><strong class="text-gray-900 dark:text-white">{{ perechesleniya_total|floatformat:0 }} so'm</strong></div>
-                <div class="flex justify-between"><span class="text-gray-500 dark:text-gray-400">Qarz</span><strong class="text-gray-900 dark:text-white">{{ debt_total|floatformat:0 }} so'm</strong></div>
+                {% if cash_total %}<div class="flex justify-between"><span class="inline-flex items-center gap-1.5 text-gray-500 dark:text-gray-400">{% icon "cash" "h-4 w-4" %} Naqd</span><strong class="text-gray-900 dark:text-white">{{ cash_total|floatformat:0 }} so'm</strong></div>{% endif %}
+                {% if card_total %}<div class="flex justify-between"><span class="inline-flex items-center gap-1.5 text-gray-500 dark:text-gray-400">{% icon "card" "h-4 w-4" %} Karta</span><strong class="text-gray-900 dark:text-white">{{ card_total|floatformat:0 }} so'm</strong></div>{% endif %}
+                {% if perechesleniya_total %}<div class="flex justify-between"><span class="inline-flex items-center gap-1.5 text-gray-500 dark:text-gray-400">{% icon "perechesleniya" "h-4 w-4" %} Perechisleniya</span><strong class="text-gray-900 dark:text-white">{{ perechesleniya_total|floatformat:0 }} so'm</strong></div>{% endif %}
+                {% if debt_total %}<div class="flex justify-between"><span class="inline-flex items-center gap-1.5 text-gray-500 dark:text-gray-400">{% icon "debt" "h-4 w-4" %} Qarz</span><strong class="text-gray-900 dark:text-white">{{ debt_total|floatformat:0 }} so'm</strong></div>{% endif %}
                 <div class="border-t border-gray-200 pt-2 dark:border-gray-700"></div>
                 <div class="flex justify-between text-base"><span class="font-semibold text-gray-700 dark:text-gray-200">Jami</span><strong class="text-gray-900 dark:text-white">{{ daily_total|floatformat:0 }} so'm</strong></div>
             </div>

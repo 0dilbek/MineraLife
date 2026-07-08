@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load ui_icons %}
 {% block title %}Kuryer xaritasi{% endblock %}
 
 {% block extra_head %}
@@ -64,7 +65,7 @@
   <div class="modal-card relative mx-auto mt-10 w-[95vw] max-w-xl bg-white dark:bg-gray-800 rounded-xl shadow-lg">
     <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
       <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Buyurtma tafsilotlari</h3>
-      <button class="text-gray-500 hover:text-gray-700 dark:text-gray-300" onclick="closeOrderModal()">✕</button>
+      <button class="text-gray-500 hover:text-gray-700 dark:text-gray-300 inline-flex items-center justify-center" onclick="closeOrderModal()">{% icon "x" "h-5 w-5" %}</button>
     </div>
 
     <div class="px-5 py-4 space-y-3 text-sm">
@@ -98,14 +99,14 @@
       <!-- Dashboard uslubidagi tugmalar -->
       <div class="pt-2 flex justify-end gap-2">
         <button type="button"
-                class="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                class="inline-flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
                 onclick="submitStatus('completed')">
-          ✅ Bajardim
+          {% icon "check-circle" "h-4 w-4" %} Bajardim
         </button>
         <button type="button"
-                class="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                class="inline-flex items-center gap-2 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
                 onclick="submitStatus('cancelled')">
-          ❌ Bekor qildim
+          {% icon "x-circle" "h-4 w-4" %} Bekor qildim
         </button>
       </div>
 

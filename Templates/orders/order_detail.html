@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load text_filters %}
+{% load text_filters ui_icons %}
 {% block title %}Buyurtma #{{ order.id }}{% endblock %}
 
 {% block extra_head %}
@@ -160,35 +160,26 @@
     </div>
 
     <!-- To'lov tafsiloti -->
+    {% with payments=order.get_payment_breakdown %}
+    {% if payments %}
     <div class="receipt-section">
       <p class="receipt-section-title">To'lov tafsiloti</p>
       <div class="space-y-2">
+        {% for payment in payments %}
         <div class="receipt-row">
-          <span class="r-label">💵 Naqd</span>
+          <span class="r-label inline-flex items-center gap-1">{% payment_icon payment.key "h-3.5 w-3.5" %} {{ payment.label }}</span>
           <span class="r-fill"></span>
-          <span class="r-value font-mono">{{ order.cash_amount|floatformat:0 }} so'm</span>
+          <span class="r-value font-mono">{{ payment.amount|floatformat:0 }} so'm</span>
         </div>
-        <div class="receipt-row">
-          <span class="r-label">💳 Karta</span>
-          <span class="r-fill"></span>
-          <span class="r-value font-mono">{{ order.card_amount|floatformat:0 }} so'm</span>
-        </div>
-        <div class="receipt-row">
-          <span class="r-label">🏦 Perechisleniya</span>
-          <span class="r-fill"></span>
-          <span class="r-value font-mono">{{ order.perechesleniya_amount|floatformat:0 }} so'm</span>
-        </div>
-        <div class="receipt-row">
-          <span class="r-label">📝 Qarz</span>
-          <span class="r-fill"></span>
-          <span class="r-value font-mono">{{ order.debt_amount|floatformat:0 }} so'm</span>
-        </div>
+        {% endfor %}
       </div>
       <div class="mt-3 flex items-center justify-between border-t border-dashed border-gray-300 pt-2 dark:border-gray-600">
         <span class="text-sm font-bold text-gray-700 dark:text-gray-200">Jami to'langan</span>
         <span class="font-mono text-base font-bold text-indigo-600 dark:text-indigo-400">{{ order.get_total_paid|floatformat:0 }} so'm</span>
       </div>
     </div>
+    {% endif %}
+    {% endwith %}
 
     <!-- Manzil / qo'shimcha ma'lumot -->
     {% if order.client.caption %}

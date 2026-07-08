@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load ui_icons %}
 
 {% block title %}{{ order.client.name }} - Buyurtma{% endblock %}
 
@@ -66,12 +67,10 @@
                     </div>
                     <div class="col-span-2 rounded-lg bg-gray-50 p-3 dark:bg-gray-900">
                         <dt class="text-gray-500 dark:text-gray-400">To'lov</dt>
-                        <dd class="mt-1 font-bold text-gray-900 dark:text-white">
-                            {% if order.cash_amount %}Naqd: {{ order.cash_amount|floatformat:0 }}{% endif %}
-                            {% if order.card_amount %}{% if order.cash_amount %} · {% endif %}Karta: {{ order.card_amount|floatformat:0 }}{% endif %}
-                            {% if order.perechesleniya_amount %}{% if order.cash_amount or order.card_amount %} · {% endif %}Perech.: {{ order.perechesleniya_amount|floatformat:0 }}{% endif %}
-                            {% if order.debt_amount %}{% if order.cash_amount or order.card_amount or order.perechesleniya_amount %} · {% endif %}Qarz: {{ order.debt_amount|floatformat:0 }}{% endif %}
-                            {% if not order.cash_amount and not order.card_amount and not order.perechesleniya_amount and not order.debt_amount %}-{% endif %}
+                        <dd class="mt-1 space-y-1 font-bold text-gray-900 dark:text-white">
+                            {% for payment in order.get_payment_breakdown %}
+                            <div class="inline-flex items-center gap-1.5">{% payment_icon payment.key "h-4 w-4" %} {{ payment.label }}: {{ payment.amount|floatformat:0 }}</div>
+                            {% empty %}-{% endfor %}
                         </dd>
                     </div>
                 </dl>
@@ -121,7 +120,7 @@
                     </div>
                     <div class="mt-3 grid gap-3 sm:grid-cols-2" id="payment-calculator">
                         <div>
-                            <label class="mb-1 block text-sm text-gray-600 dark:text-gray-300">{{ form.cash_amount.label }}</label>
+                            <label class="mb-1 flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-300">{% icon "cash" "h-4 w-4" %} {{ form.cash_amount.label }}</label>
                             <div class="flex gap-2">
                                 {{ form.cash_amount }}
                                 <button type="button" data-payment-toggle="cash" class="payment-toggle inline-flex min-h-12 min-w-16 items-center justify-center rounded-lg border-2 border-emerald-200 bg-white px-3 text-sm font-extrabold text-emerald-700 shadow-sm hover:bg-emerald-50 active:scale-[.98] dark:border-emerald-800 dark:bg-gray-800 dark:text-emerald-200 dark:hover:bg-emerald-900/30">
@@ -131,7 +130,7 @@
                             {% for error in form.cash_amount.errors %}<p class="mt-1 text-sm text-rose-600">{{ error }}</p>{% endfor %}
                         </div>
                         <div>
-                            <label class="mb-1 block text-sm text-gray-600 dark:text-gray-300">{{ form.card_amount.label }}</label>
+                            <label class="mb-1 flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-300">{% icon "card" "h-4 w-4" %} {{ form.card_amount.label }}</label>
                             <div class="flex gap-2">
                                 {{ form.card_amount }}
                                 <button type="button" data-payment-toggle="card" class="payment-toggle inline-flex min-h-12 min-w-16 items-center justify-center rounded-lg border-2 border-blue-200 bg-white px-3 text-sm font-extrabold text-blue-700 shadow-sm hover:bg-blue-50 active:scale-[.98] dark:border-blue-800 dark:bg-gray-800 dark:text-blue-200 dark:hover:bg-blue-900/30">
@@ -141,7 +140,7 @@
                             {% for error in form.card_amount.errors %}<p class="mt-1 text-sm text-rose-600">{{ error }}</p>{% endfor %}
                         </div>
                         <div>
-                            <label class="mb-1 block text-sm text-gray-600 dark:text-gray-300">{{ form.perechesleniya_amount.label }}</label>
+                            <label class="mb-1 flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-300">{% icon "perechesleniya" "h-4 w-4" %} {{ form.perechesleniya_amount.label }}</label>
                             <div class="flex gap-2">
                                 {{ form.perechesleniya_amount }}
                                 <button type="button" data-payment-toggle="perechesleniya" class="payment-toggle inline-flex min-h-12 min-w-16 items-center justify-center rounded-lg border-2 border-violet-200 bg-white px-3 text-sm font-extrabold text-violet-700 shadow-sm hover:bg-violet-50 active:scale-[.98] dark:border-violet-800 dark:bg-gray-800 dark:text-violet-200 dark:hover:bg-violet-900/30">
@@ -151,7 +150,7 @@
                             {% for error in form.perechesleniya_amount.errors %}<p class="mt-1 text-sm text-rose-600">{{ error }}</p>{% endfor %}
                         </div>
                         <div>
-                            <label class="mb-1 block text-sm text-gray-600 dark:text-gray-300">{{ form.debt_amount.label }}</label>
+                            <label class="mb-1 flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-300">{% icon "debt" "h-4 w-4" %} {{ form.debt_amount.label }}</label>
                             <div class="flex gap-2">
                                 {{ form.debt_amount }}
                                 <button type="button" data-payment-toggle="debt" class="payment-toggle inline-flex min-h-12 min-w-16 items-center justify-center rounded-lg border-2 border-orange-200 bg-white px-3 text-sm font-extrabold text-orange-700 shadow-sm hover:bg-orange-50 active:scale-[.98] dark:border-orange-800 dark:bg-gray-800 dark:text-orange-200 dark:hover:bg-orange-900/30">

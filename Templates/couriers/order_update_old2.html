@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static ui_icons %}
 
 {% block title %}Buyurtma #{{ order.id }} Tahrirlash{% endblock %}
 
@@ -43,8 +43,8 @@
                     {% if order.status == 'pending' %}border-yellow-300 bg-yellow-50 dark:bg-yellow-900 dark:border-yellow-600
                     {% elif order.status == 'completed' %}border-green-300 bg-green-50 dark:bg-green-900 dark:border-green-600
                     {% else %}border-red-300 bg-red-50 dark:bg-red-900 dark:border-red-600{% endif %}">
-                    <div class="text-2xl mb-2">
-                        {% if order.status == 'pending' %}⏳{% elif order.status == 'completed' %}✅{% else %}❌{% endif %}
+                    <div class="mb-2 flex justify-center">
+                        {% if order.status == 'pending' %}{% icon "clock" "h-8 w-8" %}{% elif order.status == 'completed' %}{% icon "check-circle" "h-8 w-8" %}{% else %}{% icon "x-circle" "h-8 w-8" %}{% endif %}
                     </div>
                     <div class="font-semibold text-gray-900 dark:text-white">
                         {{ order.get_status_display }}
@@ -52,8 +52,8 @@
                 </div>
                 
                 <div class="text-center p-4 rounded-lg border-2 border-blue-300 bg-blue-50 dark:bg-blue-900 dark:border-blue-600">
-                    <div class="text-2xl mb-2">
-                        {% if order.payment_method == 'card' %}💳{% elif order.payment_method == 'cash' %}💵{% else %}🏦{% endif %}
+                    <div class="mb-2 flex justify-center">
+                        {% if order.payment_method == 'card' %}{% icon "card" "h-8 w-8" %}{% elif order.payment_method == 'cash' %}{% icon "cash" "h-8 w-8" %}{% else %}{% icon "perechesleniya" "h-8 w-8" %}{% endif %}
                     </div>
                     <div class="font-semibold text-gray-900 dark:text-white">
                         {{ order.get_payment_method_display }}
@@ -61,7 +61,7 @@
                 </div>
                 
                 <div class="text-center p-4 rounded-lg border-2 border-green-300 bg-green-50 dark:bg-green-900 dark:border-green-600">
-                    <div class="text-2xl mb-2">💰</div>
+                    <div class="mb-2 flex justify-center">{% icon "coins" "h-8 w-8" %}</div>
                     <div class="font-semibold text-gray-900 dark:text-white">
                         {{ order.get_price_display }}
                     </div>

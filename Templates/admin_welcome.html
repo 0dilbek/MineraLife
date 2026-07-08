@@ -246,7 +246,7 @@
       const agoText = mins < 1 ? 'hozirgina' : `${mins} daqiqa oldin`;
       return `
         <div style="font-family: Arial, sans-serif;">
-          <div style="font-weight:700;">🛵 ${esc(loc.courier)}</div>
+          <div style="font-weight:700;display:flex;align-items:center;gap:6px;">${iconSvg('truck', 'h-4 w-4')}${esc(loc.courier)}</div>
           <div style="color:#6b7280; font-size:12px;">Yangilangan: ${agoText}</div>
         </div>
       `;

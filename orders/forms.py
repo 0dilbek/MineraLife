@@ -64,10 +64,10 @@ class OrderForm(forms.ModelForm):
         self.fields['effective_date'].help_text = "Buyurtma bajarilish sanasi"
         self.fields['inquantity'].help_text = "oldim miqdori"
         self.fields['outquantity'].help_text = "berdim miqdori"
-        self.fields['cash_amount'].label = "💵 Naqd (so'm)"
-        self.fields['card_amount'].label = "💳 Karta (so'm)"
-        self.fields['perechesleniya_amount'].label = "🏦 Perechisleniya (so'm)"
-        self.fields['debt_amount'].label = "📝 Qarz (so'm)"
+        self.fields['cash_amount'].label = "Naqd (so'm)"
+        self.fields['card_amount'].label = "Karta (so'm)"
+        self.fields['perechesleniya_amount'].label = "Perechisleniya (so'm)"
+        self.fields['debt_amount'].label = "Qarz (so'm)"
 
     def clean_effective_date(self):
         date = self.cleaned_data.get('effective_date')

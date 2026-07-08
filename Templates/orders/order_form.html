@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load ui_icons %}
 {% block title %}{% if order %}Buyurtmani tahrirlash{% else %}Buyurtma qo'shish{% endif %}{% endblock %}
 
 {% block extra_head %}
@@ -177,22 +178,22 @@
       <p class="text-sm font-semibold text-gray-700 dark:text-gray-200">To'lov tafsiloti (so'mda)</p>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">{{ form.cash_amount.label }}</label>
+          <label class="mb-1 flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">{% icon "cash" "h-4 w-4" %} {{ form.cash_amount.label }}</label>
           {{ form.cash_amount }}
           {% if form.cash_amount.errors %}{% for e in form.cash_amount.errors %}<p class="mt-1 text-sm text-red-600">{{ e }}</p>{% endfor %}{% endif %}
         </div>
         <div>
-          <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">{{ form.card_amount.label }}</label>
+          <label class="mb-1 flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">{% icon "card" "h-4 w-4" %} {{ form.card_amount.label }}</label>
           {{ form.card_amount }}
           {% if form.card_amount.errors %}{% for e in form.card_amount.errors %}<p class="mt-1 text-sm text-red-600">{{ e }}</p>{% endfor %}{% endif %}
         </div>
         <div>
-          <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">{{ form.perechesleniya_amount.label }}</label>
+          <label class="mb-1 flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">{% icon "perechesleniya" "h-4 w-4" %} {{ form.perechesleniya_amount.label }}</label>
           {{ form.perechesleniya_amount }}
           {% if form.perechesleniya_amount.errors %}{% for e in form.perechesleniya_amount.errors %}<p class="mt-1 text-sm text-red-600">{{ e }}</p>{% endfor %}{% endif %}
         </div>
         <div>
-          <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">{{ form.debt_amount.label }}</label>
+          <label class="mb-1 flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">{% icon "debt" "h-4 w-4" %} {{ form.debt_amount.label }}</label>
           {{ form.debt_amount }}
           {% if form.debt_amount.errors %}{% for e in form.debt_amount.errors %}<p class="mt-1 text-sm text-red-600">{{ e }}</p>{% endfor %}{% endif %}
         </div>
@@ -206,8 +207,8 @@
         <span class="text-sm font-medium text-gray-600 dark:text-gray-300">Buyurtma narxi:</span>
         <span id="order-total-display" class="text-base font-bold text-green-600 dark:text-green-400">— so'm</span>
       </div>
-      <p id="payment-hint" class="text-xs text-gray-400 dark:text-gray-500 hidden">
-        ⚠️ Jami to'lov buyurtma narxiga teng emas
+      <p id="payment-hint" class="hidden flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400">
+        {% icon "warning" "h-4 w-4" %} Jami to'lov buyurtma narxiga teng emas
       </p>
     </div>
     {% endif %}
