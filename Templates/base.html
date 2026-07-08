@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Ocean{% endblock %}</title>
+    <title>{% block title %}MineraLife{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         // Dark mode toggle uchun
@@ -46,7 +46,7 @@
         <!-- Chap: Logo + Desktop menyu -->
         <div class="flex items-center gap-6">
             <a href="/" class="flex items-center text-xl font-bold text-blue-600 dark:text-blue-400">
-            Ocean
+            MineraLife
             </a>
 
             {% if user.is_authenticated and user.is_superuser %}
@@ -189,7 +189,7 @@
     <!-- Footer -->
     <footer class="bg-white dark:bg-gray-800 shadow mt-auto">
         <div class="max-w-7xl mx-auto py-4 px-4 text-center text-gray-600 dark:text-gray-400">
-            &copy; {{ now|date:"Y" }} Ocean. Barcha huquqlar himoyalangan.
+            &copy; {{ now|date:"Y" }} MineraLife. Barcha huquqlar himoyalangan.
         </div>
     </footer>
 
@@ -311,186 +311,92 @@
 </script>
 
 {% if user.is_authenticated and not user.is_superuser %}
-<div id="courier-location-gate" class="fixed inset-0 z-[200] flex items-center justify-center p-4" role="alertdialog" aria-modal="true" aria-labelledby="courier-location-title" aria-describedby="courier-location-desc">
-  <div class="courier-gate-bg absolute inset-0"></div>
-  <div class="courier-gate-scanlines absolute inset-0 pointer-events-none"></div>
-  <div class="courier-gate-vignette absolute inset-0 pointer-events-none"></div>
-
-  <div class="courier-gate-radar absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-    <span class="courier-gate-ring courier-gate-ring-1"></span>
-    <span class="courier-gate-ring courier-gate-ring-2"></span>
-    <span class="courier-gate-ring courier-gate-ring-3"></span>
-  </div>
-
-  <div class="relative z-10 w-full max-w-md text-center">
-    <div class="courier-gate-panel mx-auto rounded-2xl border border-red-500/40 bg-black/75 px-6 py-8 shadow-2xl backdrop-blur-md">
-      <div class="courier-gate-icon-wrap mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full border-2 border-red-500/60 bg-red-950/80">
-        <svg class="courier-gate-icon h-10 w-10 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+<div id="courier-location-banner"
+     class="fixed left-0 right-0 top-16 z-50 border-b border-amber-300/80 bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 shadow-md shadow-amber-900/10 dark:border-amber-700/60 dark:from-amber-950/95 dark:via-orange-950/90 dark:to-amber-950/95 dark:shadow-black/30"
+     role="status" aria-live="polite">
+  <div class="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:py-2">
+    <div class="flex min-w-0 items-start gap-2.5 sm:items-center">
+      <span class="courier-loc-pulse mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-amber-700 ring-2 ring-amber-400/40 dark:text-amber-300 sm:mt-0">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21s7-4.35 7-11a7 7 0 10-14 0c0 6.65 7 11 7 11z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10h.01"/>
         </svg>
+      </span>
+      <div class="min-w-0">
+        <p class="text-sm font-bold text-amber-900 dark:text-amber-100">Joylashuvni ulashish kerak</p>
+        <p id="courier-location-status" class="text-xs leading-snug text-amber-800/90 dark:text-amber-200/80">
+          Admin sizni xaritada ko‘rishi uchun joylashuv ruxsati talab qilinadi.
+        </p>
       </div>
-
-      <p class="mb-2 text-xs font-bold uppercase tracking-[0.35em] text-red-400/90">Xavfsizlik protokoli</p>
-      <h2 id="courier-location-title" class="courier-gate-title mb-3 text-xl font-extrabold uppercase tracking-wide text-red-100 sm:text-2xl">
-        Joylashuv ruxsati talab qilinadi
-      </h2>
-      <p id="courier-location-desc" class="mb-5 text-sm leading-relaxed text-red-100/75">
-        Kuryer ilovasi ishlashi uchun joylashuvingizni ulashish majburiy. Ruxsat berilmasa tizimga kirish bloklanadi.
-      </p>
-
-      <p id="courier-location-status" class="mb-5 min-h-[2.5rem] text-sm font-medium text-amber-300/90"></p>
-
-      <button type="button" id="courier-location-retry"
-              class="courier-gate-btn group relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-red-600 via-red-500 to-orange-500 px-6 py-3.5 text-base font-bold text-white shadow-lg shadow-red-900/50 transition hover:from-red-500 hover:via-red-400 hover:to-orange-400 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:ring-offset-black disabled:cursor-not-allowed disabled:opacity-60">
-        <span class="relative z-10 inline-flex items-center justify-center gap-2">
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21s7-4.35 7-11a7 7 0 10-14 0c0 6.65 7 11 7 11z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10h.01"/>
-          </svg>
-          Ruxsat berish
-        </span>
-        <span class="courier-gate-btn-shine absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent"></span>
-      </button>
-
-      <p class="mt-4 text-xs text-red-200/50">
-        Rad etilsa ilova bloklangan holda qoladi
-      </p>
-
-      <form method="post" action="{% url 'logout' %}" class="mt-5">
-        {% csrf_token %}
-        <button type="submit" class="text-xs text-gray-400 underline decoration-gray-600 underline-offset-2 transition hover:text-gray-200">
-          Chiqish
-        </button>
-      </form>
     </div>
+    <button type="button" id="courier-location-retry"
+            class="inline-flex shrink-0 items-center justify-center gap-1.5 self-end rounded-lg bg-amber-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 focus:ring-offset-amber-50 disabled:cursor-not-allowed disabled:opacity-60 dark:focus:ring-offset-amber-950 sm:self-auto">
+      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21s7-4.35 7-11a7 7 0 10-14 0c0 6.65 7 11 7 11z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10h.01"/>
+      </svg>
+      Ruxsat berish
+    </button>
   </div>
 </div>
 
 <style>
-  body.courier-location-blocked {
-    overflow: hidden;
-  }
-  body.courier-location-blocked nav,
-  body.courier-location-blocked main,
-  body.courier-location-blocked footer {
-    pointer-events: none;
-    user-select: none;
-    filter: blur(6px) brightness(0.35) saturate(0.6);
-  }
-
-  .courier-gate-bg {
-    background:
-      radial-gradient(ellipse at 50% 40%, rgba(220, 38, 38, 0.22) 0%, transparent 55%),
-      radial-gradient(ellipse at 20% 80%, rgba(234, 88, 12, 0.12) 0%, transparent 45%),
-      linear-gradient(160deg, #050505 0%, #1a0505 45%, #0a0a0a 100%);
-    animation: courier-gate-bg-pulse 4s ease-in-out infinite;
-  }
-
-  .courier-gate-scanlines {
-    background: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      rgba(255, 0, 0, 0.03) 2px,
-      rgba(255, 0, 0, 0.03) 4px
-    );
-    animation: courier-gate-scan 8s linear infinite;
-  }
-
-  .courier-gate-vignette {
-    background: radial-gradient(ellipse at center, transparent 30%, rgba(0, 0, 0, 0.75) 100%);
-  }
-
-  .courier-gate-panel {
-    animation: courier-gate-panel-in 0.6s ease-out both, courier-gate-panel-glow 3s ease-in-out infinite;
-  }
-
-  .courier-gate-title {
-    text-shadow: 0 0 12px rgba(248, 113, 113, 0.45);
-    animation: courier-gate-glitch 5s steps(1) infinite;
-  }
-
-  .courier-gate-icon-wrap {
-    animation: courier-gate-icon-pulse 2.2s ease-in-out infinite;
-  }
-
-  .courier-gate-ring {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    border: 1px solid rgba(239, 68, 68, 0.35);
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    animation: courier-gate-radar 3.5s ease-out infinite;
-  }
-  .courier-gate-ring-1 { width: 120px; height: 120px; animation-delay: 0s; }
-  .courier-gate-ring-2 { width: 220px; height: 220px; animation-delay: 1.1s; }
-  .courier-gate-ring-3 { width: 320px; height: 320px; animation-delay: 2.2s; }
-
-  .courier-gate-btn-shine {
-    animation: courier-gate-shine 2.8s ease-in-out infinite;
-  }
-
-  #courier-location-gate.is-hidden {
+  #courier-location-banner.is-hidden {
     display: none;
   }
-
-  @keyframes courier-gate-bg-pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.88; }
+  body.courier-location-banner-visible main {
+    padding-top: 3.25rem;
   }
-
-  @keyframes courier-gate-scan {
-    0% { transform: translateY(0); }
-    100% { transform: translateY(4px); }
+  @media (min-width: 640px) {
+    body.courier-location-banner-visible main {
+      padding-top: 2.75rem;
+    }
   }
-
-  @keyframes courier-gate-panel-in {
-    from { opacity: 0; transform: translateY(16px) scale(0.96); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
+  .courier-loc-pulse {
+    animation: courier-loc-pulse 2s ease-in-out infinite;
   }
-
-  @keyframes courier-gate-panel-glow {
-    0%, 100% { box-shadow: 0 0 30px rgba(239, 68, 68, 0.15), inset 0 0 20px rgba(239, 68, 68, 0.05); }
-    50% { box-shadow: 0 0 50px rgba(239, 68, 68, 0.28), inset 0 0 30px rgba(239, 68, 68, 0.08); }
-  }
-
-  @keyframes courier-gate-glitch {
-    0%, 92%, 100% { transform: translate(0); opacity: 1; }
-    93% { transform: translate(-2px, 1px); opacity: 0.85; color: #fca5a5; }
-    94% { transform: translate(2px, -1px); opacity: 1; color: #fecaca; }
-    95% { transform: translate(0); }
-  }
-
-  @keyframes courier-gate-icon-pulse {
-    0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
-    50% { transform: scale(1.04); box-shadow: 0 0 24px 4px rgba(239, 68, 68, 0.25); }
-  }
-
-  @keyframes courier-gate-radar {
-    0% { opacity: 0.7; transform: translate(-50%, -50%) scale(0.6); }
-    100% { opacity: 0; transform: translate(-50%, -50%) scale(1.4); }
-  }
-
-  @keyframes courier-gate-shine {
-    0%, 100% { transform: translateX(-100%); }
-    50% { transform: translateX(100%); }
+  @keyframes courier-loc-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.35); }
+    50% { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
   }
 </style>
 
 <script>
-  // Kuryer joylashuv ruxsati majburiy: ruxsat berilmasa ilova bloklanadi.
+  // Kuryer joylashuvi: bloklamaydi, faqat tepada ogohlantirish ko‘rsatadi.
   (function () {
     const LOCATION_UPDATE_URL = "{% url 'couriers:update_location' %}";
     const UPDATE_INTERVAL_MS = 20000;
-    const GEO_OPTIONS = { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 };
+    const GEO_ATTEMPTS = [
+      { enableHighAccuracy: false, maximumAge: 120000, timeout: 25000 },
+      { enableHighAccuracy: true, maximumAge: 45000, timeout: 25000 },
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 35000 },
+    ];
+    const WATCH_OPTIONS = { enableHighAccuracy: true, maximumAge: 20000, timeout: 30000 };
 
-    const gate = document.getElementById('courier-location-gate');
+    const banner = document.getElementById('courier-location-banner');
     const retryBtn = document.getElementById('courier-location-retry');
     const statusEl = document.getElementById('courier-location-status');
-    if (!gate || !retryBtn || !statusEl) return;
+    if (!banner || !retryBtn || !statusEl) return;
 
-    let trackingStarted = false;
     let requesting = false;
+    let watchId = null;
+    let intervalId = null;
+    let hasFix = false;
+
+    function detectBrowser() {
+      const ua = navigator.userAgent || '';
+      if (window.Telegram?.WebApp?.initData) return 'telegram-miniapp';
+      if (/Telegram/i.test(ua)) return 'telegram';
+      if (/SamsungBrowser/i.test(ua)) return 'samsung';
+      if (/OPR\/|Opera/i.test(ua)) return 'opera';
+      if (/EdgA?\/|Edge\//i.test(ua)) return 'edge';
+      if (/Firefox|FxiOS/i.test(ua)) return 'firefox';
+      if (/CriOS/i.test(ua)) return 'chrome-ios';
+      if (/Chrome/i.test(ua) && !/Edg/i.test(ua)) return 'chrome';
+      if (/iPhone|iPad|iPod/i.test(ua)) return 'ios-safari';
+      if (/Android/i.test(ua)) return 'android';
+      return 'other';
+    }
+
+    const browser = detectBrowser();
 
     function getCookie(name) {
       const value = `; ${document.cookie}`;
@@ -498,28 +404,46 @@
       if (parts.length === 2) return parts.pop().split(';').shift();
     }
 
-    function blockApp(message) {
-      gate.classList.remove('is-hidden');
-      document.body.classList.add('courier-location-blocked');
+    function showBanner(message) {
+      banner.classList.remove('is-hidden');
+      document.body.classList.add('courier-location-banner-visible');
       if (message) statusEl.textContent = message;
     }
 
-    function unblockApp() {
-      gate.classList.add('is-hidden');
-      document.body.classList.remove('courier-location-blocked');
-      statusEl.textContent = '';
-      window.dispatchEvent(new CustomEvent('courierLocationGranted'));
-      startTracking();
+    function hideBanner() {
+      banner.classList.add('is-hidden');
+      document.body.classList.remove('courier-location-banner-visible');
     }
 
-    function geoErrorMessage(error) {
-      if (!error) return 'Joylashuv olinmadi. Qayta urinib ko\'ring.';
-      if (error.code === 1) {
-        return 'Ruxsat rad etildi. «Ruxsat berish» tugmasini bosing yoki brauzer sozlamalaridan joylashuvni yoqing.';
+    function browserHint(error) {
+      if (error && error.code === 1) {
+        if (browser === 'telegram' || browser === 'telegram-miniapp') {
+          return 'Telegram ichida joylashuv ba’zan ishlamaydi. Havolani Chrome yoki Safari brauzerida oching.';
+        }
+        if (browser === 'ios-safari' || browser === 'chrome-ios') {
+          return 'iPhone: Sozlamalar → Safari → Joylashuv → «So‘rovda» yoki «Ruxsat berilgan». Keyin «Ruxsat berish»ni bosing.';
+        }
+        return 'Ruxsat rad etilgan. Brauzer sozlamalaridan sayt uchun joylashuvni yoqing, so‘ng «Ruxsat berish»ni bosing.';
       }
-      if (error.code === 2) return 'Joylashuv aniqlanmadi. GPS va internetni tekshiring.';
-      if (error.code === 3) return 'Vaqt tugadi. Qayta urinib ko\'ring.';
-      return 'Joylashuv olinmadi. Qayta urinib ko\'ring.';
+      if (error && error.code === 2) {
+        if (browser === 'telegram' || browser === 'telegram-miniapp') {
+          return 'Telegram GPS signali kuchsiz. Tashqi brauzerda oching yoki ochiq joyga chiqing.';
+        }
+        return 'GPS signali topilmadi. Internet va joylashuv xizmatini yoqing, ochiq joyga chiqing.';
+      }
+      if (error && error.code === 3) {
+        return 'Joylashuv vaqti tugadi. «Ruxsat berish»ni qayta bosing yoki GPS ni yoqing.';
+      }
+      if (!window.isSecureContext) {
+        return 'Joylashuv faqat HTTPS (xavfsiz) ulanishda ishlaydi.';
+      }
+      if (!navigator.geolocation) {
+        if (browser === 'telegram' || browser === 'telegram-miniapp') {
+          return 'Bu Telegram oynasida joylashuv qo‘llab-quvvatlanmasligi mumkin. Chrome yoki Safari da oching.';
+        }
+        return 'Brauzeringiz joylashuvni qo‘llab-quvvatlamaydi.';
+      }
+      return 'Joylashuv olinmadi. «Ruxsat berish» tugmasini bosing.';
     }
 
     function postLocation(pos) {
@@ -538,80 +462,172 @@
       }).catch(() => {});
     }
 
-    function requestLocation(isManual) {
+    function onLocationSuccess(pos) {
+      hasFix = true;
+      hideBanner();
+      postLocation(pos);
+      window.dispatchEvent(new CustomEvent('courierLocationGranted'));
+      startWatch();
+    }
+
+    function onLocationSoftFail(error) {
+      hasFix = false;
+      showBanner(browserHint(error));
+    }
+
+    function getPositionWithFallbacks() {
+      return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+          reject({ code: 0 });
+          return;
+        }
+        let lastError = null;
+        let attempt = 0;
+
+        function tryNext() {
+          if (attempt >= GEO_ATTEMPTS.length) {
+            reject(lastError || { code: 3 });
+            return;
+          }
+          const opts = GEO_ATTEMPTS[attempt++];
+          navigator.geolocation.getCurrentPosition(
+            resolve,
+            (error) => {
+              lastError = error;
+              if (error.code === 1) {
+                reject(error);
+                return;
+              }
+              tryNext();
+            },
+            opts
+          );
+        }
+
+        tryNext();
+      });
+    }
+
+    function requestTelegramLocation() {
+      return new Promise((resolve, reject) => {
+        const lm = window.Telegram?.WebApp?.LocationManager;
+        if (!lm) {
+          reject({ code: 0 });
+          return;
+        }
+        const finish = (loc) => {
+          if (loc && typeof loc.latitude === 'number' && typeof loc.longitude === 'number') {
+            resolve({
+              coords: {
+                latitude: loc.latitude,
+                longitude: loc.longitude,
+                accuracy: loc.horizontal_accuracy || loc.accuracy || null,
+              },
+            });
+          } else {
+            reject({ code: 2 });
+          }
+        };
+        try {
+          if (typeof lm.init === 'function') {
+            const maybePromise = lm.init(() => {
+              if (typeof lm.getLocation === 'function') {
+                lm.getLocation(finish);
+              } else {
+                reject({ code: 0 });
+              }
+            });
+            if (maybePromise && typeof maybePromise.then === 'function') {
+              maybePromise.then(() => {
+                if (typeof lm.getLocation === 'function') lm.getLocation(finish);
+              }).catch(() => reject({ code: 2 }));
+            }
+          } else if (typeof lm.getLocation === 'function') {
+            lm.getLocation(finish);
+          } else {
+            reject({ code: 0 });
+          }
+        } catch (_) {
+          reject({ code: 2 });
+        }
+      });
+    }
+
+    async function requestLocation(isManual) {
       if (requesting) return;
-      if (!navigator.geolocation) {
-        blockApp('Brauzeringiz joylashuvni qo\'llab-quvvatlamaydi.');
+      if (!window.isSecureContext) {
+        showBanner(browserHint(null));
         return;
       }
 
       requesting = true;
       retryBtn.disabled = true;
       statusEl.textContent = isManual
-        ? 'Brauzer ruxsat oynasi kutilmoqda...'
-        : 'Joylashuv ruxsati so\'ralmoqda...';
+        ? 'Ruxsat so‘ralmoqda…'
+        : 'Joylashuv tekshirilmoqda…';
 
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          requesting = false;
-          retryBtn.disabled = false;
-          postLocation(pos);
-          unblockApp();
-        },
-        (error) => {
-          requesting = false;
-          retryBtn.disabled = false;
-          blockApp(geoErrorMessage(error));
-        },
-        GEO_OPTIONS
-      );
+      try {
+        let pos = null;
+        if (browser === 'telegram-miniapp') {
+          try {
+            pos = await requestTelegramLocation();
+          } catch (_) {}
+        }
+        if (!pos) {
+          pos = await getPositionWithFallbacks();
+        }
+        onLocationSuccess(pos);
+      } catch (error) {
+        onLocationSoftFail(error);
+      } finally {
+        requesting = false;
+        retryBtn.disabled = false;
+      }
     }
 
-    function sendLocation() {
-      if (!navigator.geolocation || document.hidden) return;
-      if (document.body.classList.contains('courier-location-blocked')) return;
+    function sendLocationQuiet() {
+      if (!navigator.geolocation || document.hidden || !hasFix) return;
       navigator.geolocation.getCurrentPosition(
         (pos) => postLocation(pos),
         (error) => {
-          if (error && error.code === 1) blockApp(geoErrorMessage(error));
+          if (error && error.code === 1) {
+            hasFix = false;
+            showBanner(browserHint(error));
+          }
         },
-        { enableHighAccuracy: true, maximumAge: 15000, timeout: 10000 }
+        { enableHighAccuracy: false, maximumAge: 60000, timeout: 15000 }
       );
     }
 
-    function startTracking() {
-      if (trackingStarted) return;
-      trackingStarted = true;
-      sendLocation();
-      setInterval(sendLocation, UPDATE_INTERVAL_MS);
-      document.addEventListener('visibilitychange', () => {
-        if (!document.hidden) sendLocation();
-      });
-    }
-
-    async function watchPermission() {
-      if (!navigator.permissions || !navigator.permissions.query) return;
-      try {
-        const result = await navigator.permissions.query({ name: 'geolocation' });
-        result.onchange = () => {
-          if (result.state === 'granted') {
-            requestLocation(false);
-          } else {
-            trackingStarted = false;
-            blockApp(
-              result.state === 'denied'
-                ? 'Ruxsat rad etildi. «Ruxsat berish» tugmasini bosing yoki brauzer sozlamalaridan joylashuvni yoqing.'
-                : 'Joylashuv ruxsati yo\'q. Davom etish uchun ruxsat bering.'
-            );
+    function startWatch() {
+      if (watchId !== null || !navigator.geolocation) return;
+      watchId = navigator.geolocation.watchPosition(
+        (pos) => {
+          hasFix = true;
+          hideBanner();
+          postLocation(pos);
+        },
+        (error) => {
+          if (error && error.code === 1) {
+            hasFix = false;
+            showBanner(browserHint(error));
           }
-        };
-      } catch (_) {}
+        },
+        WATCH_OPTIONS
+      );
+
+      if (!intervalId) {
+        intervalId = setInterval(sendLocationQuiet, UPDATE_INTERVAL_MS);
+        document.addEventListener('visibilitychange', () => {
+          if (!document.hidden && hasFix) sendLocationQuiet();
+          if (!document.hidden && !hasFix) requestLocation(false);
+        });
+      }
     }
 
     retryBtn.addEventListener('click', () => requestLocation(true));
 
-    blockApp('Joylashuv ruxsati tekshirilmoqda...');
-    watchPermission();
+    showBanner('Joylashuv ruxsati tekshirilmoqda…');
     requestLocation(false);
   })();
 </script>
