@@ -239,6 +239,7 @@
   let activeFilter = 'all';
   const markerItems = [];
   let ownPlacemark = null;
+  let sheetOpenedAt = 0;
 
   function init() {
     map = new ymaps.Map("courier-map", {
@@ -297,7 +298,10 @@
       setTimeout(() => map.container.fitToViewport(), 180);
     });
 
-    map.events.add('click', closeSheet);
+    map.events.add('click', () => {
+        if (Date.now() - sheetOpenedAt < 400) return;
+        closeSheet();
+    });
     document.getElementById('order-modal').addEventListener('click', (event) => {
       if (event.target.id === 'order-modal') closeSheet();
     });
@@ -369,6 +373,7 @@
   }
 
   function openSheet(point) {
+    sheetOpenedAt = Date.now();
     const modal = document.getElementById('order-modal');
     const caption = window.normalizeDisplayText(point.caption || point.phone || '');
     const payment = point.payment || '';

@@ -312,7 +312,7 @@
 
 {% if user.is_authenticated and not user.is_superuser %}
 <div id="courier-location-banner"
-     class="fixed left-0 right-0 top-16 z-50 border-b border-amber-300/80 bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 shadow-md shadow-amber-900/10 dark:border-amber-700/60 dark:from-amber-950/95 dark:via-orange-950/90 dark:to-amber-950/95 dark:shadow-black/30"
+     class="is-hidden fixed left-0 right-0 top-16 z-50 border-b border-amber-300/80 bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 shadow-md shadow-amber-900/10 dark:border-amber-700/60 dark:from-amber-950/95 dark:via-orange-950/90 dark:to-amber-950/95 dark:shadow-black/30"
      role="status" aria-live="polite">
   <div class="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:py-2">
     <div class="flex min-w-0 items-start gap-2.5 sm:items-center">
@@ -380,6 +380,7 @@
     let watchId = null;
     let intervalId = null;
     let hasFix = false;
+    let permissionState = 'unknown';
 
     function detectBrowser() {
       const ua = navigator.userAgent || '';
@@ -464,15 +465,48 @@
 
     function onLocationSuccess(pos) {
       hasFix = true;
+      permissionState = 'granted';
       hideBanner();
       postLocation(pos);
       window.dispatchEvent(new CustomEvent('courierLocationGranted'));
       startWatch();
     }
 
+    function shouldShowBannerForError(error) {
+      if (hasFix) return false;
+      if (error && error.code === 1) return true;
+      if (permissionState === 'granted') return false;
+      return true;
+    }
+
     function onLocationSoftFail(error) {
-      hasFix = false;
+      if (error && error.code === 1) {
+        permissionState = 'denied';
+        hasFix = false;
+      }
+      if (!shouldShowBannerForError(error)) {
+        hideBanner();
+        return;
+      }
       showBanner(browserHint(error));
+    }
+
+    async function syncPermissionState() {
+      if (!navigator.permissions?.query) return;
+      try {
+        const result = await navigator.permissions.query({ name: 'geolocation' });
+        permissionState = result.state;
+        result.onchange = () => {
+          permissionState = result.state;
+          if (result.state === 'granted') {
+            hideBanner();
+            if (!hasFix) requestLocation(false);
+          } else if (result.state === 'denied') {
+            hasFix = false;
+            showBanner(browserHint({ code: 1 }));
+          }
+        };
+      } catch (_) {}
     }
 
     function getPositionWithFallbacks() {
@@ -562,9 +596,11 @@
 
       requesting = true;
       retryBtn.disabled = true;
-      statusEl.textContent = isManual
-        ? 'Ruxsat so‘ralmoqda…'
-        : 'Joylashuv tekshirilmoqda…';
+      if (isManual) {
+        showBanner('Ruxsat so‘ralmoqda…');
+      } else if (permissionState === 'denied') {
+        showBanner(browserHint({ code: 1 }));
+      }
 
       try {
         let pos = null;
@@ -619,16 +655,28 @@
       if (!intervalId) {
         intervalId = setInterval(sendLocationQuiet, UPDATE_INTERVAL_MS);
         document.addEventListener('visibilitychange', () => {
-          if (!document.hidden && hasFix) sendLocationQuiet();
-          if (!document.hidden && !hasFix) requestLocation(false);
+          if (document.hidden) return;
+          if (hasFix) {
+            sendLocationQuiet();
+            return;
+          }
+          if (permissionState === 'denied') {
+            showBanner(browserHint({ code: 1 }));
+            return;
+          }
+          requestLocation(false);
         });
       }
     }
 
     retryBtn.addEventListener('click', () => requestLocation(true));
 
-    showBanner('Joylashuv ruxsati tekshirilmoqda…');
-    requestLocation(false);
+    syncPermissionState().then(() => {
+      if (permissionState === 'denied') {
+        showBanner(browserHint({ code: 1 }));
+      }
+      requestLocation(false);
+    });
   })();
 </script>
 {% endif %}
