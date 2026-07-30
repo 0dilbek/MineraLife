@@ -316,14 +316,29 @@
   }
 
   // Kuryerning o'z joylashuvini xaritada ko'rsatish (brauzer GPS orqali, jonli)
-  function startOwnLocationWatch() {
+  let ownWatchId = null;
+  function startOwnLocationWatch(highAccuracy = true) {
     if (!navigator.geolocation) return;
-    navigator.geolocation.watchPosition(
+    if (ownWatchId !== null) {
+      navigator.geolocation.clearWatch(ownWatchId);
+      ownWatchId = null;
+    }
+    ownWatchId = navigator.geolocation.watchPosition(
       (pos) => updateOwnLocation(pos.coords.latitude, pos.coords.longitude),
-      () => {},
-      { enableHighAccuracy: true, maximumAge: 15000, timeout: 10000 }
+      (error) => {
+        // Aniq GPS ishlamasa (ba'zi Redmi/Xiaomi telefonlarda shunday),
+        // past aniqlikdagi rejimga (Wi-Fi/tarmoq orqali) o'tamiz
+        if (highAccuracy && error && error.code !== 1) startOwnLocationWatch(false);
+      },
+      highAccuracy
+        ? { enableHighAccuracy: true, maximumAge: 15000, timeout: 20000 }
+        : { enableHighAccuracy: false, maximumAge: 60000, timeout: 30000 }
     );
   }
+
+  // base.html dagi kuzatuvchi ruxsat olganda (masalan, foydalanuvchi bannerdagi
+  // tugmani bosgach) o'z joylashuvimizni ham qaytadan yuqori aniqlikda kuzatamiz
+  window.addEventListener('courierLocationGranted', () => startOwnLocationWatch(true));
 
   function updateOwnLocation(lat, lon) {
     if (ownPlacemark) {

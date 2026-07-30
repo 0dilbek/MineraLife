@@ -365,9 +365,9 @@
     const LOCATION_UPDATE_URL = "{% url 'couriers:update_location' %}";
     const UPDATE_INTERVAL_MS = 20000;
     const GEO_ATTEMPTS = [
-      { enableHighAccuracy: false, maximumAge: 120000, timeout: 25000 },
-      { enableHighAccuracy: true, maximumAge: 45000, timeout: 25000 },
-      { enableHighAccuracy: true, maximumAge: 0, timeout: 35000 },
+      { enableHighAccuracy: false, maximumAge: 60000, timeout: 8000 },
+      { enableHighAccuracy: true, maximumAge: 30000, timeout: 15000 },
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 30000 },
     ];
     const WATCH_OPTIONS = { enableHighAccuracy: true, maximumAge: 20000, timeout: 30000 };
 
@@ -387,6 +387,7 @@
       if (window.Telegram?.WebApp?.initData) return 'telegram-miniapp';
       if (/Telegram/i.test(ua)) return 'telegram';
       if (/SamsungBrowser/i.test(ua)) return 'samsung';
+      if (/MiuiBrowser|MIUI Browser|XiaoMi\/|HeyTapBrowser/i.test(ua)) return 'miui';
       if (/OPR\/|Opera/i.test(ua)) return 'opera';
       if (/EdgA?\/|Edge\//i.test(ua)) return 'edge';
       if (/Firefox|FxiOS/i.test(ua)) return 'firefox';
@@ -398,6 +399,9 @@
     }
 
     const browser = detectBrowser();
+    // Xiaomi/Redmi/POCO qurilmalari (MIUI/HyperOS) - ruxsat oynasi faqat foydalanuvchi
+    // harakatidan keyin chiqadi, tizim sozlamalarida alohida ruxsat kerak bo'ladi
+    const isXiaomiDevice = /Redmi|Xiaomi|POCO|MIUI|HyperOS|Mi \d|Mi-\d/i.test(navigator.userAgent || '') || browser === 'miui';
 
     function getCookie(name) {
       const value = `; ${document.cookie}`;
@@ -424,11 +428,17 @@
         if (browser === 'ios-safari' || browser === 'chrome-ios') {
           return 'iPhone: Sozlamalar → Safari → Joylashuv → «So‘rovda» yoki «Ruxsat berilgan». Keyin «Ruxsat berish»ni bosing.';
         }
+        if (isXiaomiDevice) {
+          return 'Redmi/Xiaomi: Sozlamalar → Ilovalar → brauzeringiz (Chrome/Mi Browser) → Ruxsatlar → Joylashuv → «Ilova ishlatilayotganda» ni tanlang. Keyin «Ruxsat berish»ni bosing.';
+        }
         return 'Ruxsat rad etilgan. Brauzer sozlamalaridan sayt uchun joylashuvni yoqing, so‘ng «Ruxsat berish»ni bosing.';
       }
       if (error && error.code === 2) {
         if (browser === 'telegram' || browser === 'telegram-miniapp') {
           return 'Telegram GPS signali kuchsiz. Tashqi brauzerda oching yoki ochiq joyga chiqing.';
+        }
+        if (isXiaomiDevice) {
+          return 'Joylashuv xizmati o‘chiq ko‘rinadi. Ekranni yuqoridan torting va «Joylashuv» (Location) tugmasini yoqing, so‘ng «Ruxsat berish»ni bosing.';
         }
         return 'GPS signali topilmadi. Internet va joylashuv xizmatini yoqing, ochiq joyga chiqing.';
       }
@@ -467,16 +477,17 @@
       hasFix = true;
       permissionState = 'granted';
       hideBanner();
+      removeGestureRetry();
       postLocation(pos);
       window.dispatchEvent(new CustomEvent('courierLocationGranted'));
       startWatch();
     }
 
     function shouldShowBannerForError(error) {
-      if (hasFix) return false;
-      if (error && error.code === 1) return true;
-      if (permissionState === 'granted') return false;
-      return true;
+      // Fix hali olinmagan bo'lsa, har qanday yakuniy xatoda foydalanuvchiga
+      // ko'rsatma beramiz - ruxsat berilgan-u GPS o'chiq bo'lsa ham (code 2,
+      // Redmi/Xiaomi da tez-tez uchraydi) jim qolmaslik kerak.
+      return !hasFix;
     }
 
     function onLocationSoftFail(error) {
@@ -587,8 +598,11 @@
       });
     }
 
-    async function requestLocation(isManual) {
-      if (requesting) return;
+    async function requestLocation(isManual, silent) {
+      // Foydalanuvchi bosganda (gesture) avtomatik zanjir tugashini kutmaymiz:
+      // MIUI kabi brauzerlar ruxsat oynasini faqat shu bosish ichida
+      // chiqargani uchun so'rovni darhol qayta boshlaymiz.
+      if (requesting && !isManual) return;
       if (!window.isSecureContext) {
         showBanner(browserHint(null));
         return;
@@ -596,9 +610,9 @@
 
       requesting = true;
       retryBtn.disabled = true;
-      if (isManual) {
+      if (isManual && !silent) {
         showBanner('Ruxsat so‘ralmoqda…');
-      } else if (permissionState === 'denied') {
+      } else if (!silent && permissionState === 'denied') {
         showBanner(browserHint({ code: 1 }));
       }
 
@@ -671,11 +685,37 @@
 
     retryBtn.addEventListener('click', () => requestLocation(true));
 
+    // MIUI (Redmi/Xiaomi/POCO) va ba'zi WebView'lar ruxsat oynasini faqat
+    // foydalanuvchi harakati (tap) ichida chiqaradi - sahifa yuklanganda
+    // so'ralgan ruxsat jimgina muvaffaqiyatsiz bo'ladi. Shuning uchun fix
+    // olinmaguncha foydalanuvchining istalgan bosishida qayta so'raymiz.
+    let lastGestureRetry = 0;
+    function gestureRetry() {
+      if (hasFix) return;
+      const now = Date.now();
+      if (now - lastGestureRetry < 15000) return;
+      lastGestureRetry = now;
+      requestLocation(true, true);
+    }
+    function removeGestureRetry() {
+      document.removeEventListener('click', gestureRetry, true);
+      document.removeEventListener('touchend', gestureRetry, true);
+    }
+    document.addEventListener('click', gestureRetry, true);
+    document.addEventListener('touchend', gestureRetry, true);
+
     syncPermissionState().then(() => {
       if (permissionState === 'denied') {
         showBanner(browserHint({ code: 1 }));
       }
       requestLocation(false);
+      // Ruxsat oynasi chiqmagan (yoki jim bloklangan) holatda foydalanuvchi
+      // nima qilishni bilishi uchun bannerni kechiktirib ko'rsatamiz.
+      setTimeout(() => {
+        if (!hasFix) {
+          showBanner('Joylashuv hali aniqlanmadi. «Ruxsat berish» tugmasini bosing.');
+        }
+      }, 12000);
     });
   })();
 </script>

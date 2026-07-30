@@ -236,7 +236,14 @@
     } else if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         pos => setLatLon(pos.coords.latitude, pos.coords.longitude, true),
-        ()=>{}, { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+        () => {
+          // GPS ishlamasa past aniqlikda (Wi-Fi/tarmoq) qayta urinamiz
+          navigator.geolocation.getCurrentPosition(
+            pos => setLatLon(pos.coords.latitude, pos.coords.longitude, true),
+            ()=>{}, { enableHighAccuracy: false, timeout: 15000, maximumAge: 120000 }
+          );
+        },
+        { enableHighAccuracy: true, timeout: 7000, maximumAge: 30000 }
       );
     }
 
