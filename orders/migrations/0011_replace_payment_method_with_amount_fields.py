@@ -46,7 +46,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AlterField(
             model_name='order',
-            name='price',
+            name='F',
             field=models.DecimalField(decimal_places=2, default=18000.0, help_text='Bir dona uchun narx', max_digits=10),
         ),
         migrations.RemoveField(

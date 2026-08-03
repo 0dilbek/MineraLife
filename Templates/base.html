@@ -380,6 +380,8 @@
     let watchId = null;
     let intervalId = null;
     let hasFix = false;
+    let permissionState = 'unknown';
+    let permissionStatus = null;
 
     function detectBrowser() {
       const ua = navigator.userAgent || '';
@@ -413,6 +415,56 @@
     function hideBanner() {
       banner.classList.add('is-hidden');
       document.body.classList.remove('courier-location-banner-visible');
+    }
+
+    function stopWatch() {
+      if (watchId !== null && navigator.geolocation) {
+        navigator.geolocation.clearWatch(watchId);
+        watchId = null;
+      }
+    }
+
+    function applyPermissionState(state) {
+      permissionState = state || 'unknown';
+
+      if (permissionState === 'granted') {
+        // Ruxsat koordinatadan alohida holat. GPS sekin javob bersa ham
+        // foydalanuvchiga ruxsat so‘rovini qayta-qayta ko‘rsatmaymiz.
+        hideBanner();
+        startWatch();
+        if (!hasFix) requestLocation(false);
+        return;
+      }
+
+      hasFix = false;
+      stopWatch();
+      if (permissionState === 'denied') {
+        showBanner(browserHint({ code: 1 }));
+      } else {
+        showBanner('Admin sizni xaritada ko‘rishi uchun joylashuv ruxsati talab qilinadi.');
+      }
+    }
+
+    async function observePermission() {
+      if (!navigator.permissions || typeof navigator.permissions.query !== 'function') {
+        return false;
+      }
+
+      try {
+        permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
+        applyPermissionState(permissionStatus.state);
+        const handlePermissionChange = () => {
+          applyPermissionState(permissionStatus.state);
+        };
+        if (typeof permissionStatus.addEventListener === 'function') {
+          permissionStatus.addEventListener('change', handlePermissionChange);
+        } else {
+          permissionStatus.onchange = handlePermissionChange;
+        }
+        return true;
+      } catch (_) {
+        return false;
+      }
     }
 
     function browserHint(error) {
@@ -472,6 +524,12 @@
 
     function onLocationSoftFail(error) {
       hasFix = false;
+      // Permissions API ruxsat berilganini tasdiqlagan bo‘lsa, vaqtinchalik GPS
+      // timeout/signali sabab ruxsat bannerini qayta ochmaymiz.
+      if (permissionState === 'granted') {
+        hideBanner();
+        return;
+      }
       showBanner(browserHint(error));
     }
 
@@ -592,7 +650,7 @@
         (error) => {
           if (error && error.code === 1) {
             hasFix = false;
-            showBanner(browserHint(error));
+            if (permissionState !== 'granted') showBanner(browserHint(error));
           }
         },
         { enableHighAccuracy: false, maximumAge: 60000, timeout: 15000 }
@@ -610,7 +668,7 @@
         (error) => {
           if (error && error.code === 1) {
             hasFix = false;
-            showBanner(browserHint(error));
+            if (permissionState !== 'granted') showBanner(browserHint(error));
           }
         },
         WATCH_OPTIONS
@@ -627,8 +685,15 @@
 
     retryBtn.addEventListener('click', () => requestLocation(true));
 
-    showBanner('Joylashuv ruxsati tekshirilmoqda…');
-    requestLocation(false);
+    (async function initializeLocation() {
+      const permissionObserved = await observePermission();
+      if (!permissionObserved) {
+        // Safari va eski brauzerlarda Permissions API bo‘lmasa, avvalgi
+        // geolocation tekshiruvi orqali holatni aniqlaymiz.
+        showBanner('Joylashuv ruxsati tekshirilmoqda…');
+        requestLocation(false);
+      }
+    })();
   })();
 </script>
 {% endif %}

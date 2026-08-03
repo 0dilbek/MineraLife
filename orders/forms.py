@@ -32,7 +32,7 @@ class OrderForm(forms.ModelForm):
             "courier": forms.Select(attrs=_attrs()),
             "inquantity": EmptyZeroNumberInput(attrs=_attrs(min=0, placeholder="oldim")),
             "outquantity": EmptyZeroNumberInput(attrs=_attrs(min=0, placeholder="berdim")),
-            "price": forms.NumberInput(attrs=_attrs(step="1", min=0, placeholder="18000")),
+            "price": forms.NumberInput(attrs=_attrs(step="1", min=0, placeholder="19000")),
             "status": forms.Select(attrs=_attrs()),
             "effective_date": forms.DateInput(attrs=_attrs(type="date")),
             "cash_amount": EmptyZeroNumberInput(attrs=_attrs(step="1", min=0, placeholder="0")),
@@ -56,7 +56,7 @@ class OrderForm(forms.ModelForm):
         if not self.instance.pk:
             if "effective_date" not in self.initial:
                 self.fields['effective_date'].initial = timezone.localdate()
-            self.fields['price'].initial = 18000
+            self.fields['price'].initial = 19000
 
         for field_name in ("inquantity", "outquantity", "cash_amount", "card_amount", "perechesleniya_amount", "debt_amount"):
             self.fields[field_name].required = False
@@ -115,7 +115,7 @@ class OrderCreateForm(forms.ModelForm):
         widgets = {
             "client": forms.Select(attrs=_attrs()),
             "outquantity": EmptyZeroNumberInput(attrs=_attrs(min=0, placeholder="berdim")),
-            "price": forms.NumberInput(attrs=_attrs(step="1", min=0, placeholder="18000")),
+            "price": forms.NumberInput(attrs=_attrs(step="1", min=0, placeholder="19000")),
             "effective_date": forms.DateInput(attrs=_attrs(type="date")),
             "notes": forms.Textarea(attrs=_attrs(rows=3, placeholder="Qo'shimcha izohlar...")),
         }
@@ -128,7 +128,7 @@ class OrderCreateForm(forms.ModelForm):
 
         if "effective_date" not in self.initial:
             self.fields['effective_date'].initial = timezone.localdate()
-        self.fields['price'].initial = 18000
+        self.fields['price'].initial = 19000
 
         self.fields['outquantity'].required = False
         self.fields['effective_date'].help_text = "Buyurtma bajarilish sanasi"
