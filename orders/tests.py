@@ -1,5 +1,6 @@
 import json
 from datetime import timedelta
+from decimal import Decimal
 
 from django.contrib.auth.models import Group, User
 from django.test import TestCase
@@ -9,6 +10,15 @@ from django.utils import timezone
 from clients.models import Client
 from orders.forms import OrderForm
 from orders.models import Order
+
+
+class OrderDefaultPriceTests(TestCase):
+    def test_new_order_uses_19000_default_price(self):
+        client_obj = Client.objects.create(name="Yangi mijoz")
+
+        order = Order.objects.create(client=client_obj)
+
+        self.assertEqual(order.price, Decimal("19000.00"))
 
 
 class BulkAssignCourierToOrdersTests(TestCase):
