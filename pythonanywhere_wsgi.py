@@ -4,7 +4,7 @@ import os
 import sys
 
 # add your project directory to the sys.path
-project_home = '/home/ocean/Ocean'
+project_home = os.environ.get('PROJECT_HOME', os.path.dirname(os.path.abspath(__file__)))
 if project_home not in sys.path:
     sys.path.insert(0, project_home)
 

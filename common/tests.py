@@ -1,7 +1,17 @@
-from django.test import TestCase
+from django.test import TestCase, override_settings
+from django.urls import reverse
 
 from clients.models import Client
 from common.text_utils import normalize_multiline_text
+
+
+class SiteNameConfigurationTests(TestCase):
+    @override_settings(SITE_NAME="Configured Brand")
+    def test_login_page_uses_configured_site_name(self):
+        response = self.client.get(reverse("login"))
+
+        self.assertContains(response, "Configured Brand")
+        self.assertNotContains(response, ">Ocean<")
 
 
 class NormalizeMultilineTextTests(TestCase):

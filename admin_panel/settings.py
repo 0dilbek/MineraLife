@@ -39,6 +39,9 @@ if ENV_PATH.exists():
         # Ignore .env parse issues silently to avoid breaking settings
         pass
 
+SITE_NAME = os.environ.get('SITE_NAME', 'MineraLife')
+REPORTS_PASSWORD = os.environ.get('REPORTS_PASSWORD', 'change-me')
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
@@ -102,6 +105,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'django.template.context_processors.request',
+                'common.context_processors.site_config',
             ],
         },
     },
@@ -117,10 +121,10 @@ if os.environ.get('USE_MYSQL', 'False').lower() == 'true':
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
-            'NAME': os.environ.get('DB_NAME', 'ocean$default'),
-            'USER': os.environ.get('DB_USER', 'ocean'),
+            'NAME': os.environ.get('DB_NAME', ''),
+            'USER': os.environ.get('DB_USER', ''),
             'PASSWORD': os.environ.get('DB_PASSWORD', ''),
-            'HOST': os.environ.get('DB_HOST', 'ocean.mysql.pythonanywhere-services.com'),
+            'HOST': os.environ.get('DB_HOST', 'localhost'),
             'PORT': os.environ.get('DB_PORT', '3306'),
             'OPTIONS': {
                 'charset': 'utf8mb4',
@@ -188,5 +192,7 @@ YANDEX_MAPS_API_KEY = os.environ.get('YANDEX_MAPS_API_KEY', '')
 # CSRF trusted origins for production
 if not DEBUG:
     CSRF_TRUSTED_ORIGINS = [
-        'https://ocean.pythonanywhere.com',
+        origin.strip()
+        for origin in os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',')
+        if origin.strip()
     ]
