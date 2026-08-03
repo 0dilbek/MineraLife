@@ -10,7 +10,7 @@ class Order(models.Model):
     courier = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_orders')
     inquantity = models.PositiveIntegerField(default=0)
     outquantity = models.PositiveIntegerField(default=0)
-    price = models.DecimalField(max_digits=10, decimal_places=2, default=18000.00, help_text="Bir dona uchun narx")
+    price = models.DecimalField(max_digits=10, decimal_places=2, default=17000.00, help_text="Bir dona uchun narx")
     status = models.CharField(max_length=20, choices=[
         ('pending', 'Kutilmoqda'),
         ('completed', 'Bajardi'),

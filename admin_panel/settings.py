@@ -117,10 +117,10 @@ if os.environ.get('USE_MYSQL', 'False').lower() == 'true':
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
-            'NAME': os.environ.get('DB_NAME', 'mineralife$default'),
-            'USER': os.environ.get('DB_USER', 'mineralife'),
+            'NAME': os.environ.get('DB_NAME', 'ocean$default'),
+            'USER': os.environ.get('DB_USER', 'ocean'),
             'PASSWORD': os.environ.get('DB_PASSWORD', ''),
-            'HOST': os.environ.get('DB_HOST', 'mineralife.mysql.pythonanywhere-services.com'),
+            'HOST': os.environ.get('DB_HOST', 'ocean.mysql.pythonanywhere-services.com'),
             'PORT': os.environ.get('DB_PORT', '3306'),
             'OPTIONS': {
                 'charset': 'utf8mb4',
@@ -188,5 +188,5 @@ YANDEX_MAPS_API_KEY = os.environ.get('YANDEX_MAPS_API_KEY', '')
 # CSRF trusted origins for production
 if not DEBUG:
     CSRF_TRUSTED_ORIGINS = [
-        'https://mineralife.pythonanywhere.com',
+        'https://ocean.pythonanywhere.com',
     ]
