@@ -1,0 +1,17 @@
+# Copy this file to /etc/mineralife.env and replace every value.
+DEBUG=False
+SECRET_KEY=replace-with-a-long-random-secret
+ALLOWED_HOSTS=mineralife.uz
+CSRF_TRUSTED_ORIGINS=https://mineralife.uz
+SITE_NAME=MineraLife
+REPORTS_PASSWORD=replace-this-password
+YANDEX_MAPS_API_KEY=
+
+# Supported values: postgresql, mysql, sqlite.
+DB_ENGINE=postgresql
+DB_NAME=mineralife
+DB_USER=mineralife
+DB_PASSWORD=replace-this-database-password
+DB_HOST=127.0.0.1
+DB_PORT=5432
+DB_CONN_MAX_AGE=60

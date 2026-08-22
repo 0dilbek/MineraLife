@@ -1,0 +1,26 @@
+[Unit]
+Description=MineraLife Django application
+After=network.target
+
+[Service]
+Type=simple
+User=mineralife
+Group=mineralife
+WorkingDirectory=/home/MineraLife
+EnvironmentFile=/etc/mineralife.env
+Environment=PYTHONUNBUFFERED=1
+Environment=DJANGO_ENV_FILE=/etc/mineralife.env
+ExecStart=/home/MineraLife/.venv/bin/gunicorn \
+    --workers 3 \
+    --timeout 120 \
+    --access-logfile - \
+    --error-logfile - \
+    --bind 127.0.0.1:8010 \
+    admin_panel.wsgi:application
+Restart=on-failure
+RestartSec=5
+PrivateTmp=true
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

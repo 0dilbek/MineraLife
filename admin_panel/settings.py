@@ -23,8 +23,9 @@ except ImportError:
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# Load environment variables from a local .env file if present (simple loader)
-ENV_PATH = BASE_DIR / '.env'
+# Load environment variables from a local .env file if present (simple loader).
+# DJANGO_ENV_FILE lets management commands explicitly use the production file.
+ENV_PATH = Path(os.environ.get('DJANGO_ENV_FILE', BASE_DIR / '.env'))
 if ENV_PATH.exists():
     try:
         for _line in ENV_PATH.read_text(encoding='utf-8').splitlines():
@@ -117,27 +118,64 @@ WSGI_APPLICATION = 'admin_panel.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-if os.environ.get('USE_MYSQL', 'False').lower() == 'true':
+def _database_env(*names, default=''):
+    """Return the first non-empty database environment value."""
+    for name in names:
+        value = os.environ.get(name)
+        if value not in (None, ''):
+            return value
+    return default
+
+
+DATABASE_ENGINE = os.environ.get('DB_ENGINE', '').strip().lower()
+if not DATABASE_ENGINE:
+    # Backwards compatibility with the existing production environment.
+    DATABASE_ENGINE = (
+        'mysql'
+        if os.environ.get('USE_MYSQL', 'False').lower() == 'true'
+        else 'sqlite'
+    )
+
+if DATABASE_ENGINE in ('postgres', 'postgresql', 'pgsql'):
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': _database_env('DB_NAME', 'POSTGRES_DB', 'PGDATABASE'),
+            'USER': _database_env('DB_USER', 'POSTGRES_USER', 'PGUSER'),
+            'PASSWORD': _database_env('DB_PASSWORD', 'POSTGRES_PASSWORD', 'PGPASSWORD'),
+            'HOST': _database_env('DB_HOST', 'POSTGRES_HOST', 'PGHOST', default='127.0.0.1'),
+            'PORT': _database_env('DB_PORT', 'POSTGRES_PORT', 'PGPORT', default='5432'),
+            'CONN_MAX_AGE': int(os.environ.get('DB_CONN_MAX_AGE', '60')),
+            'CONN_HEALTH_CHECKS': True,
+        }
+    }
+elif DATABASE_ENGINE == 'mysql':
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
-            'NAME': os.environ.get('DB_NAME', ''),
-            'USER': os.environ.get('DB_USER', ''),
-            'PASSWORD': os.environ.get('DB_PASSWORD', ''),
-            'HOST': os.environ.get('DB_HOST', 'localhost'),
-            'PORT': os.environ.get('DB_PORT', '3306'),
+            # MYSQL_* aliases keep the existing production environment file
+            # compatible while DB_* remains the preferred naming scheme.
+            'NAME': _database_env('DB_NAME', 'MYSQL_DBNAME'),
+            'USER': _database_env('DB_USER', 'MYSQL_USER'),
+            'PASSWORD': _database_env('DB_PASSWORD', 'MYSQL_PASSWORD'),
+            'HOST': _database_env('DB_HOST', 'MYSQL_HOST', default='localhost'),
+            'PORT': _database_env('DB_PORT', 'MYSQL_PORT', default='3306'),
             'OPTIONS': {
                 'charset': 'utf8mb4',
             },
         }
     }
-else:
+elif DATABASE_ENGINE == 'sqlite':
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
+else:
+    raise ValueError(
+        'Unsupported DB_ENGINE. Use postgresql, mysql, or sqlite.'
+    )
 
 
 # Password validation
@@ -184,6 +222,14 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Nginx terminates HTTPS and forwards the original protocol to Gunicorn.
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
+
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
 # External API keys
 # Provide via environment variable in production
