@@ -13,8 +13,8 @@
     }
   </script>
   <style>
-    :root { color-scheme: light; --shell: #f5f7fb; --panel: #fff; --ink: #0f172a; --muted: #64748b; --line: #e7ebf1; }
-    .dark { color-scheme: dark; --shell: #070d18; --panel: #0e1726; --ink: #f8fafc; --muted: #94a3b8; --line: #1d2939; }
+    :root { color-scheme: light; --shell: #f5f7fb; --panel: #fff; --panel-soft: #f8fafc; --panel-raised: #fff; --ink: #0f172a; --muted: #64748b; --line: #e7ebf1; --accent: #0891b2; --accent-strong: #0e7490; --accent-soft: #ecfeff; --panel-shadow: 0 12px 32px rgba(15,23,42,.055); }
+    .dark { color-scheme: dark; --shell: #070d18; --panel: #0e1726; --panel-soft: #131f30; --panel-raised: #111c2d; --ink: #f8fafc; --muted: #94a3b8; --line: #1d2939; --accent: #22d3ee; --accent-strong: #67e8f9; --accent-soft: rgba(8,145,178,.13); --panel-shadow: 0 16px 36px rgba(0,0,0,.18); }
     * { scrollbar-width: thin; scrollbar-color: #94a3b866 transparent; }
     body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--shell); color: var(--ink); }
     ::selection { background: #22d3ee55; }
@@ -31,6 +31,165 @@
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
   </style>
   {% block extra_head %}{% endblock %}
+  <style id="modern-component-compatibility">
+    /* Shared modern components for templates that are also used by the classic UI. */
+    .modern-content > [class~="px-4"][class~="py-6"] { padding: 0 !important; }
+    .modern-content h1.text-2xl,
+    .modern-content h1.text-3xl { color: var(--ink) !important; font-weight: 850 !important; letter-spacing: -.025em; }
+    .modern-content h2 { letter-spacing: -.012em; }
+
+    .modern-content .bg-white,
+    .dark .modern-content .dark\:bg-gray-800,
+    .dark .modern-content .dark\:bg-gray-900 { background-color: var(--panel) !important; }
+    .modern-content .bg-gray-50,
+    .modern-content .bg-gray-100,
+    .modern-content .bg-gray-200,
+    .dark .modern-content .dark\:bg-gray-700,
+    .dark .modern-content .dark\:bg-gray-900\/60 { background-color: var(--panel-soft) !important; }
+    .modern-content .border-gray-100,
+    .modern-content .border-gray-200,
+    .modern-content .border-gray-300,
+    .dark .modern-content .dark\:border-gray-500,
+    .dark .modern-content .dark\:border-gray-600,
+    .dark .modern-content .dark\:border-gray-700 { border-color: var(--line) !important; }
+
+    .modern-content .text-gray-900,
+    .modern-content .text-gray-800,
+    .modern-content .text-gray-700,
+    .dark .modern-content .dark\:text-white,
+    .dark .modern-content .dark\:text-gray-100,
+    .dark .modern-content .dark\:text-gray-200 { color: var(--ink) !important; }
+    .modern-content .text-gray-600,
+    .modern-content .text-gray-500,
+    .modern-content .text-gray-400,
+    .dark .modern-content .dark\:text-gray-300,
+    .dark .modern-content .dark\:text-gray-400,
+    .dark .modern-content .dark\:text-gray-500 { color: var(--muted) !important; }
+    .modern-content .text-blue-600,
+    .modern-content .text-blue-700,
+    .dark .modern-content .dark\:text-blue-400 { color: var(--accent-strong) !important; }
+
+    .modern-content .rounded,
+    .modern-content .rounded-md,
+    .modern-content .rounded-lg { border-radius: .8rem !important; }
+    .modern-content .rounded-xl { border-radius: 1.15rem !important; }
+    .modern-content .shadow,
+    .modern-content .shadow-sm,
+    .modern-content .shadow-md { box-shadow: var(--panel-shadow) !important; }
+
+    .modern-content input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+    .modern-content select,
+    .modern-content textarea {
+      border: 1px solid var(--line) !important;
+      border-radius: .85rem !important;
+      background: var(--panel-raised) !important;
+      color: var(--ink) !important;
+      min-height: 2.75rem;
+    }
+    .modern-content textarea { min-height: 6.5rem; }
+    .modern-content input::placeholder,
+    .modern-content textarea::placeholder { color: var(--muted); opacity: .78; }
+    .modern-content input:focus,
+    .modern-content select:focus,
+    .modern-content textarea:focus { border-color: var(--accent) !important; outline: none !important; box-shadow: 0 0 0 3px rgba(34,211,238,.13) !important; }
+    .modern-content input:disabled,
+    .modern-content select:disabled,
+    .modern-content textarea:disabled { cursor: not-allowed; opacity: .62; }
+    .modern-content input[type="checkbox"],
+    .modern-content input[type="radio"] { accent-color: var(--accent); }
+
+    .modern-content a.bg-blue-600,
+    .modern-content button.bg-blue-600,
+    .modern-content button[type="submit"].bg-blue-600 {
+      border-radius: .8rem !important;
+      background: linear-gradient(135deg, #0891b2, #06b6d4) !important;
+      color: #fff !important;
+      box-shadow: 0 8px 20px rgba(8,145,178,.18);
+      font-weight: 750;
+    }
+    .modern-content a.bg-blue-600:hover,
+    .modern-content button.bg-blue-600:hover,
+    .modern-content button[type="submit"].bg-blue-600:hover { background: linear-gradient(135deg, #0e7490, #0891b2) !important; }
+    .modern-content a.bg-green-600,
+    .modern-content button.bg-green-600 { border-radius: .8rem !important; background-color: #059669 !important; font-weight: 750; }
+    .modern-content a.bg-gray-200,
+    .modern-content button.bg-gray-200,
+    .dark .modern-content a.dark\:bg-gray-700,
+    .dark .modern-content button.dark\:bg-gray-700 { border: 1px solid var(--line); background: var(--panel-soft) !important; color: var(--ink) !important; }
+    .modern-content a[class*="bg-"]:focus-visible,
+    .modern-content button:focus-visible { outline: 3px solid rgba(34,211,238,.28); outline-offset: 2px; }
+
+    .modern-content table { border-collapse: separate; border-spacing: 0; }
+    .modern-content thead { color: var(--muted); }
+    .modern-content thead tr { background: var(--panel-soft) !important; }
+    .modern-content tbody tr { transition: background-color .16s ease; }
+    .modern-content tbody tr:hover { background: color-mix(in srgb, var(--accent-soft) 58%, transparent) !important; }
+    .modern-content th { font-size: .7rem; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
+
+    .modern-content .stat-card {
+      border: 1px solid var(--line);
+      border-radius: 1.15rem;
+      background: var(--panel);
+      padding: 1rem;
+      box-shadow: var(--panel-shadow);
+      transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+    }
+    .modern-content .stat-card:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--accent) 35%, var(--line)); }
+    .modern-content .metric-value { color: var(--ink); font-size: 1.5rem; font-weight: 800; }
+    .modern-content .metric-label { color: var(--muted); font-size: .875rem; }
+
+    .select2-container--default .select2-selection--single,
+    .select2-dropdown,
+    .select2-search__field { border-color: var(--line) !important; background: var(--panel-raised) !important; color: var(--ink) !important; }
+    .select2-container--default .select2-selection--single { border-radius: .85rem !important; min-height: 2.75rem; }
+    .select2-container--default .select2-selection--single .select2-selection__rendered,
+    .select2-results__option { color: var(--ink) !important; }
+    .select2-container--default .select2-results__option--highlighted[aria-selected] { background: var(--accent) !important; color: #06202a !important; }
+
+    /* Map pages had their own classic-era controls; keep them on the same tokens. */
+    .modern-content .admin-map-page { background: transparent !important; }
+    .modern-content .map-card,
+    .modern-content .stats-panel {
+      border: 1px solid var(--line) !important;
+      border-radius: 1.25rem !important;
+      background: var(--panel) !important;
+      box-shadow: var(--panel-shadow) !important;
+    }
+    .modern-content .stats-panel { padding: 1rem !important; }
+    .modern-content .filter-btn,
+    .modern-content .icon-btn,
+    .modern-content .ml-action-btn {
+      border: 1px solid var(--line) !important;
+      border-radius: .75rem !important;
+      background: color-mix(in srgb, var(--panel-raised) 94%, transparent) !important;
+      color: var(--ink) !important;
+      box-shadow: 0 6px 18px rgba(15,23,42,.09);
+      font-weight: 700;
+    }
+    .modern-content .filter-btn:hover,
+    .modern-content .icon-btn:hover,
+    .modern-content .ml-action-btn:hover { border-color: color-mix(in srgb, var(--accent) 35%, var(--line)) !important; background: var(--panel-soft) !important; }
+    .modern-content .filter-btn.active,
+    .modern-content .ml-chip.active,
+    .modern-content .ml-btn.primary { border-color: var(--accent) !important; background: var(--accent) !important; color: #06202a !important; }
+    .modern-content .ml-control.light,
+    .modern-content .selection-panel,
+    .modern-content .map-search-box {
+      border-color: var(--line) !important;
+      background: color-mix(in srgb, var(--panel-raised) 96%, transparent) !important;
+      color: var(--ink) !important;
+      box-shadow: 0 16px 42px rgba(15,23,42,.18) !important;
+      backdrop-filter: blur(14px);
+    }
+    .modern-content .selection-panel.is-active { border-color: var(--accent) !important; }
+    .modern-content .map-search-submit { background: var(--accent) !important; color: #06202a !important; font-weight: 800; }
+
+    @media (max-width: 640px) {
+      .modern-content h1.text-3xl { font-size: 1.6rem !important; }
+      .modern-content table th,
+      .modern-content table td { white-space: nowrap; }
+    }
+  </style>
 </head>
 <body class="modern-shell min-h-screen antialiased">
   <div class="pointer-events-none fixed inset-0 shell-dot-grid opacity-50 dark:opacity-25" aria-hidden="true"></div>
@@ -50,7 +209,7 @@
         <a href="{% url 'admin_welcome' %}" class="modern-nav-link {% if request.resolver_match.url_name == 'admin_welcome' %}is-active{% endif %} flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-slate-400 hover:bg-white/5 hover:text-white">
           <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 13h6V4H4v9Zm0 7h6v-4H4v4Zm10 0h6v-9h-6v9Zm0-16v4h6V4h-6Z" stroke-width="1.8" stroke-linejoin="round"/></svg><span>Boshqaruv paneli</span>
         </a>
-        <a href="{% url 'orders:list' %}" class="modern-nav-link {% if request.resolver_match.app_name == 'orders' %}is-active{% endif %} flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-slate-400 hover:bg-white/5 hover:text-white">
+        <a href="{% url 'orders:list' %}" class="modern-nav-link {% if request.resolver_match.app_name == 'orders' and request.resolver_match.url_name != 'map' %}is-active{% endif %} flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-slate-400 hover:bg-white/5 hover:text-white">
           <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12h14V7a2 2 0 0 0-2-2h-2M9 5a3 3 0 0 1 6 0M9 5h6M9 11h6M9 15h4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Buyurtmalar</span>
           {% if sidebar_pending_count %}<span class="ml-auto rounded-full bg-cyan-400 px-2 py-0.5 text-[10px] font-black text-slate-950">{{ sidebar_pending_count }}</span>{% endif %}
         </a>
@@ -91,13 +250,13 @@
       <button type="button" data-close-sidebar class="rounded-xl p-2 text-slate-400 hover:bg-white/10 hover:text-white" aria-label="Menyuni yopish"><svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" stroke-width="2" stroke-linecap="round"/></svg></button>
     </div>
     <nav class="space-y-1 overflow-y-auto">
-      <a href="{% url 'admin_welcome' %}" class="flex items-center gap-3 rounded-xl bg-white/5 px-4 py-3 font-semibold text-white">Boshqaruv paneli</a>
-      <a href="{% url 'orders:list' %}" class="flex items-center gap-3 rounded-xl px-4 py-3 font-semibold hover:bg-white/5 hover:text-white">Buyurtmalar</a>
-      <a href="{% url 'clients:list' %}" class="flex items-center gap-3 rounded-xl px-4 py-3 font-semibold hover:bg-white/5 hover:text-white">Mijozlar</a>
-      <a href="{% url 'products:list' %}" class="flex items-center gap-3 rounded-xl px-4 py-3 font-semibold hover:bg-white/5 hover:text-white">Mahsulotlar</a>
-      <a href="{% url 'couriers:list' %}" class="flex items-center gap-3 rounded-xl px-4 py-3 font-semibold hover:bg-white/5 hover:text-white">Kuryerlar</a>
-      <a href="{% url 'orders:map' %}" class="flex items-center gap-3 rounded-xl px-4 py-3 font-semibold hover:bg-white/5 hover:text-white">Marshrut xaritasi</a>
-      <a href="{% url 'hisobotlar:reports' %}" class="flex items-center gap-3 rounded-xl px-4 py-3 font-semibold hover:bg-white/5 hover:text-white">Hisobotlar</a>
+      <a href="{% url 'admin_welcome' %}" class="flex items-center gap-3 rounded-xl px-4 py-3 font-semibold {% if request.resolver_match.url_name == 'admin_welcome' %}bg-cyan-400/10 text-cyan-300{% else %}hover:bg-white/5 hover:text-white{% endif %}">Boshqaruv paneli</a>
+      <a href="{% url 'orders:list' %}" class="flex items-center gap-3 rounded-xl px-4 py-3 font-semibold {% if request.resolver_match.app_name == 'orders' and request.resolver_match.url_name != 'map' %}bg-cyan-400/10 text-cyan-300{% else %}hover:bg-white/5 hover:text-white{% endif %}">Buyurtmalar</a>
+      <a href="{% url 'clients:list' %}" class="flex items-center gap-3 rounded-xl px-4 py-3 font-semibold {% if request.resolver_match.app_name == 'clients' %}bg-cyan-400/10 text-cyan-300{% else %}hover:bg-white/5 hover:text-white{% endif %}">Mijozlar</a>
+      <a href="{% url 'products:list' %}" class="flex items-center gap-3 rounded-xl px-4 py-3 font-semibold {% if request.resolver_match.app_name == 'products' %}bg-cyan-400/10 text-cyan-300{% else %}hover:bg-white/5 hover:text-white{% endif %}">Mahsulotlar</a>
+      <a href="{% url 'couriers:list' %}" class="flex items-center gap-3 rounded-xl px-4 py-3 font-semibold {% if request.resolver_match.app_name == 'couriers' %}bg-cyan-400/10 text-cyan-300{% else %}hover:bg-white/5 hover:text-white{% endif %}">Kuryerlar</a>
+      <a href="{% url 'orders:map' %}" class="flex items-center gap-3 rounded-xl px-4 py-3 font-semibold {% if request.resolver_match.url_name == 'map' and request.resolver_match.app_name == 'orders' %}bg-cyan-400/10 text-cyan-300{% else %}hover:bg-white/5 hover:text-white{% endif %}">Marshrut xaritasi</a>
+      <a href="{% url 'hisobotlar:reports' %}" class="flex items-center gap-3 rounded-xl px-4 py-3 font-semibold {% if request.resolver_match.app_name == 'hisobotlar' %}bg-cyan-400/10 text-cyan-300{% else %}hover:bg-white/5 hover:text-white{% endif %}">Hisobotlar</a>
     </nav>
     <a href="{% url 'admin_welcome' %}?choose=1" class="mt-auto rounded-xl border border-white/10 px-4 py-3 text-center text-sm font-bold text-cyan-300">Interfeysni almashtirish</a>
   </aside>

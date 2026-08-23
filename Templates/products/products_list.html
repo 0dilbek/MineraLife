@@ -3,54 +3,54 @@
 {% block title %}Mahsulotlar{% endblock %}
 
 {% block content %}
-<div class="mb-6 text-center">
-    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Mahsulotlar</h1>
-    <p class="text-gray-600 dark:text-gray-400 mt-2">Siz uchun mavjud bo‘lgan barcha mahsulotlar</p>
-</div>
+<div class="space-y-6">
+  <header class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <div>
+      <p class="text-[11px] font-black uppercase tracking-[.18em] text-cyan-700 dark:text-cyan-400">Katalog</p>
+      <h1 class="mt-1 text-3xl font-black tracking-tight text-slate-950 dark:text-white">Mahsulotlar</h1>
+      <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Buyurtmalarda ishlatiladigan mahsulotlar katalogi.</p>
+    </div>
+    <span class="inline-flex w-fit items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
+      {{ products|length }} ta mahsulot
+    </span>
+  </header>
 
 {% if products %}
-<!-- Mahsulotlar grid -->
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
     {% for product in products %}
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow hover:shadow-2xl transform hover:-translate-y-1 transition duration-300">
-            <!-- Agar rasm maydoni bo‘lsa -->
-            <div class="h-40 bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
-                {% if product.image %}
-                    <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover">
-                {% else %}
-                    <svg class="w-16 h-16 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path d="M3 7h18M3 12h18M3 17h18" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                {% endif %}
-            </div>
-
-        <div class="p-5">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-2 truncate">{{ product.name }}</h2>
-            <p class="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-3">{{ product.description }}</p>
-            <div class="flex items-center justify-between">
-                <span class="text-lg font-bold text-blue-600 dark:text-blue-400">{{ product.price }} so'm</span>
-                <a href="{% url 'products:detail' product.pk %}" class="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition">
-                    Batafsil
-                </a>
-            </div>
+    <a href="{% url 'products:detail' product.pk %}" class="group overflow-hidden rounded-[1.35rem] border border-slate-200 bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:border-cyan-300 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900 dark:hover:border-cyan-800">
+      <div class="relative flex h-44 items-center justify-center overflow-hidden bg-slate-100 dark:bg-slate-800">
+        {% if product.image %}
+          <img src="{{ product.image.url }}" alt="{{ product.name }}" class="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]">
+        {% else %}
+          <span class="flex h-16 w-16 items-center justify-center rounded-2xl bg-white text-cyan-700 shadow-sm dark:bg-slate-900 dark:text-cyan-300">
+            <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="m4 7 8-4 8 4-8 4-8-4Zm0 0v10l8 4 8-4V7M12 11v10" stroke-width="1.8" stroke-linejoin="round"/></svg>
+          </span>
+        {% endif %}
+        <span class="absolute right-3 top-3 rounded-full bg-slate-950/75 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-white backdrop-blur">Mahsulot</span>
+      </div>
+      <div class="p-5">
+        <h2 class="truncate text-lg font-extrabold text-slate-950 dark:text-white">{{ product.name }}</h2>
+        <p class="mt-2 line-clamp-2 min-h-10 text-sm leading-5 text-slate-500 dark:text-slate-400">{{ product.description|default:"Tavsif kiritilmagan" }}</p>
+        <div class="mt-5 flex items-end justify-between gap-3 border-t border-slate-100 pt-4 dark:border-slate-800">
+          <div><p class="text-[10px] font-bold uppercase tracking-wide text-slate-400">Narxi</p><p class="mt-0.5 text-lg font-black text-cyan-700 dark:text-cyan-300">{{ product.price }} so‘m</p></div>
+          <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition group-hover:bg-cyan-400 group-hover:text-slate-950 dark:bg-slate-800 dark:text-slate-300">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
         </div>
-    </div>
+      </div>
+    </a>
     {% endfor %}
 </div>
 {% else %}
-<!-- Bo'sh holat (YouTube-style) -->
-<div class="flex flex-col items-center justify-center py-20">
-    <svg class="w-24 h-24 text-gray-400 dark:text-gray-600 mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path d="M9 17v-2h6v2m-7 4h8a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-3l-1-2H9l-1 2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2z" 
-              stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-    <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200">Hozircha mahsulotlar mavjud emas</h2>
-    <p class="text-gray-500 dark:text-gray-400 mt-2 text-center max-w-md">
-        Mahsulotlar tez orada qo'shiladi. Shu vaqtgacha mavjud bo'lgan boshqa bo'limlarni ko'rib chiqing.
-    </p>
-    <a href="#" class="mt-6 px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-        Bosh sahifaga qaytish
-    </a>
+<div class="grid min-h-80 place-items-center rounded-[1.5rem] border border-dashed border-slate-300 bg-white/70 p-8 text-center dark:border-slate-700 dark:bg-slate-900/70">
+  <div>
+    <span class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-slate-400 dark:bg-slate-800"><svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="m4 7 8-4 8 4-8 4-8-4Zm0 0v10l8 4 8-4V7M12 11v10" stroke-width="1.8" stroke-linejoin="round"/></svg></span>
+    <h2 class="mt-4 text-lg font-extrabold">Mahsulotlar mavjud emas</h2>
+    <p class="mt-1 max-w-md text-sm text-slate-500 dark:text-slate-400">Katalogga mahsulot qo‘shilgach ular shu yerda ko‘rinadi.</p>
+    <a href="{% url 'admin_welcome' %}" class="mt-5 inline-flex rounded-xl bg-cyan-400 px-4 py-2.5 text-sm font-black text-slate-950 hover:bg-cyan-300">Boshqaruv paneliga qaytish</a>
+  </div>
 </div>
 {% endif %}
+</div>
 {% endblock %}

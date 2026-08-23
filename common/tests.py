@@ -67,6 +67,14 @@ class AdminInterfaceChoiceTests(TestCase):
                     self.assertEqual(response.status_code, 200)
                     self.assertTemplateUsed(response, expected_base)
 
+    def test_modern_interface_loads_shared_component_layer(self):
+        self.client.post(reverse("set_admin_ui"), {"mode": "modern"})
+
+        response = self.client.get(reverse("clients:list"))
+
+        self.assertContains(response, 'id="modern-component-compatibility"')
+        self.assertContains(response, "--panel-soft:")
+
 
 class NormalizeMultilineTextTests(TestCase):
     def test_converts_literal_escape_sequences(self):
