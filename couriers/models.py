@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 
 class CourierRoute(models.Model):
@@ -46,6 +47,11 @@ class CourierLocation(models.Model):
     latitude = models.FloatField(verbose_name="Kenglik")
     longitude = models.FloatField(verbose_name="Uzunlik")
     accuracy = models.FloatField(null=True, blank=True, verbose_name="Aniqlik (metr)")
+    altitude = models.FloatField(null=True, blank=True, verbose_name="Balandlik (metr)")
+    speed = models.FloatField(null=True, blank=True, verbose_name="Tezlik (m/s)")
+    bearing = models.FloatField(null=True, blank=True, verbose_name="Yo'nalish (gradus)")
+    is_mocked = models.BooleanField(default=False, verbose_name="Soxta joylashuv")
+    captured_at = models.DateTimeField(default=timezone.now, verbose_name="Qurilmada olingan vaqti")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Yangilangan vaqti")
 
     class Meta:

@@ -264,7 +264,12 @@ def courier_update_location(request):
 
     CourierLocation.objects.update_or_create(
         courier=request.user,
-        defaults={"latitude": lat, "longitude": lon, "accuracy": accuracy},
+        defaults={
+            "latitude": lat,
+            "longitude": lon,
+            "accuracy": accuracy,
+            "captured_at": timezone.now(),
+        },
     )
     return JsonResponse({"success": True})
 
@@ -285,6 +290,10 @@ def courier_live_locations(request):
         "lat": loc.latitude,
         "lon": loc.longitude,
         "accuracy": loc.accuracy,
+        "speed": loc.speed,
+        "bearing": loc.bearing,
+        "is_mocked": loc.is_mocked,
+        "captured_at": loc.captured_at.isoformat(),
         "updated_at": loc.updated_at.isoformat(),
         "seconds_ago": int((now_ts - loc.updated_at).total_seconds()),
     } for loc in locations]

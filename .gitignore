@@ -13,3 +13,6 @@ admin_panel/db.sqlite3
 __pycache__/
 *.pyc
 *.pyo
+
+# Local Android courier application (kept outside the Django repository history)
+/mobile/

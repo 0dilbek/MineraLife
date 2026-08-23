@@ -15,7 +15,7 @@ ExecStart=/home/MineraLife/.venv/bin/gunicorn \
     --timeout 120 \
     --access-logfile - \
     --error-logfile - \
-    --bind 127.0.0.1:8010 \
+    --bind 127.0.0.1:8027 \
     admin_panel.wsgi:application
 Restart=on-failure
 RestartSec=5

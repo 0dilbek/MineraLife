@@ -1,6 +1,6 @@
 # MineraLife VPS deployment
 
-This deployment runs Gunicorn on private port `8010`. Nginx sends only requests
+This deployment runs Gunicorn on private port `8027`. Nginx sends only requests
 for `mineralife.uz` to that port, so other virtual hosts on the server remain
 independent.
 
@@ -128,11 +128,11 @@ priority, but removing the obsolete setting avoids confusion.
 
 ## 5. Enable Gunicorn and Nginx
 
-First confirm that port `8010` is free. If it is occupied, change `8010` in both
+First confirm that port `8027` is free. If it is occupied, change `8027` in both
 deployment files to another unused localhost port.
 
 ```bash
-sudo ss -ltnp | grep ':8010 ' || true
+sudo ss -ltnp | grep ':8027 ' || true
 sudo cp /home/MineraLife/deploy/mineralife.service /etc/systemd/system/mineralife.service
 sudo systemctl daemon-reload
 sudo systemctl enable --now mineralife

@@ -91,7 +91,7 @@ class CourierRouteAdmin(admin.ModelAdmin):
 
 @admin.register(CourierLocation)
 class CourierLocationAdmin(admin.ModelAdmin):
-    list_display = ('courier', 'latitude', 'longitude', 'accuracy', 'updated_at')
-    list_filter = ('courier',)
+    list_display = ('courier', 'latitude', 'longitude', 'accuracy', 'speed', 'is_mocked', 'captured_at', 'updated_at')
+    list_filter = ('courier', 'is_mocked')
     search_fields = ('courier__username',)
-    readonly_fields = ('updated_at',)
+    readonly_fields = ('captured_at', 'updated_at')
