@@ -197,6 +197,10 @@ class DebtWorkflowTests(TestCase):
         self.client.force_login(self.admin)
 
     def test_admin_marks_pending_order_as_debt_and_completes_it(self):
+        list_response = self.client.get(reverse("orders:list"))
+        self.assertContains(list_response, "Qarz holati")
+        self.assertContains(list_response, "Qarzga belgilash")
+
         response = self.client.post(reverse("orders:mark_debt", args=[self.order.pk]))
 
         self.assertRedirects(response, reverse("orders:list"))
