@@ -58,6 +58,10 @@
             <a href="{% url 'clients:list' %}" class="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">
                 Mijozlar
             </a>
+            <a href="{% url 'clients:debtors' %}" class="inline-flex items-center gap-1 px-1 pt-1 text-sm font-medium text-gray-700 hover:text-amber-600 dark:text-gray-300 dark:hover:text-amber-400">
+                Qarzdorlar
+                {% if active_debtor_count %}<span class="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-800 dark:bg-amber-900 dark:text-amber-100">{{ active_debtor_count }}</span>{% endif %}
+            </a>
             <a href="{% url 'products:list' %}" class="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">
                 Mahsulotlar
             </a>
@@ -84,6 +88,13 @@
         <div class="flex items-center gap-2">
 
             {% if user.is_authenticated %}
+            {% if not user.is_superuser %}
+            <a href="{% url 'couriers:debtors' %}" title="Qarzdorlar eslatmasi" aria-label="Qarzdorlar eslatmasi"
+               class="relative inline-flex h-11 w-11 items-center justify-center rounded-lg border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-300 dark:hover:bg-amber-900/60">
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              {% if active_debtor_count %}<span class="absolute -right-1.5 -top-1.5 inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-bold text-white ring-2 ring-white dark:ring-gray-800">{{ active_debtor_count }}</span>{% endif %}
+            </a>
+            {% endif %}
             <!-- Desktop: Profil dropdown -->
             <div class="relative hidden md:block" id="profileDropdown">
                 <button type="button" data-dropdown-trigger
@@ -141,11 +152,13 @@
         {% if user.is_authenticated and user.is_superuser %}
             <a href="{% url 'orders:list' %}" class="block px-3 py-2 rounded-lg text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700">Buyurtmalar</a>
             <a href="{% url 'clients:list' %}" class="block px-3 py-2 rounded-lg text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700">Mijozlar</a>
+            <a href="{% url 'clients:debtors' %}" class="flex items-center justify-between rounded-lg px-3 py-2 text-gray-800 hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-gray-700"><span>Qarzdorlar</span>{% if active_debtor_count %}<span class="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-800">{{ active_debtor_count }}</span>{% endif %}</a>
             <a href="{% url 'products:list' %}" class="block px-3 py-2 rounded-lg text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700">Mahsulotlar</a>
             <a href="{% url 'couriers:list' %}" class="block px-3 py-2 rounded-lg text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700">Kuryerlar</a>
         {% elif user.is_authenticated %}
             <a href="{% url 'couriers:dashboard' %}" class="block px-3 py-2 rounded-lg text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700">Dashboard</a>
             <a href="{% url 'couriers:map' %}" class="block px-3 py-2 rounded-lg text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700">Xarita</a>
+            <a href="{% url 'couriers:debtors' %}" class="flex items-center justify-between rounded-lg px-3 py-2 text-gray-800 hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-gray-700"><span>Qarzdorlar eslatmasi</span>{% if active_debtor_count %}<span class="rounded-full bg-rose-600 px-2 py-0.5 text-xs font-bold text-white">{{ active_debtor_count }}</span>{% endif %}</a>
         {% endif %}
 
         <div class="h-px bg-gray-200 dark:bg-gray-700 my-2"></div>

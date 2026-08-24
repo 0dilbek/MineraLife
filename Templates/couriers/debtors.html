@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Qarzdorlar eslatmasi{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-5xl space-y-4">
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <div><h1 class="text-2xl font-bold text-gray-900 dark:text-white">Qarzdorlar eslatmasi</h1><p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Mijozga yaqin bo'lsangiz, qarzi borligini eslatib o'ting.</p></div>
+    <form method="get" class="flex gap-2"><input name="q" value="{{ q }}" placeholder="Mijoz yoki telefon" class="min-h-12 min-w-0 rounded-lg border border-gray-300 bg-white px-4 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"><button class="min-h-12 rounded-lg bg-blue-600 px-4 font-bold text-white">Qidirish</button></form>
+  </div>
+  {% if debtors %}
+  <section class="grid gap-3 sm:grid-cols-2">
+    {% for client in debtors %}
+    <article class="rounded-lg border border-l-4 border-gray-200 border-l-amber-500 bg-white p-4 shadow-sm dark:border-gray-700 dark:border-l-amber-400 dark:bg-gray-800">
+      <div class="flex items-start justify-between gap-3"><div><h2 class="font-bold text-gray-900 dark:text-white">{{ client.name }}</h2><p class="text-sm text-gray-500 dark:text-gray-400">{{ client.get_primary_phone|default:"Telefon yo'q" }}</p></div><span class="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-800 dark:bg-amber-900 dark:text-amber-100">{{ client.debt_order_count }} ta</span></div>
+      <p class="mt-3 text-xl font-bold text-rose-700 dark:text-rose-300">{{ client.total_debt|floatformat:0 }} so'm</p>
+      {% if client.caption %}<p class="mt-1 text-sm text-gray-600 dark:text-gray-300">{{ client.get_caption_display_text }}</p>{% endif %}
+      <div class="mt-3 grid grid-cols-2 gap-2">
+        {% if client.get_primary_phone %}<a href="tel:{{ client.get_primary_phone }}" class="inline-flex min-h-12 items-center justify-center rounded-lg border border-gray-300 font-bold text-gray-800 dark:border-gray-600 dark:text-white">Qo'ng'iroq</a>{% endif %}
+        {% if client.latitude and client.longitude %}<a href="geo:{{ client.latitude }},{{ client.longitude }}?q={{ client.latitude }},{{ client.longitude }}({{ client.name|urlencode }})" class="inline-flex min-h-12 items-center justify-center rounded-lg bg-blue-600 font-bold text-white">Manzil</a>{% endif %}
+      </div>
+    </article>
+    {% endfor %}
+  </section>
+  {% else %}<section class="rounded-lg border border-dashed border-gray-300 bg-white p-10 text-center text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400">Faol qarzdor topilmadi.</section>{% endif %}
+</div>
+{% endblock %}

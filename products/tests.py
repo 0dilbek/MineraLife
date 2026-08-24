@@ -7,7 +7,7 @@ from django.urls import reverse
 from .models import Product
 
 
-class ProductModernUiTests(TestCase):
+class ProductClassicUiTests(TestCase):
     def setUp(self):
         self.admin = User.objects.create_superuser(
             username="product-admin",
@@ -20,13 +20,12 @@ class ProductModernUiTests(TestCase):
             price=Decimal("19000.00"),
         )
         self.client.force_login(self.admin)
-        self.client.post(reverse("set_admin_ui"), {"mode": "modern"})
 
-    def test_product_list_uses_modern_catalog_components(self):
+    def test_product_list_uses_classic_catalog(self):
         response = self.client.get(reverse("products:list"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "base_modern.html")
+        self.assertTemplateUsed(response, "base.html")
         self.assertContains(response, "Katalog")
         self.assertContains(response, "1 ta mahsulot")
 

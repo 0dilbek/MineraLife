@@ -170,9 +170,10 @@
           <td class="px-4 py-3 font-semibold text-gray-900 dark:text-white">{{ o.get_total_price|floatformat:0 }}</td>
           <td class="px-4 py-3 text-gray-700 dark:text-gray-200">{{ o.get_payment_summary }}</td>
           <td class="px-4 py-3">
-            <span class="rounded-full px-2.5 py-1 text-xs font-semibold {% if o.status == 'pending' %}bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100{% elif o.status == 'completed' %}bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-100{% else %}bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-100{% endif %}">
-              {{ o.get_status_display }}
-            </span>
+	            <span class="rounded-full px-2.5 py-1 text-xs font-semibold {% if o.status == 'pending' %}bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100{% elif o.status == 'completed' %}bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-100{% else %}bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-100{% endif %}">
+	              {{ o.get_status_display }}
+	            </span>
+	            {% if o.is_debt %}<span class="ml-1 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-800 dark:bg-amber-900 dark:text-amber-100">Qarz</span>{% endif %}
           </td>
           <td class="px-4 py-3 text-gray-700 dark:text-gray-200">{{ o.effective_date|date:"Y-m-d" }}</td>
           <td class="px-4 py-3">
@@ -181,10 +182,16 @@
 	                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.46 12C3.73 7.94 7.52 5 12 5s8.27 2.94 9.54 7c-1.27 4.06-5.06 7-9.54 7s-8.27-2.94-9.54-7z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
 	                <span>Ko'rish</span>
 	              </a>
-	              <a href="{% url 'orders:update' o.pk %}" title="Tahrirlash" aria-label="Tahrirlash" class="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-bold text-white hover:bg-blue-700">
+		              <a href="{% url 'orders:update' o.pk %}" title="Tahrirlash" aria-label="Tahrirlash" class="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-bold text-white hover:bg-blue-700">
 	                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.41-9.41a2 2 0 112.82 2.82L11.83 15H9v-2.83l8.59-8.58z"/></svg>
 	                <span>Tahrir</span>
-	              </a>
+		              </a>
+		              {% if o.status == 'pending' and not o.is_debt %}
+		              <form method="post" action="{% url 'orders:mark_debt' o.pk %}" onsubmit="return confirm('{{ o.client.name|escapejs }} buyurtmasini qarzga belgilaysizmi? Buyurtma bajarilgan holatiga o'tadi.');">
+		                {% csrf_token %}
+		                <button type="submit" title="Qarzga belgilash" class="inline-flex min-h-10 items-center justify-center rounded-lg bg-amber-500 px-3 py-2 text-xs font-bold text-amber-950 hover:bg-amber-400">Qarz</button>
+		              </form>
+		              {% endif %}
 	              <a href="{% url 'orders:delete' o.pk %}" title="O'chirish" aria-label="O'chirish" class="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-rose-600 px-3 py-2 text-xs font-bold text-white hover:bg-rose-700">
 	                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 7h12M9 7V5h6v2m-8 0l1 13h8l1-13"/></svg>
 	                <span>O'chirish</span>
@@ -206,9 +213,10 @@
       <div class="min-w-0">
         <div class="flex items-center gap-2">
           <h2 class="truncate text-sm font-semibold text-gray-900 dark:text-white">{{ o.client.name }}</h2>
-          <span class="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold {% if o.status == 'pending' %}bg-blue-100 text-blue-800{% elif o.status == 'completed' %}bg-emerald-100 text-emerald-800{% else %}bg-rose-100 text-rose-800{% endif %}">
-            {{ o.get_status_display }}
-          </span>
+	          <span class="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold {% if o.status == 'pending' %}bg-blue-100 text-blue-800{% elif o.status == 'completed' %}bg-emerald-100 text-emerald-800{% else %}bg-rose-100 text-rose-800{% endif %}">
+	            {{ o.get_status_display }}
+	          </span>
+	          {% if o.is_debt %}<span class="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-800">Qarz</span>{% endif %}
         </div>
         <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ o.effective_date|date:"Y-m-d" }} · {{ o.courier.username|default:"-" }}</p>
       </div>
@@ -228,10 +236,15 @@
 	          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.46 12C3.73 7.94 7.52 5 12 5s8.27 2.94 9.54 7c-1.27 4.06-5.06 7-9.54 7s-8.27-2.94-9.54-7z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
 	          <span>Ko'rish</span>
 	        </a>
-	        <a href="{% url 'orders:update' o.pk %}" class="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 py-2.5 text-sm font-bold text-white" aria-label="Tahrirlash">
+		        <a href="{% url 'orders:update' o.pk %}" class="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 py-2.5 text-sm font-bold text-white" aria-label="Tahrirlash">
 	          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.41-9.41a2 2 0 112.82 2.82L11.83 15H9v-2.83l8.59-8.58z"/></svg>
 	          <span>Tahrir</span>
-	        </a>
+		        </a>
+		        {% if o.status == 'pending' and not o.is_debt %}
+		        <form method="post" action="{% url 'orders:mark_debt' o.pk %}" class="col-span-2" onsubmit="return confirm('{{ o.client.name|escapejs }} buyurtmasini qarzga belgilaysizmi? Buyurtma bajarilgan holatiga o'tadi.');">
+		          {% csrf_token %}<button class="inline-flex min-h-12 w-full items-center justify-center rounded-lg bg-amber-500 px-3 py-2.5 text-sm font-bold text-amber-950">Qarzga belgilash</button>
+		        </form>
+		        {% endif %}
 	        <a href="{% url 'orders:delete' o.pk %}" class="col-span-2 inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-rose-600 px-3 py-2.5 text-sm font-bold text-white" aria-label="O'chirish">
 	          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 7h12M9 7V5h6v2m-8 0l1 13h8l1-13"/></svg>
 	          <span>O'chirish</span>

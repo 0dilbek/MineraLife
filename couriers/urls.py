@@ -2,7 +2,8 @@ from . import  views
 from django.urls import path
 from .views import (
     CourierListView, CourierDetailView, CourierCreateView,
-    CourierUpdateView, CourierPasswordUpdateView, CourierDeleteView, courier_dashboard
+    CourierUpdateView, CourierPasswordUpdateView, CourierDeleteView, courier_dashboard,
+    courier_debtors,
 )
 
 app_name = "couriers"
@@ -10,6 +11,7 @@ app_name = "couriers"
 urlpatterns = [
     path("", CourierListView.as_view(), name="list"),
     path("dashboard/", courier_dashboard, name="dashboard"),
+    path("debtors/", courier_debtors, name="debtors"),
     path("create/", CourierCreateView.as_view(), name="create"),
     path("<int:pk>/", CourierDetailView.as_view(), name="detail"),
     path("<int:pk>/edit/", CourierUpdateView.as_view(), name="update"),

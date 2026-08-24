@@ -1,0 +1,50 @@
+{% extends ui_base_template %}
+{% load text_filters %}
+{% block title %}{{ client.name }} qarzlari{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-6xl space-y-4">
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <div>
+      <a href="{% url 'clients:debtors' %}" class="text-sm font-semibold text-blue-600 dark:text-blue-400">← Qarzdorlar</a>
+      <h1 class="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{{ client.name }}</h1>
+      <p class="text-sm text-gray-500 dark:text-gray-400">{{ client.get_phone_numbers_display }}</p>
+    </div>
+    <div class="rounded-lg border border-rose-200 bg-rose-50 px-5 py-3 dark:border-rose-800 dark:bg-rose-950/40">
+      <p class="text-xs font-semibold uppercase text-rose-700 dark:text-rose-300">Faol qarz</p>
+      <p class="text-2xl font-bold text-rose-900 dark:text-rose-100">{{ total_debt|floatformat:0 }} so'm</p>
+    </div>
+  </div>
+
+  <section class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+    <div class="border-b border-gray-200 px-4 py-3 dark:border-gray-700"><h2 class="font-bold text-gray-900 dark:text-white">Faol qarz buyurtmalari</h2></div>
+    {% if debt_orders %}
+    <div class="divide-y divide-gray-100 dark:divide-gray-700">
+      {% for order in debt_orders %}
+      <article class="grid gap-3 p-4 lg:grid-cols-[1fr_auto] lg:items-center">
+        <div>
+          <div class="flex flex-wrap items-center gap-2"><a class="font-bold text-blue-600 dark:text-blue-400" href="{% url 'orders:detail' order.pk %}">Buyurtma #{{ order.pk }}</a><span class="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-800 dark:bg-emerald-900 dark:text-emerald-100">Bajarildi</span><span class="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-800 dark:bg-amber-900 dark:text-amber-100">Qarz</span></div>
+          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ order.effective_date|date:"Y-m-d" }} · Kuryer: {{ order.courier.username|default:"—" }} · Berdim: {{ order.outquantity }}</p>
+          {% if order.notes %}<p class="mt-1 text-sm text-gray-600 dark:text-gray-300">{{ order.notes|display_text }}</p>{% endif %}
+          <p class="mt-2 text-lg font-bold text-rose-700 dark:text-rose-300">{{ order.debt_amount|floatformat:0 }} so'm</p>
+        </div>
+        <form method="post" action="{% url 'clients:close_debt' client.pk order.pk %}" onsubmit="return confirm('Buyurtma #{{ order.pk }} qarzi yopilganini tasdiqlaysizmi? Bu amal faqat qarzdorlar sahifasida bajariladi.');">
+          {% csrf_token %}
+          <button class="min-h-12 w-full rounded-lg bg-emerald-600 px-5 py-3 font-bold text-white hover:bg-emerald-700 lg:w-auto">Qarzni yopish</button>
+        </form>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}<p class="p-8 text-center text-gray-500 dark:text-gray-400">Faol qarz qolmagan.</p>{% endif %}
+  </section>
+
+  {% if closed_debt_orders %}
+  <details class="rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+    <summary class="cursor-pointer p-4 font-bold text-gray-900 dark:text-white">Yopilgan qarzlar tarixi ({{ closed_debt_orders|length }})</summary>
+    <div class="divide-y divide-gray-100 border-t dark:divide-gray-700 dark:border-gray-700">
+      {% for order in closed_debt_orders %}<div class="flex flex-col justify-between gap-1 p-4 text-sm sm:flex-row"><span class="text-gray-700 dark:text-gray-200">#{{ order.pk }} · {{ order.effective_date|date:"Y-m-d" }} · {{ order.debt_amount|floatformat:0 }} so'm</span><span class="text-gray-500 dark:text-gray-400">{{ order.debt_closed_at|date:"Y-m-d H:i" }} · {{ order.debt_closed_by.username|default:"—" }}</span></div>{% endfor %}
+    </div>
+  </details>
+  {% endif %}
+</div>
+{% endblock %}

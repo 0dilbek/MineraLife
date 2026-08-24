@@ -117,6 +117,35 @@ def _summary(queryset):
     }
 
 
+def _debtors_payload():
+    debt_orders = list(
+        Order.objects.filter(is_debt=True)
+        .select_related('client', 'courier')
+        .prefetch_related('client__phone_numbers')
+        .order_by('client__name', 'effective_date', 'pk')
+    )
+    grouped = {}
+    for order in debt_orders:
+        item = grouped.setdefault(order.client_id, {
+            'client': MobileOrderSerializer(order).data['client'],
+            'total_debt': Decimal('0'),
+            'orders': [],
+        })
+        item['total_debt'] += order.debt_amount
+        item['orders'].append(MobileOrderSerializer(order).data)
+    results = []
+    for item in grouped.values():
+        item['total_debt'] = _decimal_string(item['total_debt'])
+        item['order_count'] = len(item['orders'])
+        results.append(item)
+    return {
+        'count': len(results),
+        'order_count': len(debt_orders),
+        'total_debt': _decimal_string(sum((o.debt_amount for o in debt_orders), Decimal('0'))),
+        'results': results,
+    }
+
+
 class MobileLoginView(APIView):
     authentication_classes = ()
     permission_classes = (AllowAny,)
@@ -164,13 +193,23 @@ class MobileDashboardView(CourierAPIView):
         route = CourierRoute.objects.filter(
             courier=request.user, date=selected_date
         ).first()
+        debtors = _debtors_payload()
         return Response({
             'date': selected_date.isoformat(),
             'can_edit': selected_date == timezone.localdate(),
             'summary': _summary(queryset),
             'orders': MobileOrderSerializer(queryset, many=True).data,
             'route': MobileRouteSerializer(route).data if route else None,
+            'debtors': debtors['results'],
+            'debtors_count': debtors['count'],
+            'debt_orders_count': debtors['order_count'],
+            'debt_total': debtors['total_debt'],
         })
+
+
+class MobileDebtorListView(CourierAPIView):
+    def get(self, request):
+        return Response(_debtors_payload())
 
 
 class MobileOrderListView(CourierAPIView):
@@ -205,6 +244,11 @@ class MobileOrderDetailView(CourierAPIView):
     @transaction.atomic
     def patch(self, request, order_id):
         order = self.get_object(request, order_id)
+        if order.is_debt:
+            return Response(
+                {'detail': "Qarzdor buyurtma faqat adminning qarzdorlar sahifasidan yopiladi."},
+                status=status.HTTP_409_CONFLICT,
+            )
         if order.effective_date != timezone.localdate():
             return Response(
                 {'detail': "Faqat bugungi buyurtmani o'zgartirish mumkin."},

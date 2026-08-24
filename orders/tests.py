@@ -181,3 +181,47 @@ class EmptyZeroInputTests(TestCase):
         self.assertIn('name="inquantity" value=""', str(form["inquantity"]))
         self.assertIn('name="outquantity" value=""', str(form["outquantity"]))
         self.assertIn('name="cash_amount" value=""', str(form["cash_amount"]))
+
+
+class DebtWorkflowTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_superuser("debt-admin", "debt@example.com", "password")
+        self.client_obj = Client.objects.create(name="Qarzdor mijoz")
+        self.order = Order.objects.create(
+            client=self.client_obj,
+            status="pending",
+            outquantity=10,
+            price=Decimal("19000"),
+            cash_amount=Decimal("40000"),
+        )
+        self.client.force_login(self.admin)
+
+    def test_admin_marks_pending_order_as_debt_and_completes_it(self):
+        response = self.client.post(reverse("orders:mark_debt", args=[self.order.pk]))
+
+        self.assertRedirects(response, reverse("orders:list"))
+        self.order.refresh_from_db()
+        self.assertTrue(self.order.is_debt)
+        self.assertEqual(self.order.status, "completed")
+        self.assertEqual(self.order.debt_amount, Decimal("150000"))
+        self.assertEqual(self.order.debt_marked_by, self.admin)
+
+    def test_debt_is_closed_only_from_debtor_order_action(self):
+        self.order.mark_as_debt(self.admin)
+        response = self.client.post(reverse(
+            "clients:close_debt",
+            args=[self.client_obj.pk, self.order.pk],
+        ))
+
+        self.assertRedirects(response, reverse("clients:debtor_detail", args=[self.client_obj.pk]))
+        self.order.refresh_from_db()
+        self.assertFalse(self.order.is_debt)
+        self.assertIsNotNone(self.order.debt_closed_at)
+        self.assertEqual(self.order.debt_amount, Decimal("150000"))
+
+    def test_new_order_form_warns_about_active_debtor(self):
+        self.order.mark_as_debt(self.admin)
+        response = self.client.get(reverse("orders:create"))
+
+        self.assertContains(response, "Bu mijozning yopilmagan qarzi bor")
+        self.assertIn(str(self.client_obj.pk), response.context["client_debt_summary"])

@@ -8,6 +8,7 @@ from .mobile_views import (
     MobileMeView,
     MobileOrderDetailView,
     MobileOrderListView,
+    MobileDebtorListView,
 )
 
 app_name = 'api'
@@ -18,6 +19,7 @@ urlpatterns = [
     path('mobile/v1/me/', MobileMeView.as_view(), name='mobile_me'),
     path('mobile/v1/dashboard/', MobileDashboardView.as_view(), name='mobile_dashboard'),
     path('mobile/v1/orders/', MobileOrderListView.as_view(), name='mobile_orders'),
+    path('mobile/v1/debtors/', MobileDebtorListView.as_view(), name='mobile_debtors'),
     path('mobile/v1/orders/<int:order_id>/', MobileOrderDetailView.as_view(), name='mobile_order_detail'),
     path('mobile/v1/location/', MobileLocationView.as_view(), name='mobile_location'),
 

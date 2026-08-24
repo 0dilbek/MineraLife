@@ -18,7 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from .views import admin_welcome, admin_today_map_data, dashboard_redirect, set_admin_ui
+from .views import admin_welcome, admin_today_map_data, dashboard_redirect
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -29,7 +29,6 @@ urlpatterns = [
     path('couriers/', include('couriers.urls'), name='couriers'),
     path('accounts/', include('django.contrib.auth.urls')),  # login/logout/password_*
     path('dashboard/admin/', admin_welcome, name='admin_welcome'),
-    path('dashboard/admin/interface/', set_admin_ui, name='set_admin_ui'),
     path('dashboard/admin/today-map-data/', admin_today_map_data, name='admin_today_map_data'),
     path("reports/", include("hisobotlar.urls")),
     path('', dashboard_redirect, name='dashboard'),

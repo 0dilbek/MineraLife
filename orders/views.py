@@ -1,7 +1,11 @@
 from django.views.generic import ListView, CreateView, DetailView, TemplateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
 from django.urls import reverse
-from django.db.models import Sum
+from django.shortcuts import get_object_or_404, redirect
+from django.db.models import Count, Q, Sum
+from django.db import transaction
+from django.contrib import messages
+from django.core.exceptions import ValidationError
 from .models import Order
 from .forms import OrderForm, OrderCreateForm
 from django.utils import timezone
@@ -120,6 +124,8 @@ class OrderListView(SuperuserRequiredMixin, ListView):
                 "lat": o.client.latitude,
                 "lon": o.client.longitude,
                 "status": o.get_status_display(),
+                "status_raw": "completed" if o.is_debt else o.status,
+                "is_debt": o.is_debt,
                 "price": float(o.get_total_price()),
                 "notes": o.get_notes_display_text(),
             }
@@ -183,7 +189,8 @@ class OrdersMapView(SuperuserRequiredMixin, TemplateView):
                 "lat": o.client.latitude,
                 "lon": o.client.longitude,
                 "status": o.get_status_display(),
-                "status_raw": o.status,
+                "status_raw": "completed" if o.is_debt else o.status,
+                "is_debt": o.is_debt,
                 "price": float(o.price),
                 "date": o.effective_date.isoformat(),
                 "courier": (o.courier.username if o.courier_id else None),
@@ -393,6 +400,24 @@ class OrderCreateView(SuperuserRequiredMixin, CreateView):
         initial["effective_date"] = resolve_order_working_date(self.request)
         return initial
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        active_debts = (
+            Order.objects.filter(is_debt=True)
+            .values("client_id", "client__name")
+            .annotate(order_count=Count("id"), total_debt=Sum("debt_amount"))
+            .order_by("client__name")
+        )
+        context["client_debt_summary"] = {
+            str(item["client_id"]): {
+                "name": item["client__name"],
+                "order_count": item["order_count"],
+                "total_debt": float(item["total_debt"] or 0),
+            }
+            for item in active_debts
+        }
+        return context
+
 
 class OrderDetailView(SuperuserRequiredMixin, DetailView):
     model = Order
@@ -422,3 +447,32 @@ class OrderDeleteView(SuperuserRequiredMixin, DeleteView):
 
     def get_success_url(self):
         return f"{reverse('orders:list')}?{order_date_query(resolve_order_working_date(self.request))}"
+
+    def form_valid(self, form):
+        if self.object.is_debt:
+            messages.error(
+                self.request,
+                "Faol qarzdor buyurtmani o'chirib bo'lmaydi. Avval Qarzdorlar sahifasidan yoping.",
+            )
+            return redirect("clients:debtor_detail", pk=self.object.client_id)
+        return super().form_valid(form)
+
+
+@require_POST
+@user_passes_test(lambda u: u.is_superuser)
+@transaction.atomic
+def mark_order_as_debt(request, order_id):
+    order = get_object_or_404(
+        Order.objects.select_for_update().select_related("client"),
+        pk=order_id,
+    )
+    try:
+        order.mark_as_debt(request.user)
+    except ValidationError as error:
+        messages.error(request, error.messages[0])
+    else:
+        messages.success(
+            request,
+            f"{order.client.name} buyurtmasi {order.debt_amount:,.0f} so'm qarzga belgilandi.",
+        )
+    return redirect("orders:list")

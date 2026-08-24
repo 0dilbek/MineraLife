@@ -18,7 +18,7 @@ from django.shortcuts import render
 from django.utils.timezone import localdate
 # couriers/views.py
 from django.contrib.auth.decorators import login_required
-from django.db.models import Sum
+from django.db.models import Count, Min, Q, Sum
 from django.shortcuts import render
 from django.utils import timezone
 from datetime import datetime
@@ -123,6 +123,33 @@ def courier_dashboard(request):
         "can_edit_orders": can_edit_orders,
     })
 
+
+@login_required
+def courier_debtors(request):
+    """Kuryer uchun qarzdor mijozlar eslatmasi (qarzni yopish huquqisiz)."""
+    from clients.models import Client
+
+    query = (request.GET.get("q") or "").strip()
+    client_ids = Client.objects.all()
+    if query:
+        client_ids = client_ids.filter(
+            Q(name__icontains=query) |
+            Q(phone_numbers__phone_number__icontains=query)
+        ).values("pk")
+
+    active_debt = Q(orders__is_debt=True)
+    debtors = (
+        Client.objects.filter(pk__in=client_ids).prefetch_related("phone_numbers")
+        .annotate(
+            debt_order_count=Count("orders", filter=active_debt, distinct=True),
+            total_debt=Sum("orders__debt_amount", filter=active_debt),
+            oldest_debt_date=Min("orders__effective_date", filter=active_debt),
+        )
+        .filter(debt_order_count__gt=0)
+        .order_by("-total_debt", "name")
+    )
+    return render(request, "couriers/debtors.html", {"debtors": debtors, "q": query})
+
 @login_required
 def courier_order_update(request, pk):
     """Kurer buyurtma holatini va to'lov usulini tahrirlay oladi"""
@@ -131,14 +158,18 @@ def courier_order_update(request, pk):
         Order.objects.select_related("client").prefetch_related("client__phone_numbers"), 
         pk=pk, courier=request.user
     )
-    readonly = order.effective_date != today
+    readonly = order.effective_date != today or order.is_debt
 
     # Formani har doim yaratish
     form = CourierOrderUpdateForm(instance=order)
 
     if request.method == "POST":
         if readonly:
-            messages.error(request, "Bu sanadagi buyurtmani faqat ko'rish mumkin. O'zgartirish faqat bugungi buyurtmalar uchun.")
+            messages.error(
+                request,
+                "Qarzdor yoki oldingi sanadagi buyurtmani faqat ko'rish mumkin. "
+                "Qarz faqat adminning qarzdorlar sahifasidan yopiladi.",
+            )
             return redirect("couriers:order_update", pk=order.pk)
 
         # Quick action - modal orqali tez bajarish
@@ -206,7 +237,8 @@ def courier_map(request):
         "lat": o.client.latitude,
         "lon": o.client.longitude,
         "status": o.get_status_display(),
-        "status_raw": o.status,  # ('pending'...'completed'...'cancelled')
+        "status_raw": "completed" if o.is_debt else o.status,
+        "is_debt": o.is_debt,
         "inquantity": o.inquantity,
         "outquantity": o.outquantity,
         "price": float(o.get_total_price()),

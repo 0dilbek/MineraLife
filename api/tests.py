@@ -81,6 +81,21 @@ class MobileCourierApiTests(APITestCase):
             '+998901234567',
         )
 
+    def test_dashboard_and_debtors_endpoint_include_active_debt_reminder(self):
+        admin = User.objects.create_superuser("admin-debt", "admin@example.com", "password")
+        self.today_order.mark_as_debt(admin)
+        self.authenticate()
+
+        dashboard = self.client.get(reverse('api:mobile_dashboard'))
+        debtors = self.client.get(reverse('api:mobile_debtors'))
+
+        self.assertEqual(dashboard.status_code, 200)
+        self.assertEqual(dashboard.data['debtors_count'], 1)
+        self.assertTrue(dashboard.data['orders'][0]['is_debt'])
+        self.assertFalse(dashboard.data['orders'][0]['can_edit'])
+        self.assertEqual(debtors.data['count'], 1)
+        self.assertEqual(debtors.data['results'][0]['client']['id'], self.client_obj.id)
+
     def test_courier_cannot_read_another_couriers_order(self):
         self.authenticate()
         response = self.client.get(reverse(

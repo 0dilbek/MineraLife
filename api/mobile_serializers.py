@@ -54,12 +54,13 @@ class MobileOrderSerializer(serializers.ModelSerializer):
             'id', 'client', 'inquantity', 'outquantity', 'price',
             'total_price', 'cash_amount', 'card_amount',
             'perechesleniya_amount', 'debt_amount', 'total_paid',
-            'payment_summary', 'status', 'status_display', 'effective_date',
+            'payment_summary', 'status', 'status_display', 'is_debt',
+            'debt_marked_at', 'effective_date',
             'notes', 'can_edit', 'created_at', 'updated_at',
         )
 
     def get_can_edit(self, obj):
-        return obj.effective_date == timezone.localdate()
+        return obj.effective_date == timezone.localdate() and not obj.is_debt
 
 
 class MobileOrderUpdateSerializer(serializers.ModelSerializer):

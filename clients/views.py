@@ -14,10 +14,111 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.conf import settings
 from datetime import timedelta
 
-from django.db.models import Count, Max, Min, OuterRef, Q, Subquery
+from django.db.models import Count, Max, Min, OuterRef, Q, Subquery, Sum
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.core.paginator import Paginator
 import json
+
+
+class DebtorListView(SuperuserRequiredMixin, ListView):
+    model = Client
+    template_name = "clients/debtors_list.html"
+    context_object_name = "debtors"
+    paginate_by = 12
+
+    def get_queryset(self):
+        query = (self.request.GET.get("q") or "").strip()
+        client_ids = Client.objects.all()
+        if query:
+            client_ids = client_ids.filter(
+                Q(name__icontains=query) |
+                Q(phone_numbers__phone_number__icontains=query)
+            ).values("pk")
+
+        active_debt = Q(orders__is_debt=True)
+        queryset = (
+            Client.objects.filter(pk__in=client_ids).prefetch_related("phone_numbers")
+            .annotate(
+                debt_order_count=Count("orders", filter=active_debt, distinct=True),
+                total_debt=Sum("orders__debt_amount", filter=active_debt),
+                oldest_debt_date=Min("orders__effective_date", filter=active_debt),
+            )
+            .filter(debt_order_count__gt=0)
+            .order_by("-total_debt", "name")
+        )
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from orders.models import Order
+
+        totals = Order.objects.filter(is_debt=True).aggregate(
+            order_count=Count("id"),
+            client_count=Count("client_id", distinct=True),
+            total_debt=Sum("debt_amount"),
+        )
+        context.update({
+            "q": (self.request.GET.get("q") or "").strip(),
+            "debt_order_count": totals["order_count"] or 0,
+            "debtor_count": totals["client_count"] or 0,
+            "total_debt": totals["total_debt"] or 0,
+        })
+        return context
+
+
+class DebtorDetailView(SuperuserRequiredMixin, DetailView):
+    model = Client
+    template_name = "clients/debtor_detail.html"
+    context_object_name = "client"
+
+    def get_queryset(self):
+        return Client.objects.prefetch_related("phone_numbers")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from orders.models import Order
+
+        active_orders = (
+            Order.objects.filter(client=self.object, is_debt=True)
+            .select_related("courier", "debt_marked_by")
+            .order_by("effective_date", "pk")
+        )
+        closed_orders = (
+            Order.objects.filter(client=self.object, is_debt=False, debt_closed_at__isnull=False)
+            .select_related("courier", "debt_closed_by")
+            .order_by("-debt_closed_at")[:20]
+        )
+        context.update({
+            "debt_orders": active_orders,
+            "closed_debt_orders": closed_orders,
+            "total_debt": active_orders.aggregate(total=Sum("debt_amount"))["total"] or 0,
+        })
+        return context
+
+
+@require_POST
+@login_required
+@transaction.atomic
+def close_client_debt(request, client_pk, order_pk):
+    if not request.user.is_superuser:
+        messages.error(request, "Bu amal uchun ruxsat yo'q.")
+        return redirect("clients:debtor_detail", pk=client_pk)
+
+    from orders.models import Order
+
+    order = get_object_or_404(
+        Order.objects.select_for_update().select_related("client"),
+        pk=order_pk,
+        client_id=client_pk,
+    )
+    try:
+        order.close_debt(request.user)
+    except ValidationError as error:
+        messages.error(request, error.messages[0])
+    else:
+        messages.success(request, f"#{order.pk} buyurtma qarzi yopildi.")
+    return redirect("clients:debtor_detail", pk=client_pk)
 
 class ClientListView(SuperuserRequiredMixin, ListView):
     model = Client
@@ -132,6 +233,12 @@ class ClientDeleteView(SuperuserRequiredMixin, DeleteView):
     template_name = "clients/client_confirm_delete.html"
     context_object_name = "client"
     success_url = reverse_lazy("clients:list")
+
+    def form_valid(self, form):
+        if self.object.orders.filter(is_debt=True).exists():
+            messages.error(self.request, "Faol qarzi bor mijozni o'chirib bo'lmaydi.")
+            return redirect("clients:debtor_detail", pk=self.object.pk)
+        return super().form_valid(form)
 
 class ClientUpdateView(SuperuserRequiredMixin, UpdateView):
     model = Client

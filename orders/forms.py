@@ -69,6 +69,13 @@ class OrderForm(forms.ModelForm):
         self.fields['perechesleniya_amount'].label = "Perechisleniya (so'm)"
         self.fields['debt_amount'].label = "Qarz (so'm)"
 
+        if self.instance.pk and self.instance.is_debt:
+            self.fields["status"].disabled = True
+            self.fields["debt_amount"].disabled = True
+            self.fields["debt_amount"].help_text = (
+                "Faol qarz summasi. Uni faqat Qarzdorlar sahifasidan yopish mumkin."
+            )
+
     def clean_effective_date(self):
         date = self.cleaned_data.get('effective_date')
         if date:
@@ -94,6 +101,11 @@ class OrderForm(forms.ModelForm):
                 cleaned_data[field_name] = 0
         inquantity = cleaned_data.get('inquantity', 0) or 0
         outquantity = cleaned_data.get('outquantity', 0) or 0
+        if self.instance.pk and self.instance.is_debt and cleaned_data.get("status") != "completed":
+            raise ValidationError(
+                "Qarzdor buyurtma bajarilgan holatda qolishi kerak. "
+                "Qarzni faqat Qarzdorlar sahifasidan yoping."
+            )
         if inquantity < 0:
             raise ValidationError('"oldim" manfiy bo\'lmasligi kerak')
         if outquantity < 0:

@@ -100,6 +100,16 @@
       {% endif %}
     </div>
 
+    {% if not order %}
+    {{ client_debt_summary|json_script:"client-debt-summary" }}
+    <div id="client-debt-warning" class="hidden rounded-lg border border-amber-300 bg-amber-50 p-4 text-amber-900 dark:border-amber-700 dark:bg-amber-950/50 dark:text-amber-100" role="alert">
+      <div class="flex items-start gap-3">
+        {% icon "warning" "mt-0.5 h-5 w-5 shrink-0" %}
+        <div class="min-w-0"><p class="font-bold">Bu mijozning yopilmagan qarzi bor</p><p id="client-debt-warning-text" class="mt-1 text-sm"></p><a id="client-debt-warning-link" class="mt-2 inline-flex font-bold text-blue-700 underline dark:text-blue-300" href="#">Qarz buyurtmalarini ko'rish</a></div>
+      </div>
+    </div>
+    {% endif %}
+
     {% if order %}
     <div>
       <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Kurer</label>
@@ -249,6 +259,27 @@
         allowClear: true,
         width: '100%'
       });
+
+      const debtSummaryElement = document.getElementById('client-debt-summary');
+      const debtSummary = debtSummaryElement ? JSON.parse(debtSummaryElement.textContent) : {};
+      const debtWarning = document.getElementById('client-debt-warning');
+      function updateClientDebtWarning() {
+        if (!debtWarning) return;
+        const clientId = String($('#id_client').val() || '');
+        const debt = debtSummary[clientId];
+        if (!debt) {
+          debtWarning.classList.add('hidden');
+          return;
+        }
+        const amount = Number(debt.total_debt || 0).toLocaleString();
+        document.getElementById('client-debt-warning-text').textContent =
+          `${debt.order_count} ta buyurtma bo'yicha ${amount} so'm faol qarz mavjud.`;
+        document.getElementById('client-debt-warning-link').href =
+          `{% url 'clients:debtors' %}${clientId}/`;
+        debtWarning.classList.remove('hidden');
+      }
+      $('#id_client').on('change', updateClientDebtWarning);
+      updateClientDebtWarning();
 
       $('#id_courier').select2({
         placeholder: 'Kurerni tanlang',

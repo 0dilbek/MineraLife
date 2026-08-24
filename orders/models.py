@@ -1,5 +1,5 @@
 from django.db import models
-from django.core.validators import RegexValidator
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 from common.text_utils import normalize_multiline_text
@@ -24,6 +24,27 @@ class Order(models.Model):
     card_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Karta to'lov summasi")
     perechesleniya_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Perechisleniya summasi")
     debt_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Qarz summasi")
+    is_debt = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text="Buyurtma yopilmagan qarz sifatida belgilanganmi?",
+    )
+    debt_marked_at = models.DateTimeField(null=True, blank=True)
+    debt_marked_by = models.ForeignKey(
+        'auth.User',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='marked_debt_orders',
+    )
+    debt_closed_at = models.DateTimeField(null=True, blank=True)
+    debt_closed_by = models.ForeignKey(
+        'auth.User',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='closed_debt_orders',
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -49,6 +70,41 @@ class Order(models.Model):
     def get_total_paid(self):
         """Jami to'langan summa"""
         return self.cash_amount + self.card_amount + self.perechesleniya_amount + self.debt_amount
+
+    def get_outstanding_amount(self):
+        """Naqd/karta/o'tkazmadan keyin qolgan to'lanmagan summa."""
+        paid = self.cash_amount + self.card_amount + self.perechesleniya_amount
+        return max(self.get_total_price() - paid, 0)
+
+    def mark_as_debt(self, user):
+        """Ochiq buyurtmani qarz sifatida yakunlaydi."""
+        if self.status != 'pending':
+            raise ValidationError("Faqat kutilayotgan buyurtmani qarzga belgilash mumkin.")
+        outstanding_amount = self.get_outstanding_amount()
+        if outstanding_amount <= 0:
+            raise ValidationError(
+                "Qarz summasi 0. Avval berilgan miqdor va to'lov summalarini tekshiring."
+            )
+        self.status = 'completed'
+        self.is_debt = True
+        self.debt_amount = outstanding_amount
+        self.debt_marked_at = timezone.now()
+        self.debt_marked_by = user
+        self.debt_closed_at = None
+        self.debt_closed_by = None
+        self.save(update_fields=[
+            'status', 'is_debt', 'debt_amount', 'debt_marked_at',
+            'debt_marked_by', 'debt_closed_at', 'debt_closed_by', 'updated_at',
+        ])
+
+    def close_debt(self, user):
+        """Faol qarzni yopadi; moliyaviy tarix uchun qarz summasini saqlaydi."""
+        if not self.is_debt:
+            raise ValidationError("Bu buyurtmada faol qarz yo'q.")
+        self.is_debt = False
+        self.debt_closed_at = timezone.now()
+        self.debt_closed_by = user
+        self.save(update_fields=['is_debt', 'debt_closed_at', 'debt_closed_by', 'updated_at'])
 
     def get_price_display(self):
         """Narxni ko'rsatish uchun"""
