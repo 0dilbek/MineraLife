@@ -77,9 +77,13 @@ class Order(models.Model):
         return max(self.get_total_price() - paid, 0)
 
     def mark_as_debt(self, user):
-        """Ochiq buyurtmani qarz sifatida yakunlaydi."""
-        if self.status != 'pending':
-            raise ValidationError("Faqat kutilayotgan buyurtmani qarzga belgilash mumkin.")
+        """Kutilayotgan yoki bajarilgan buyurtmani faol qarzga belgilaydi."""
+        if self.is_debt:
+            raise ValidationError("Bu buyurtma allaqachon faol qarz sifatida belgilangan.")
+        if self.status not in {'pending', 'completed'}:
+            raise ValidationError(
+                "Faqat kutilayotgan yoki bajarilgan buyurtmani qarzga belgilash mumkin."
+            )
         outstanding_amount = self.get_outstanding_amount()
         if outstanding_amount <= 0:
             raise ValidationError(

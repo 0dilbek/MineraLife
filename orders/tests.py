@@ -210,6 +210,18 @@ class DebtWorkflowTests(TestCase):
         self.assertEqual(self.order.debt_amount, Decimal("150000"))
         self.assertEqual(self.order.debt_marked_by, self.admin)
 
+    def test_admin_can_mark_completed_order_as_debt(self):
+        self.order.status = "completed"
+        self.order.save(update_fields=["status"])
+
+        response = self.client.post(reverse("orders:mark_debt", args=[self.order.pk]))
+
+        self.assertRedirects(response, reverse("orders:list"))
+        self.order.refresh_from_db()
+        self.assertTrue(self.order.is_debt)
+        self.assertEqual(self.order.status, "completed")
+        self.assertEqual(self.order.debt_amount, Decimal("150000"))
+
     def test_debt_is_closed_only_from_debtor_order_action(self):
         self.order.mark_as_debt(self.admin)
         response = self.client.post(reverse(
